@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#7c5cff" />
+    <title>Zahlen-Abenteuer – Mathematik entdecken</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Zahlen-Abenteuer" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="background-shape shape-one"></div>
+    <div class="background-shape shape-two"></div>
+
+    <main class="app-shell">
+      <section id="profileScreen" class="screen profile-screen">
+        <div class="profile-welcome">
+          <div class="welcome-mark">✦</div>
+          <p class="eyebrow">Zahlen-Abenteuer</p>
+          <h1>Wer übt heute?</h1>
+          <p>Wähle dein Profil aus.</p>
+        </div>
+        <div id="profileSelectGrid" class="profile-select-grid"></div>
+        <button id="addProfileButton" class="add-profile-button" type="button"><span>＋</span><strong>Neuer Benutzer</strong></button>
+        <button id="teacherAreaButton" class="teacher-link" type="button">🔒 Bereich für Lehrpersonen</button>
+      </section>
+
+      <section id="activityScreen" class="screen activity-screen hidden">
+        <button id="activityProfileButton" class="profile-button" type="button" aria-label="Profileinstellungen">
+          <span id="activityProfileEmoji">🌟</span><span><small>Spielerin</small><strong id="activityProfileName">Profil</strong></span><span>⌄</span>
+        </button>
+        <header class="activity-header">
+          <p class="eyebrow">Was möchtest du machen?</p>
+          <h1>Such dir ein Spiel aus</h1>
+          <p>Verstehe zuerst die Rechenarten, übe sie danach und wende sie schließlich in Geschichten an.</p>
+        </header>
+        <button id="levelOverview" class="level-overview" type="button"><div id="levelAvatar">🌟</div><div><small id="levelNow">Level 1</small><strong id="levelRewardText">Nächste Belohnung</strong><div class="level-progress"><i id="levelProgressBar"></i></div><em id="levelProgressText">0 von 20 Sternen · Belohnungen ansehen</em></div><b>🎁</b></button>
+        <div id="teacherPreviewBanner" class="teacher-preview-banner hidden">🧪 Lehrpersonen-Testmodus: Alle Freischaltungen sind offen.<button id="endPreview" type="button">Beenden</button></div>
+        <section id="studentAssignment" class="student-assignment hidden"><span>📌</span><div><small>Dein Auftrag bis zum nächsten Mal</small><strong id="assignmentTitle"></strong><div class="assignment-progress"><i id="assignmentBar"></i></div><em id="assignmentStatus"></em></div></section>
+        <div class="activity-grid">
+          <button id="understandActivity" class="activity-card understand-card" type="button"><span class="activity-picture">🧠</span><span><small>Erst handeln</small><strong>Rechenarten verstehen</strong><em>Was bedeuten +, −, × und ÷?</em></span><b>→</b></button>
+          <button id="gamesActivity" class="activity-card times-card" type="button"><span class="activity-picture">🎮</span><span><small>Üben &amp; Spielen</small><strong>Spiele</strong><em>Einmaleins, Geteilt, Laden, Stellenwert &amp; mehr</em></span><b>→</b></button>
+        </div>
+        <button id="activityRewardsButton" class="studio-button" type="button">🎁 Mein Belohnungsstudio</button>
+      </section>
+
+      <section id="gamesScreen" class="screen activity-screen hidden"><button id="gamesBack" class="icon-button" type="button">←</button><header class="activity-header"><p class="eyebrow">Üben &amp; Spielen</p><h1>Was möchtest du spielen?</h1><p>Alle Spiele an einem Ort.</p></header><div class="activity-grid games-grid">
+        <button id="gamesTimesCard" class="activity-card times-card" type="button"><span class="activity-picture">✖️</span><span><small>Mal-Aufgaben</small><strong>Einmaleins üben</strong><em>Reihen oder alles gemischt</em></span><b>→</b></button>
+        <button id="gamesKingTowerCard" class="activity-card king-tower-hub-card" type="button"><span class="activity-picture">👑</span><span><small>Erst ableiten, dann rechnen</small><strong>Königsaufgaben-Turm</strong><em>Schwere Aufgaben aus leichten bauen</em></span><b>→</b></button>
+        <button id="gamesNeighborCard" class="activity-card neighbor-hub-card" type="button"><span class="activity-picture">🁣</span><span><small>Von der Nachbaraufgabe aus</small><strong>Nachbaraufgaben-Domino</strong><em>+1 oder −1 Reihe weiterdenken</em></span><b>→</b></button>
+        <button id="gamesDoubleChainCard" class="activity-card double-chain-hub-card" type="button"><span class="activity-picture">🔗</span><span><small>Verdoppeln &amp; halbieren</small><strong>Verdopplungskette</strong><em>Von 2×, 4× zu 8× weiterdenken</em></span><b>→</b></button>
+        <button id="gamesDivisionCard" class="activity-card division-card" type="button"><span class="activity-picture">➗</span><span><small>Geteilt-Aufgaben</small><strong>Geteilt üben</strong><em>Reihen oder alles gemischt</em></span><b>→</b></button>
+        <button id="gamesFamilyCard" class="activity-card family-card" type="button"><span class="activity-picture">🧩</span><span><small>Mal und Geteilt gehören zusammen</small><strong>Umkehraufgaben-Memory</strong><em>Finde die passende Rechenfamilie</em></span><b>→</b></button>
+        <button id="gamesCatchCard" class="activity-card catch-card locked" type="button"><span class="activity-picture">🧺</span><span><small id="gamesCatchStatus">ab Level 5</small><strong>Lösungen auffangen</strong><em>Fange die richtige Antwort</em></span><b id="gamesCatchLock">🔒</b></button>
+        <button id="gamesRaceCard" class="activity-card race-card locked" type="button"><span class="activity-picture">⏱️</span><span><small id="gamesRaceStatus">ab Level 5</small><strong>Tempo-Rennen</strong><em>Wie viele schaffst du in 60 Sekunden?</em></span><b id="gamesRaceLock">🔒</b></button>
+        <button id="gamesShopCard" class="activity-card shop-card" type="button"><span class="activity-picture">🛒</span><span><small>In Geschichten erkennen</small><strong>Im Laden anwenden</strong><em>Welche Rechenart brauchst du?</em></span><b>→</b></button>
+        <button id="gamesPlaceValueCard" class="activity-card place-build-card" type="button"><span class="activity-picture">🏠</span><span><small>Große Zahlen bis 10.000</small><strong>Stellenwert-Werkstatt</strong><em>Tausender, Hunderter, Zehner und Einer bündeln</em></span><b>→</b></button>
+        <button id="gamesNumberLineCard" class="activity-card number-line-card" type="button"><span class="activity-picture">📏</span><span><small>Selbst einzeichnen</small><strong>Zahlenstrahl</strong><em>Sprünge selbst markieren</em></span><b>→</b></button>
+      </div></section>
+
+      <section id="conceptStartScreen" class="screen concept-start hidden"><button id="conceptBack" class="icon-button" type="button">←</button><header class="activity-header"><p class="eyebrow">Rechenarten verstehen</p><h1>Was passiert beim Rechnen?</h1><p>Wähle eine Rechenart und führe sie selbst aus.</p></header><div class="concept-choice-grid"><button data-concept="+"><span>＋</span><strong>Plus</strong><small>Etwas kommt dazu</small></button><button data-concept="-"><span>−</span><strong>Minus</strong><small>Etwas wird weggenommen</small></button><button data-concept="*"><span>×</span><strong>Mal</strong><small>Gleich große Gruppen</small></button><button data-concept="/"><span>÷</span><strong>Geteilt</strong><small>Verteilen und gruppieren</small></button></div></section>
+
+      <section id="conceptScreen" class="screen concept-screen hidden"><header class="game-header"><button id="conceptHome" class="icon-button" type="button">←</button><div class="game-title"><small>Rechenart verstehen</small><strong id="conceptTitle">Plus</strong></div><div class="score-pill"><span id="conceptSymbol">＋</span><strong id="conceptScore">0</strong></div></header><div class="progress-track"><div id="conceptProgress" class="progress-bar"></div></div><section class="concept-card"><h2 id="conceptStory"></h2><div id="conceptObjects" class="concept-objects"></div><div id="conceptLiveEquation" class="concept-live-equation"></div><p id="conceptInstruction"></p><div id="conceptDragArea" class="concept-drag-area"><div id="conceptAppleToken" class="concept-apple-token" draggable="true">🍎</div><span>hierhin ziehen</span><div id="conceptDropZone" class="concept-drop-zone">Dazulegen</div></div><button id="conceptAction" class="secondary-button concept-fallback" type="button"></button><div id="conceptAnswerArea" class="concept-answer-area hidden"><p>Was ist das Ergebnis?</p><div id="conceptAnswerZone" class="answer-zone">?</div><div class="action-row"><button id="conceptDelete" class="secondary-button" type="button">⌫ Löschen</button><button id="conceptCheck" class="check-button" type="button" disabled>Prüfen</button></div></div><p id="conceptFeedback" class="feedback"></p></section><section id="conceptNumberArea" class="number-area hidden"><p>Deine Zahlen</p><div id="conceptNumberTray" class="number-tray"></div></section></section>
+
+      <section id="conceptFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">🧠 ✦ 💡</div><p class="eyebrow">Jetzt ergibt es Sinn!</p><h2>Gut verstanden</h2><p id="conceptFinishText"></p><div class="result-circle"><span id="conceptFinalScore">0</span><small>von 6</small></div><button id="conceptAgain" class="check-button large" type="button">Nochmal verstehen</button><button id="conceptChoose" class="text-button" type="button">Andere Rechenart wählen</button></section>
+
+      <section id="teacherScreen" class="screen teacher-screen hidden">
+        <header class="teacher-header"><button id="teacherBack" class="icon-button" type="button">←</button><div><p class="eyebrow">Lehrpersonenbereich</p><h1>Lernübersicht</h1></div></header>
+        <div id="teacherEmpty" class="teacher-empty hidden">Lege zuerst ein Schülerprofil an.</div>
+        <div id="teacherContent">
+          <label class="teacher-profile-label">Profil auswählen<select id="teacherProfileSelect"></select></label>
+          <div id="teacherStats" class="teacher-stats"></div>
+          <section class="teacher-panel"><h2>Schwierige Malsätze</h2><p>Diese Aufgaben hatten zuletzt die meisten Fehler.</p><div id="weakFacts" class="weak-facts"></div></section>
+          <section class="teacher-panel"><h2>Rechenarten verstehen</h2><div id="operationStats" class="operation-stats"></div></section>
+          <section class="teacher-panel"><h2>Spiele testen</h2><p>Öffnet alle Level-Sperren vorübergehend, ohne Erfahrungspunkte oder Lernstände zu verändern.</p><button id="teacherPreviewButton" class="secondary-button" type="button">Alle Spiele im Testmodus öffnen</button></section>
+          <section class="teacher-panel assignment-maker"><h2>Auftrag bis zum nächsten Mal</h2><label>Was soll geübt werden?<select id="assignmentActivity"><option value="multiplication">Einmaleins gemischt</option><option value="division">Geteilt rechnen</option><option value="shop">Einkaufsgeschichten</option><option value="catch">Lösungen auffangen</option><option value="family">Umkehraufgaben-Memory</option><option value="placeValue">Stellenwert-Werkstatt bis 10.000</option><option value="numberLine">Zahlenstrahl-Sprünge</option><option value="kingTower">Königsaufgaben-Turm</option><option value="neighbor">Nachbaraufgaben-Domino</option><option value="doubleChain">Verdopplungskette</option></select></label><label>Wie viele Aufgaben?<input id="assignmentTarget" type="number" min="1" max="50" value="10"></label><label>Eigene Nachricht (optional)<input id="assignmentNote" maxlength="80" placeholder="z. B. Übe besonders die 6er-Reihe"></label><button id="saveAssignment" class="check-button" type="button">Auftrag speichern</button><button id="removeAssignment" class="text-button" type="button">Aktuellen Auftrag entfernen</button><p id="teacherMessage" class="feedback"></p></section>
+        </div>
+      </section>
+
+      <section id="startScreen" class="screen start-screen hidden">
+        <button id="backToActivities" class="icon-button subject-back" type="button" aria-label="Zurück zu den Spielen">←</button>
+        <button id="profileButton" class="profile-button" type="button" aria-label="Profil wechseln">
+          <span id="profileEmoji">🌟</span>
+          <span><small>Spielerin</small><strong id="profileName">Profil anlegen</strong></span>
+          <span aria-hidden="true">⌄</span>
+        </button>
+        <header class="hero">
+          <div class="mascot" aria-hidden="true">
+            <span class="star">★</span>
+            <span class="spark spark-one">✦</span>
+            <span class="spark spark-two">✦</span>
+          </div>
+          <p class="eyebrow">Das kleine Einmaleins</p>
+          <h1>Willkommen beim<br /><span>Zahlen-Abenteuer!</span></h1>
+          <p class="intro">Wähle eine Reihe aus und zaubere die richtigen Lösungen.</p>
+        </header>
+
+        <div class="mode-section">
+          <h2>Welche Reihe möchtest du üben?</h2>
+          <div id="modeGrid" class="mode-grid" aria-label="Reihe auswählen"></div>
+          <button id="mixedMode" class="mixed-button" type="button">
+            <span class="mixed-icon">✦</span>
+            <span><strong>Alles gemischt</strong><small>Die große Herausforderung</small></span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="gameScreen" class="screen game-screen hidden" aria-live="polite">
+        <header class="game-header">
+          <button id="homeButton" class="icon-button" type="button" aria-label="Zurück zur Auswahl">←</button>
+          <div class="game-title">
+            <small>Du übst gerade</small>
+            <strong id="currentMode">2er-Reihe</strong>
+          </div>
+          <div class="score-pill" title="Richtige Antworten"><span id="gameEmoji">🌟</span><strong id="score">0</strong></div>
+        </header>
+
+        <div class="progress-track" aria-label="Fortschritt">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+        <section class="exercise-card">
+          <div class="card-decoration left" aria-hidden="true">✦</div>
+          <p class="task-label">Löse die Aufgabe</p>
+          <div class="equation">
+            <span id="factorOne">2</span><span class="operator">×</span><span id="factorTwo">4</span><span class="equals">=</span>
+            <div id="answerZone" class="answer-zone" role="group" aria-label="Lösungsfeld"></div>
+          </div>
+          <p class="help-text">Ziehe die Ziffern ins Feld oder tippe sie an.</p>
+
+          <div class="action-row">
+            <button id="deleteButton" class="secondary-button" type="button">⌫ Löschen</button>
+            <button id="checkButton" class="check-button" type="button" disabled>Prüfen</button>
+          </div>
+          <div id="feedback" class="feedback" role="status"></div>
+        </section>
+
+        <section class="number-area">
+          <p>Deine Zahlen</p>
+          <div id="numberTray" class="number-tray"></div>
+        </section>
+
+        <div class="streak"><span>🔥</span><span><strong id="streakCount">0</strong> in Folge richtig</span></div>
+      </section>
+
+      <section id="finishScreen" class="screen finish-screen hidden">
+        <div class="finish-stars" aria-hidden="true">✦ ★ ✦</div>
+        <p class="eyebrow">Runde geschafft!</p>
+        <h2>Zauberhaft gemacht!</h2>
+        <p id="finishText">Du hast 15 Aufgaben gelöst.</p>
+        <div class="result-circle"><span id="finalScore">0</span><small id="finalTotal">von 15</small></div>
+        <button id="againButton" class="check-button large" type="button">Noch eine Runde</button>
+        <button id="chooseButton" class="text-button" type="button">Andere Reihe wählen</button>
+      </section>
+
+      <section id="shopWorldScreen" class="screen shop-world-screen hidden">
+        <header class="game-header shop-world-header">
+          <button id="leaveShopButton" class="icon-button" type="button" aria-label="Zurück zu den Spielen">←</button>
+          <div class="game-title"><small id="shopLevelLabel">Dein Laden</small><strong>Der kleine Rechenladen</strong></div>
+          <div class="score-pill"><span id="worldEmoji">🌟</span><strong id="worldLevel">1</strong></div>
+        </header>
+        <div id="shopBuilding" class="shop-building">
+          <div class="shop-sign">RECHENLADEN</div>
+          <div class="shop-awning"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p id="shopInstruction" class="shop-instruction">Wo möchtest du heute helfen?</p>
+          <div class="store-floor">
+            <button class="store-station fruit-station" data-station="fruit" data-level="1" type="button"><span>🍎🍐</span><strong>Obststand</strong><small>offen</small></button>
+            <button class="store-station bakery-station" data-station="bakery" data-level="3" type="button"><span>🥨🥖</span><strong>Bäckerei</strong><small>ab Level 3</small></button>
+            <button class="store-station checkout-station" data-station="checkout" data-level="6" type="button"><span>🛒🧾</span><strong>Kasse</strong><small>ab Level 6</small></button>
+            <button class="store-station stock-station" data-station="stock" data-level="10" type="button"><span>📦🪜</span><strong>Lager</strong><small>ab Level 10</small></button>
+          </div>
+          <div class="shop-counter">🪴 <span>Danke, dass du mithilfst!</span> 🛎️</div>
+        </div>
+      </section>
+
+      <section id="shopScreen" class="screen shop-game hidden" aria-live="polite">
+        <header class="game-header">
+          <button id="shopHomeButton" class="icon-button" type="button" aria-label="Zurück zu den Spielen">←</button>
+          <div class="game-title"><small>Du spielst</small><strong>Im kleinen Laden</strong></div>
+          <div class="score-pill"><span id="shopEmoji">🌟</span><strong id="shopScore">0</strong></div>
+        </header>
+        <div class="progress-track"><div id="shopProgress" class="progress-bar"></div></div>
+        <section class="shop-card-panel">
+          <div id="shopScene" class="shop-scene">🛒 🍎 🥖</div>
+          <p class="task-label">Was musst du rechnen?</p>
+          <h2 id="shopStory">Du kaufst etwas im Laden.</h2>
+          <div class="operation-preview"><span id="shopPreviewA">12</span><b>□</b><span id="shopPreviewB">3</span><b>=</b><span>?</span></div>
+          <div id="operationChoices" class="operation-choices">
+            <button type="button" data-operation="+"><span>＋</span><small>Plus</small></button>
+            <button type="button" data-operation="-"><span>−</span><small>Minus</small></button>
+            <button type="button" data-operation="*"><span>×</span><small>Mal</small></button>
+            <button type="button" data-operation="/"><span>÷</span><small>Geteilt</small></button>
+          </div>
+          <div id="shopWriteArea" class="shop-write-area hidden"><label for="shopEquationInput">Schreibe den ganzen Rechenweg auf:</label><input id="shopEquationInput" inputmode="text" placeholder="zum Beispiel 12 + 5 = 17" /><button id="shopWriteCheck" class="check-button" type="button">Rechenweg prüfen</button></div>
+          <div id="shopEquation" class="shop-equation hidden"><span id="shopA"></span><span id="shopOperator"></span><span id="shopB"></span><span>=</span><div id="shopAnswerZone" class="answer-zone"></div></div>
+          <p id="shopFeedback" class="feedback"></p>
+          <div id="shopActions" class="action-row hidden"><button id="shopDelete" class="secondary-button" type="button">⌫ Löschen</button><button id="shopCheck" class="check-button" type="button" disabled>Prüfen</button></div>
+        </section>
+        <section id="shopNumberArea" class="number-area hidden"><p>Deine Zahlen</p><div id="shopNumberTray" class="number-tray"></div></section>
+      </section>
+
+      <section id="shopFinishScreen" class="screen finish-screen hidden">
+        <div class="finish-stars">🛍️ ✦ 🛒</div><p class="eyebrow">Einkauf geschafft!</p><h2>Der Laden schließt</h2>
+        <p id="shopFinishText"></p><div class="result-circle"><span id="shopFinalScore">0</span><small>von 8</small></div>
+        <button id="shopAgain" class="check-button large" type="button">Nochmal einkaufen</button><button id="shopChoose" class="text-button" type="button">Anderes Spiel wählen</button>
+      </section>
+
+      <section id="catchScreen" class="screen catch-screen hidden">
+        <header class="game-header"><button id="catchHome" class="icon-button" type="button">←</button><div class="game-title"><small>Fange die richtige Lösung</small><strong id="catchQuestion">4 × 6</strong></div><div class="score-pill">🧺 <strong id="catchScore">0</strong></div></header>
+        <div class="progress-track"><div id="catchProgress" class="progress-bar"></div></div>
+        <div id="catchArena" class="catch-arena">
+          <div id="catchQuestionBoard" class="catch-question-board">4 × 6 = ?</div>
+          <div id="catchFlash" class="catch-flash">⚡ Falsch gefangen!</div>
+          <div class="catch-cloud cloud-a">☁️</div><div class="catch-cloud cloud-b">☁️</div>
+          <div id="fallingAnswer" class="falling-answer">24</div>
+          <div id="catchBasket" class="catch-basket">🧺</div>
+          <p id="catchFeedback" class="catch-feedback">Bewege den Korb unter die richtige Lösung.</p>
+        </div>
+        <p class="catch-help">Mit dem Finger ziehen oder die Tasten ← und → benutzen.</p>
+      </section>
+
+      <section id="catchFinishScreen" class="screen finish-screen hidden">
+        <div class="finish-stars">🧺 ✦ ⭐</div><p class="eyebrow">Alles aufgefangen!</p><h2>Starker Fang!</h2><p id="catchFinishText"></p>
+        <div class="result-circle"><span id="catchFinalScore">0</span><small>von 10</small></div><button id="catchAgain" class="check-button large" type="button">Nochmal fangen</button><button id="catchChoose" class="text-button" type="button">Zurück zum Einmaleins</button>
+      </section>
+
+      <section id="divisionStartScreen" class="screen start-screen hidden">
+        <button id="divisionBack" class="icon-button subject-back" type="button">←</button>
+        <header class="hero"><div class="mascot">➗</div><p class="eyebrow">Geteilt üben</p><h1>Geteilt-Reihen<br><span>festigen</span></h1><p class="intro">Das anschauliche Verstehen findest du im Bereich „Rechenarten verstehen“.</p></header>
+        <div class="mode-section"><h2>Welche Geteilt-Reihe möchtest du üben?</h2><div id="divisionModeGrid" class="mode-grid"></div><button id="divisionMixed" class="catch-mode-button" type="button"><span>🔀</span><span><strong>Alles gemischt</strong><small>Alle Geteilt-Aufgaben</small></span><b>→</b></button></div>
+      </section>
+
+      <section id="divisionScreen" class="screen division-screen hidden">
+        <header class="game-header"><button id="divisionHome" class="icon-button" type="button">←</button><div class="game-title"><small>Geteilt verstehen</small><strong id="divisionKind">Gerecht verteilen</strong></div><div class="score-pill">➗ <strong id="divisionScore">0</strong></div></header>
+        <div class="progress-track"><div id="divisionProgress" class="progress-bar"></div></div>
+        <section class="division-card-panel">
+          <div id="divisionObjects" class="division-objects"></div>
+          <div id="divisionConceptControls" class="division-concept-controls hidden"><p id="divisionConceptText"></p><button id="divisionConceptButton" class="secondary-button" type="button">Je eine Erdbeere verteilen</button></div>
+          <p class="task-label">Schau genau hin</p><h2 id="divisionStory"></h2>
+          <div class="division-equation"><span id="divisionA"></span><span>÷</span><span id="divisionB"></span><span>=</span><div id="divisionAnswerZone" class="answer-zone">?</div></div>
+          <div id="divisionInverse" class="division-inverse hidden"><small>Die passende Mal-Aufgabe hilft dir:</small><strong id="divisionInverseEquation"></strong></div>
+          <p id="divisionFeedback" class="feedback"></p><div class="action-row"><button id="divisionDelete" class="secondary-button" type="button">⌫ Löschen</button><button id="divisionCheck" class="check-button" type="button" disabled>Prüfen</button></div>
+        </section>
+        <section class="number-area"><p>Deine Zahlen</p><div id="divisionNumberTray" class="number-tray"></div></section>
+      </section>
+      <section id="divisionFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">➗ ✦ 🍓</div><p class="eyebrow">Gut verteilt!</p><h2>Geteilt geschafft</h2><p id="divisionFinishText"></p><div class="result-circle"><span id="divisionFinalScore">0</span><small>von 10</small></div><button id="divisionAgain" class="check-button large" type="button">Nochmal teilen</button><button id="divisionChoose" class="text-button" type="button">Anderes Spiel wählen</button></section>
+
+      <section id="numberLineScreen" class="screen number-line-screen hidden"><header class="game-header"><button id="numberLineHome" class="icon-button" type="button">←</button><div class="game-title"><small>Große Zahlen</small><strong>Zahlensprünge</strong></div><div class="score-pill">📍 <strong id="numberLineScore">0</strong></div></header><div class="progress-track"><div id="numberLineProgress" class="progress-bar"></div></div><section class="number-line-panel"><p class="eyebrow">Zeichne deinen Sprung selbst ein</p><h2 id="numberLineTask">2.400 + 300</h2><p id="numberLineHint">Zieh den Pfeil vom Start aus so weit, wie du springen musst.</p><div id="numberLineVisual" class="number-line-visual"></div><p id="numberLineFeedback" class="feedback"></p><div class="action-row"><button id="numberLineCheck" class="check-button" type="button">Prüfen</button></div></section></section>
+      <section id="numberLineFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">📍 ✦ 🚀</div><p class="eyebrow">Sicher gelandet!</p><h2>Zahlensprünge geschafft</h2><p id="numberLineFinishText"></p><div class="result-circle"><span id="numberLineFinalScore">0</span><small>von 8</small></div><button id="numberLineAgain" class="check-button large" type="button">Nochmal springen</button><button id="numberLineChoose" class="text-button" type="button">Andere Aktivität wählen</button></section>
+
+      <section id="placeValueStartScreen" class="screen activity-screen hidden"><button id="placeValueBack" class="icon-button" type="button">←</button><header class="activity-header"><p class="eyebrow">Große Zahlen begreifen</p><h1>Stellenwert-Werkstatt</h1><p>Ein Punkt hat je nach Haus einen anderen Wert. Zehn gleiche Punkte können gegen einen Punkt im nächsten Haus getauscht werden.</p></header><div class="activity-grid"><button class="activity-card place-build-card" data-place-mode="build" type="button"><span class="activity-picture">🏗️</span><span><small>Stellen richtig besetzen</small><strong>Zahl bauen</strong><em>Baue eine Zahl aus T, H, Z und E</em></span><b>→</b></button><button class="activity-card place-trade-card" data-place-mode="trade" type="button"><span class="activity-picture">🔄</span><span><small>10 werden zu 1</small><strong>Tausch-Challenge</strong><em>Tausche Einer, Zehner und Hunderter</em></span><b>→</b></button><button class="activity-card place-minus-card" data-place-mode="minus" type="button"><span class="activity-picture">✂️</span><span><small>Punkte wegnehmen</small><strong>Minus-Werkstatt</strong><em>Entbündle einen Zehner, wenn es nicht reicht</em></span><b>→</b></button></div></section>
+      <section id="placeValueScreen" class="screen place-value-screen hidden"><header class="game-header"><button id="placeValueHome" class="icon-button" type="button">←</button><div class="game-title"><small>Stellenwert-Werkstatt</small><strong id="placeValueModeTitle">Zahl bauen</strong></div><div class="score-pill">🏠 <strong id="placeValueScore">0</strong></div></header><div class="progress-track"><div id="placeValueProgress" class="progress-bar"></div></div><section class="place-value-panel"><p id="placeValueInstruction" class="eyebrow"></p><h2 id="placeValueTask">Baue 3.426</h2><div id="placeValueHouses" class="place-value-houses"></div><div id="placeValueTray" class="place-value-tray"></div><div id="placeValueActions" class="place-value-actions"></div><p id="placeValueReading" class="place-value-reading"></p><p id="placeValueFeedback" class="feedback"></p><div class="action-row"><button id="placeValueReset" class="secondary-button" type="button">↺ Zurücksetzen</button><button id="placeValueCheck" class="check-button" type="button">Prüfen</button></div></section></section>
+      <section id="placeValueFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">🏠 ✦ 🔢</div><p class="eyebrow">Stellenwert-Profi!</p><h2>Werkstatt geschafft</h2><p id="placeValueFinishText"></p><div class="result-circle"><span id="placeValueFinalScore">0</span><small>von 6</small></div><button id="placeValueAgain" class="check-button large" type="button">Nochmal spielen</button><button id="placeValueChoose" class="text-button" type="button">Anderes Spiel wählen</button></section>
+      <section id="familyScreen" class="screen family-screen hidden"><header class="game-header"><button id="familyHome" class="icon-button" type="button">←</button><div class="game-title"><small>Mal ↔ Geteilt</small><strong>Umkehraufgaben-Memory</strong></div><div class="score-pill">🧩 <strong id="familyPairs">0/6</strong></div></header><section class="family-panel"><h2>Welche beiden Rechnungen gehören zusammen?</h2><p>Beispiel: 4 × 6 = 24 passt zu 24 ÷ 4 = 6.</p><div id="familyGrid" class="family-grid"></div><p id="familyFeedback" class="feedback"></p></section></section>
+      <section id="familyFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">✖️ ✦ ➗</div><p class="eyebrow">Rechenfamilien gefunden!</p><h2>Memory geschafft</h2><p>Mal und Geteilt sind Umkehraufgaben.</p><button id="familyAgain" class="check-button large" type="button">Nochmal spielen</button><button id="familyChoose" class="text-button" type="button">Andere Übung wählen</button></section>
+
+      <section id="kingTowerScreen" class="screen king-tower-screen hidden">
+        <header class="game-header"><button id="kingTowerHome" class="icon-button" type="button">←</button><div class="game-title"><small>Ableiten statt zählen</small><strong>Königsaufgaben-Turm</strong></div><div class="score-pill">👑 <strong id="kingTowerScore">0</strong></div></header>
+        <div class="progress-track"><div id="kingTowerProgress" class="progress-bar"></div></div>
+        <section class="exercise-card king-tower-card">
+          <p class="task-label">Baue den Turm</p>
+          <div class="equation"><span id="kingTowerA">6</span><span class="operator">×</span><span id="kingTowerB">7</span><span class="equals">=</span><span>?</span></div>
+          <p id="kingTowerInstruction" class="king-tower-instruction"></p>
+          <div id="kingTowerTiles" class="king-tower-tiles"></div>
+          <div id="kingTowerOps" class="king-tower-ops"></div>
+          <p id="kingTowerSum" class="king-tower-sum"></p>
+          <div class="action-row"><button id="kingTowerCheck" class="check-button" type="button" disabled>Prüfen</button></div>
+          <p id="kingTowerFeedback" class="feedback"></p>
+        </section>
+      </section>
+      <section id="kingTowerFinishScreen" class="screen finish-screen hidden">
+        <div class="finish-stars">👑 ✦ 🏗️</div><p class="eyebrow">Turm gebaut!</p><h2>Königsaufgaben geschafft</h2>
+        <p id="kingTowerFinishText"></p>
+        <div class="result-circle"><span id="kingTowerFinalScore">0</span><small>von 8</small></div>
+        <button id="kingTowerAgain" class="check-button large" type="button">Nochmal bauen</button><button id="kingTowerChoose" class="text-button" type="button">Anderes Spiel wählen</button>
+      </section>
+
+      <section id="neighborScreen" class="screen neighbor-screen hidden">
+        <header class="game-header"><button id="neighborHome" class="icon-button" type="button">←</button><div class="game-title"><small>Von der Nachbaraufgabe aus</small><strong>Nachbaraufgaben-Domino</strong></div><div class="score-pill">🁣 <strong id="neighborScore">0</strong></div></header>
+        <div class="progress-track"><div id="neighborProgress" class="progress-bar"></div></div>
+        <section class="exercise-card neighbor-card">
+          <div class="neighbor-domino">
+            <div class="neighbor-tile neighbor-known"><small>Das weißt du schon</small><strong id="neighborKnownEquation"></strong></div>
+            <div id="neighborOpChoice" class="neighbor-op-choice"></div>
+            <div class="neighbor-tile neighbor-target"><small>Das ist gesucht</small><strong id="neighborTargetEquation"></strong></div>
+          </div>
+          <p class="task-label">Wie lautet das Ergebnis?</p>
+          <div class="equation"><div id="neighborAnswerZone" class="answer-zone" role="group"></div></div>
+          <div class="action-row"><button id="neighborDelete" class="secondary-button" type="button">⌫ Löschen</button><button id="neighborCheck" class="check-button" type="button" disabled>Prüfen</button></div>
+          <p id="neighborFeedback" class="feedback"></p>
+        </section>
+        <section class="number-area"><p>Deine Zahlen</p><div id="neighborNumberTray" class="number-tray"></div></section>
+      </section>
+      <section id="neighborFinishScreen" class="screen finish-screen hidden">
+        <div class="finish-stars">🁣 ✦ 🧠</div><p class="eyebrow">Nachbarn gefunden!</p><h2>Domino geschafft</h2>
+        <p id="neighborFinishText"></p>
+        <div class="result-circle"><span id="neighborFinalScore">0</span><small>von 8</small></div>
+        <button id="neighborAgain" class="check-button large" type="button">Nochmal legen</button><button id="neighborChoose" class="text-button" type="button">Anderes Spiel wählen</button>
+      </section>
+
+      <section id="doubleChainScreen" class="screen double-chain-screen hidden">
+        <header class="game-header"><button id="doubleChainHome" class="icon-button" type="button">←</button><div class="game-title"><small>Verdoppeln &amp; Halbieren</small><strong>Verdopplungskette</strong></div><div class="score-pill">🔗 <strong id="doubleChainScore">0</strong></div></header>
+        <div class="progress-track"><div id="doubleChainProgress" class="progress-bar"></div></div>
+        <section class="exercise-card">
+          <p class="task-label" id="doubleChainDirection">Verdopple weiter</p>
+          <div id="doubleChainLinks" class="double-chain-links"></div>
+          <p id="doubleChainInstruction" class="king-tower-instruction"></p>
+          <div class="equation"><div id="doubleChainAnswerZone" class="answer-zone" role="group"></div></div>
+          <div class="action-row"><button id="doubleChainDelete" class="secondary-button" type="button">⌫ Löschen</button><button id="doubleChainCheck" class="check-button" type="button" disabled>Prüfen</button></div>
+          <p id="doubleChainFeedback" class="feedback"></p>
+        </section>
+        <section class="number-area"><p>Deine Zahlen</p><div id="doubleChainNumberTray" class="number-tray"></div></section>
+      </section>
+      <section id="doubleChainFinishScreen" class="screen finish-screen hidden">
+        <div class="finish-stars">🔗 ✦ ✖️</div><p class="eyebrow">Kette geschafft!</p><h2>Verdoppelt &amp; halbiert</h2>
+        <p id="doubleChainFinishText"></p>
+        <div class="result-circle"><span id="doubleChainFinalScore">0</span><small>von 6</small></div>
+        <button id="doubleChainAgain" class="check-button large" type="button">Nochmal verketten</button><button id="doubleChainChoose" class="text-button" type="button">Anderes Spiel wählen</button>
+      </section>
+
+      <section id="raceScreen" class="screen race-screen hidden" aria-live="polite">
+        <header class="game-header"><button id="raceHome" class="icon-button" type="button">←</button><div class="game-title"><small>Gegen die Uhr</small><strong>Tempo-Rennen</strong></div><div class="score-pill">⏱️ <strong id="raceTimer">60</strong></div></header>
+        <div class="progress-track"><div id="raceProgress" class="progress-bar race-timer-bar"></div></div>
+        <section class="exercise-card">
+          <p class="task-label">Löse so viele wie du kannst</p>
+          <div class="equation"><span id="raceA">4</span><span class="operator" id="raceOperator">×</span><span id="raceB">6</span><span class="equals">=</span><div id="raceAnswerZone" class="answer-zone" role="group" aria-label="Lösungsfeld"></div></div>
+          <div class="action-row"><button id="raceDelete" class="secondary-button" type="button">⌫ Löschen</button><button id="raceCheck" class="check-button" type="button" disabled>Prüfen</button></div>
+          <div id="raceFeedback" class="feedback" role="status"></div>
+        </section>
+        <section class="number-area"><p>Deine Zahlen</p><div id="raceNumberTray" class="number-tray"></div></section>
+        <div class="streak"><span>🔥</span><span><strong id="raceScore">0</strong> richtig gelöst</span></div>
+      </section>
+      <section id="raceFinishScreen" class="screen finish-screen hidden">
+        <div class="finish-stars">⏱️ ✦ 🏁</div><p class="eyebrow">Zeit um!</p><h2>Starkes Tempo!</h2>
+        <p id="raceFinishText"></p>
+        <div class="result-circle"><span id="raceFinalScore">0</span><small>richtig gelöst</small></div>
+        <button id="raceAgain" class="check-button large" type="button">Nochmal rennen</button><button id="raceChoose" class="text-button" type="button">Zurück zu den Spielen</button>
+      </section>
+    </main>
+
+    <div id="profileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="profile-box">
+        <button id="closeProfiles" class="modal-close" type="button" aria-label="Schließen">×</button>
+        <p class="eyebrow">Dein Profil</p>
+        <h2 id="profileModalTitle">Neuer Benutzer</h2>
+        <form id="profileForm" class="profile-form">
+          <label for="newProfileName">Wie heißt du?</label>
+          <input id="newProfileName" maxlength="16" autocomplete="off" placeholder="Dein Name" required />
+          <label>Suche dir eine Figur aus</label>
+          <div id="starterEmojiGrid" class="emoji-grid starter-grid"></div>
+          <button class="check-button large" type="submit">Profil anlegen</button>
+        </form>
+        <section id="emojiPicker" class="emoji-picker hidden">
+          <div id="profileLevelSummary" class="profile-level-summary"></div>
+          <div class="edit-name-row"><input id="editProfileName" maxlength="16" aria-label="Profilname" /><button id="saveProfileName" class="secondary-button" type="button">Name speichern</button></div>
+          <h3>Figur auswählen</h3>
+          <p>Mit höheren Levels schaltest du neue Figuren und Schätze frei.</p>
+          <div id="emojiGrid" class="emoji-grid"></div>
+          <button id="switchProfileButton" class="secondary-button switch-profile" type="button">Benutzer wechseln</button>
+        </section>
+      </div>
+    </div>
+
+    <div id="rewardsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="rewardsTitle">
+      <div class="profile-box rewards-box">
+        <button id="closeRewards" class="modal-close" type="button" aria-label="Schließen">×</button>
+        <p class="eyebrow">Dein Studio</p>
+        <h2 id="rewardsTitle">Belohnungen</h2>
+        <div id="rewardSummary" class="profile-level-summary"></div>
+        <h3>Farbwelt</h3>
+        <div id="themeGrid" class="reward-grid"></div>
+        <h3>Zahlenkärtchen</h3>
+        <div id="tileGrid" class="reward-grid"></div>
+        <h3>Spiele und Spielwelten</h3>
+        <div id="gameRewardGrid" class="reward-grid game-reward-grid"></div>
+        <p class="reward-note">Levels bringen Spielvarianten und Gestaltung. Lernbereiche werden nicht gesperrt.</p>
+      </div>
+    </div>
+    <div id="leaveModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="leaveTitle"><div class="leave-box"><div class="leave-icon">🚪</div><h2 id="leaveTitle">Schon aufhören?</h2><p>Deine gesammelten Sterne bleiben sicher gespeichert.</p><div class="leave-level"><strong id="leaveLevelText"></strong><div class="level-progress"><i id="leaveLevelBar"></i></div><small id="leaveRewardText"></small></div><div class="leave-actions"><button id="stayButton" class="check-button" type="button">Weiterspielen</button><button id="leaveButton" class="secondary-button" type="button">Spiel verlassen</button></div></div></div>
+    <div id="levelUpModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="levelUpTitle"><div class="leave-box level-up-box"><div class="leave-icon">🎉</div><h2 id="levelUpTitle">Level <span id="levelUpNumber">2</span> erreicht!</h2><p>Das hast du neu freigeschaltet:</p><div id="levelUpUnlocks" class="level-up-unlocks"></div><button id="levelUpClose" class="check-button large" type="button">Weiter geht's!</button></div></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

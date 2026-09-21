@@ -1391,6 +1391,9 @@ function getLevelProgress(profile) {
   const stars = profile?.areaStars?.[area] || 0;
   return { level: getLevel(profile), area, progress: stars % 20, missing: 20 - (stars % 20) };
 }
+function formatAreaStars(profile) {
+  return AREAS.map(area => `★ ${AREA_NAMES[area]} ${profile?.areaStars?.[area] || 0}`).join(' · ');
+}
 
 let pendingLevelUp=null;
 function addAreaStars(profile,area,amount){
@@ -1519,7 +1522,7 @@ function renderProfileHeader() {
   const raceUnlocked=level>=5||teacherPreview;
   elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Level 5';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
   const{area:limitingArea,progress,missing}=getLevelProgress(profile);const nextRewards=[...EMOJIS.map(item=>({level:item.level,text:`Figur ${item.icon}`})),...THEMES.map(item=>({level:item.level,text:`Farbwelt „${item.name}“`})),...TILE_STYLES.map(item=>({level:item.level,text:`Zahlenkarten „${item.name}“`})),...GAME_REWARDS.map(item=>({level:item.level,text:`Spiel „${item.name}“`}))].filter(item=>item.level>level).sort((a,b)=>a.level-b.level);const next=nextRewards[0];
-  elements.levelAvatar.textContent=profile?.emoji||'🌟';elements.levelNow.textContent=`Level ${level}`;elements.levelRewardText.textContent=next?`Auf Level ${next.level}: ${next.text}`:'Alle bisherigen Belohnungen freigeschaltet';elements.levelProgressBar.style.width=`${progress/20*100}%`;elements.levelProgressText.textContent=`${progress} von 20 Sternen bei ${AREA_NAMES[limitingArea]} · noch ${missing} bis Level ${level+1}`;elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
+  elements.levelAvatar.textContent=profile?.emoji||'🌟';elements.levelNow.textContent=`Level ${level}`;elements.levelRewardText.textContent=next?`Auf Level ${next.level}: ${next.text}`:'Alle bisherigen Belohnungen freigeschaltet';elements.levelProgressBar.style.width=`${progress/20*100}%`;elements.levelProgressText.textContent=`${formatAreaStars(profile)} · noch ${missing} bei ${AREA_NAMES[limitingArea]} bis Level ${level+1}`;elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
 }
 
 function openRewards() {
@@ -1532,7 +1535,7 @@ function renderRewards() {
   if (!profile) return;
   const level = getLevel(profile);
   const rewardProgress=getLevelProgress(profile);
-  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${rewardProgress.progress} von 20 Sternen bei ${AREA_NAMES[rewardProgress.area]} bis zum nächsten Level</small>`;
+  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${formatAreaStars(profile)} · noch ${rewardProgress.missing} bei ${AREA_NAMES[rewardProgress.area]} bis zum nächsten Level</small>`;
   renderRewardGroup(elements.themeGrid, THEMES, profile.theme || 'classic', (id) => { profile.theme = id; });
   renderRewardGroup(elements.tileGrid, TILE_STYLES, profile.tileStyle || 'classic', (id) => { profile.tileStyle = id; });
   elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(game=>{const locked=level<game.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${game.icon}</span><strong>${game.name}</strong><small>${locked?`ab Level ${game.level}`:'freigeschaltet'}</small></div>`}).join('');

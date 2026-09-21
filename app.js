@@ -28,6 +28,9 @@ const GAME_REWARDS=[
   {name:'Lösungen auffangen',icon:'🧺',level:5},{name:'Tempo-Rennen',icon:'⏱️',level:5},
   {name:'Größerer Laden',icon:'🏪',level:7},{name:'Schnelle Fangwellen',icon:'⚡',level:10},{name:'Großes Geschäft',icon:'🏬',level:12},
 ];
+const AREAS=['plus','minus','mal','geteilt','stellenwert'];
+const AREA_NAMES={plus:'Plus',minus:'Minus',mal:'Mal',geteilt:'Geteilt',stellenwert:'Stellenwert'};
+const OP_TO_AREA={'+':'plus','-':'minus','*':'mal','/':'geteilt'};
 
 const screens = {
   profiles: document.querySelector('#profileScreen'),
@@ -39,6 +42,7 @@ const screens = {
   shop: document.querySelector('#shopScreen'),
   shopFinish: document.querySelector('#shopFinishScreen'),
   catch: document.querySelector('#catchScreen'), catchFinish: document.querySelector('#catchFinishScreen'),
+  pipe: document.querySelector('#pipeScreen'), pipeFinish: document.querySelector('#pipeFinishScreen'),
   divisionStart: document.querySelector('#divisionStartScreen'), division: document.querySelector('#divisionScreen'), divisionFinish: document.querySelector('#divisionFinishScreen'),
   teacher: document.querySelector('#teacherScreen'),
   games: document.querySelector('#gamesScreen'),
@@ -107,6 +111,7 @@ const elements = {
   catchQuestionBoard: document.querySelector('#catchQuestionBoard'),
   catchBasket: document.querySelector('#catchBasket'), catchFeedback: document.querySelector('#catchFeedback'), catchFinalScore: document.querySelector('#catchFinalScore'),
   catchFinishText: document.querySelector('#catchFinishText'), catchAgain: document.querySelector('#catchAgain'), catchChoose: document.querySelector('#catchChoose'),
+  pipeHome: document.querySelector('#pipeHome'), pipeScore: document.querySelector('#pipeScore'), pipeProgress: document.querySelector('#pipeProgress'), pipeQuestionBoard: document.querySelector('#pipeQuestionBoard'), pipeArena: document.querySelector('#pipeArena'), pipeFeedback: document.querySelector('#pipeFeedback'), pipeFinalScore: document.querySelector('#pipeFinalScore'), pipeFinishText: document.querySelector('#pipeFinishText'), pipeAgain: document.querySelector('#pipeAgain'), pipeChoose: document.querySelector('#pipeChoose'),
   divisionHome: document.querySelector('#divisionHome'), divisionKind: document.querySelector('#divisionKind'),
   divisionScore: document.querySelector('#divisionScore'), divisionProgress: document.querySelector('#divisionProgress'), divisionObjects: document.querySelector('#divisionObjects'),
   divisionStory: document.querySelector('#divisionStory'), divisionA: document.querySelector('#divisionA'), divisionB: document.querySelector('#divisionB'),
@@ -127,8 +132,9 @@ const elements = {
   understandActivity: document.querySelector('#understandActivity'), gamesActivity: document.querySelector('#gamesActivity'), gamesBack: document.querySelector('#gamesBack'), conceptBack: document.querySelector('#conceptBack'), conceptHome: document.querySelector('#conceptHome'),
   gamesTimesCard: document.querySelector('#gamesTimesCard'), gamesDivisionCard: document.querySelector('#gamesDivisionCard'), gamesFamilyCard: document.querySelector('#gamesFamilyCard'),
   gamesCatchCard: document.querySelector('#gamesCatchCard'), gamesCatchStatus: document.querySelector('#gamesCatchStatus'), gamesCatchLock: document.querySelector('#gamesCatchLock'),
+  gamesPipeCard: document.querySelector('#gamesPipeCard'),
   gamesRaceCard: document.querySelector('#gamesRaceCard'), gamesRaceStatus: document.querySelector('#gamesRaceStatus'), gamesRaceLock: document.querySelector('#gamesRaceLock'), gamesShopCard: document.querySelector('#gamesShopCard'), gamesPlaceValueCard: document.querySelector('#gamesPlaceValueCard'), gamesNumberLineCard: document.querySelector('#gamesNumberLineCard'),
-  conceptTitle: document.querySelector('#conceptTitle'), conceptSymbol: document.querySelector('#conceptSymbol'), conceptScore: document.querySelector('#conceptScore'), conceptProgress: document.querySelector('#conceptProgress'), conceptStory: document.querySelector('#conceptStory'), conceptObjects: document.querySelector('#conceptObjects'), conceptLiveEquation: document.querySelector('#conceptLiveEquation'), conceptInstruction: document.querySelector('#conceptInstruction'), conceptAction: document.querySelector('#conceptAction'), conceptAnswerArea: document.querySelector('#conceptAnswerArea'), conceptAnswerZone: document.querySelector('#conceptAnswerZone'), conceptDelete: document.querySelector('#conceptDelete'), conceptCheck: document.querySelector('#conceptCheck'), conceptFeedback: document.querySelector('#conceptFeedback'), conceptNumberArea: document.querySelector('#conceptNumberArea'), conceptNumberTray: document.querySelector('#conceptNumberTray'), conceptFinishText: document.querySelector('#conceptFinishText'), conceptFinalScore: document.querySelector('#conceptFinalScore'), conceptAgain: document.querySelector('#conceptAgain'), conceptChoose: document.querySelector('#conceptChoose'),
+  conceptTitle: document.querySelector('#conceptTitle'), conceptSymbol: document.querySelector('#conceptSymbol'), conceptScore: document.querySelector('#conceptScore'), conceptProgress: document.querySelector('#conceptProgress'), conceptStory: document.querySelector('#conceptStory'), conceptObjects: document.querySelector('#conceptObjects'), conceptLiveEquation: document.querySelector('#conceptLiveEquation'), conceptInstruction: document.querySelector('#conceptInstruction'), conceptAction: document.querySelector('#conceptAction'), conceptAnswerArea: document.querySelector('#conceptAnswerArea'), conceptAnswerZone: document.querySelector('#conceptAnswerZone'), conceptRemainderArea: document.querySelector('#conceptRemainderArea'), conceptRemainderZone: document.querySelector('#conceptRemainderZone'), conceptDelete: document.querySelector('#conceptDelete'), conceptCheck: document.querySelector('#conceptCheck'), conceptFeedback: document.querySelector('#conceptFeedback'), conceptNumberArea: document.querySelector('#conceptNumberArea'), conceptNumberTray: document.querySelector('#conceptNumberTray'), conceptFinishText: document.querySelector('#conceptFinishText'), conceptFinalScore: document.querySelector('#conceptFinalScore'), conceptAgain: document.querySelector('#conceptAgain'), conceptChoose: document.querySelector('#conceptChoose'),
   conceptDragArea: document.querySelector('#conceptDragArea'), conceptAppleToken: document.querySelector('#conceptAppleToken'), conceptDropZone: document.querySelector('#conceptDropZone'),
   numberLineHome:document.querySelector('#numberLineHome'),numberLineScore:document.querySelector('#numberLineScore'),numberLineProgress:document.querySelector('#numberLineProgress'),numberLineTask:document.querySelector('#numberLineTask'),numberLineHint:document.querySelector('#numberLineHint'),numberLineVisual:document.querySelector('#numberLineVisual'),numberLineFeedback:document.querySelector('#numberLineFeedback'),numberLineCheck:document.querySelector('#numberLineCheck'),numberLineFinalScore:document.querySelector('#numberLineFinalScore'),numberLineFinishText:document.querySelector('#numberLineFinishText'),numberLineAgain:document.querySelector('#numberLineAgain'),numberLineChoose:document.querySelector('#numberLineChoose'),
   placeValueBack:document.querySelector('#placeValueBack'),placeValueHome:document.querySelector('#placeValueHome'),placeValueModeTitle:document.querySelector('#placeValueModeTitle'),placeValueScore:document.querySelector('#placeValueScore'),placeValueProgress:document.querySelector('#placeValueProgress'),placeValueInstruction:document.querySelector('#placeValueInstruction'),placeValueTask:document.querySelector('#placeValueTask'),placeValueHouses:document.querySelector('#placeValueHouses'),placeValueTray:document.querySelector('#placeValueTray'),placeValueActions:document.querySelector('#placeValueActions'),placeValueReading:document.querySelector('#placeValueReading'),placeValueFeedback:document.querySelector('#placeValueFeedback'),placeValueReset:document.querySelector('#placeValueReset'),placeValueCheck:document.querySelector('#placeValueCheck'),placeValueFinalScore:document.querySelector('#placeValueFinalScore'),placeValueFinishText:document.querySelector('#placeValueFinishText'),placeValueAgain:document.querySelector('#placeValueAgain'),placeValueChoose:document.querySelector('#placeValueChoose'),
@@ -147,8 +153,10 @@ let confidenceBoost = false;
 let starterEmoji = '🌟';
 let shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: [], station: 'fruit', difficulty: 1 };
 let catchState = { question: 0, score: 0, a: 2, b: 2, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: false, mistake: false, bubbles: [] };
+const PIPE_COUNT = 4;
+let pipeState = { question: 0, score: 0, a: 2, b: 2, op: '*', result: 4, running: false, bubbles: [], pipesBusy: new Array(PIPE_COUNT).fill(false), lastTime: 0, nextSpawnAt: 0, frame: 0 };
 let divisionState = { question:0, score:0, total:12, divisor:3, result:4, type:'share', answer:'', retry:0, locked:false, mode:'understand', conceptStep:0 };
-let conceptState={operation:'+',question:0,score:0,a:3,b:2,result:5,step:0,answer:'',locked:false,retry:0};
+let conceptState={operation:'+',question:0,score:0,a:3,b:2,result:5,step:0,answer:'',locked:false,retry:0,perChild:[]};
 let numberLineState={question:0,score:0,start:0,jump:0,result:0,step:10,locked:false};
 let placeValueState={mode:'build',question:0,score:0,target:0,counts:[0,0,0,0],initial:[],tradeIndex:3,locked:false};
 let familyState={cards:[],open:[],pairs:0,locked:false};
@@ -165,9 +173,9 @@ function showScreen(name) {
 }
 
 function confirmLeaveGame(destination, stopAction = null) {
-  const profile=getProfile();const level=getLevel(profile);const progress=(profile?.xp||0)%20;const missing=20-progress;
-  const round=screens.catch&&!screens.catch.classList.contains('hidden')?catchState.score:screens.placeValue&&!screens.placeValue.classList.contains('hidden')?placeValueState.score:screens.numberLine&&!screens.numberLine.classList.contains('hidden')?numberLineState.score:screens.race&&!screens.race.classList.contains('hidden')?raceState.score:screens.kingTower&&!screens.kingTower.classList.contains('hidden')?kingTowerState.score:screens.neighbor&&!screens.neighbor.classList.contains('hidden')?neighborState.score:screens.doubleChain&&!screens.doubleChain.classList.contains('hidden')?doubleChainState.score:screens.game&&!screens.game.classList.contains('hidden')?state.score:0;
-  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/20*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von 20 Sternen im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
+  const profile=getProfile();const{level,area,progress,missing}=getLevelProgress(profile);
+  const round=screens.catch&&!screens.catch.classList.contains('hidden')?catchState.score:screens.pipe&&!screens.pipe.classList.contains('hidden')?pipeState.score:screens.placeValue&&!screens.placeValue.classList.contains('hidden')?placeValueState.score:screens.numberLine&&!screens.numberLine.classList.contains('hidden')?numberLineState.score:screens.race&&!screens.race.classList.contains('hidden')?raceState.score:screens.kingTower&&!screens.kingTower.classList.contains('hidden')?kingTowerState.score:screens.neighbor&&!screens.neighbor.classList.contains('hidden')?neighborState.score:screens.doubleChain&&!screens.doubleChain.classList.contains('hidden')?doubleChainState.score:screens.game&&!screens.game.classList.contains('hidden')?state.score:0;
+  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bei ${AREA_NAMES[area]} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/20*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von 20 Sternen bei ${AREA_NAMES[area]} im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
 }
 
 function closeLeaveModal(){elements.leaveModal.classList.add('hidden');pendingLeaveAction=null}
@@ -181,33 +189,60 @@ function flashCatchError(){
   window.setTimeout(()=>{elements.catchFlash.classList.remove('show');elements.catchArena.classList.remove('wrong-catch')},1250);
 }
 
-function startConceptGame(operation){conceptState={operation,question:0,score:0,a:3,b:2,result:5,step:0,answer:'',locked:false,retry:0};elements.conceptScore.textContent='0';showScreen('concept');nextConceptQuestion()}
-function nextConceptQuestion(){if(conceptState.question>=6)return finishConceptGame();const op=conceptState.operation;conceptState.a=randomInt(op==='-'?6:2,op==='-'?12:5);conceptState.b=randomInt(2,5);if(op==='-'&&conceptState.b>=conceptState.a)conceptState.b=conceptState.a-1;conceptState.result=op==='+'?conceptState.a+conceptState.b:op==='-'?conceptState.a-conceptState.b:op==='*'?conceptState.a*conceptState.b:conceptState.b;conceptState.total=op==='/'?conceptState.a*conceptState.b:null;conceptState.step=0;conceptState.answer='';conceptState.locked=false;conceptState.retry=0;const names={'+':'Plus','-':'Minus','*':'Mal','/':'Geteilt'};elements.conceptTitle.textContent=names[op];elements.conceptSymbol.textContent={'+':'＋','-':'−','*':'×','/':'÷'}[op];elements.conceptProgress.style.width=`${conceptState.question/6*100}%`;elements.conceptFeedback.textContent='';elements.conceptFeedback.className='feedback';renderConcept()}
-function drawConceptQuantity(filled,capacity,splitAt=null,showRemoved=false){const patterns=[[],[2],[0,4],[0,2,4],[0,1,3,4],[0,1,2,3,4]];const panels=Math.ceil(capacity/5);const board=document.createElement('div');board.className='dice-board';for(let panel=0;panel<panels;panel+=1){const five=document.createElement('span');five.className='dice-five';const filledHere=Math.max(0,Math.min(5,filled-panel*5));const capacityHere=Math.max(0,Math.min(5,capacity-panel*5));const active=patterns[filledHere],possible=patterns[capacityHere];for(let spot=0;spot<5;spot+=1){const dot=document.createElement('i');dot.className='dice-spot';const rank=active.indexOf(spot);if(rank>=0){const itemIndex=panel*5+rank;dot.textContent='🍎';dot.classList.add('filled');if(splitAt!==null&&itemIndex>=splitAt)dot.classList.add('added');if(conceptState.operation==='-'&&conceptState.step<conceptState.b)enablePoolDrag(dot)}else{dot.textContent='•';if(showRemoved&&possible.includes(spot))dot.classList.add('removed')}five.append(dot)}board.append(five)}elements.conceptObjects.append(board)}
-function enablePoolDrag(dot){dot.draggable=true;dot.classList.add('removable');dot.addEventListener('dragstart',event=>event.dataTransfer.setData('text/plain','pool-item'));let ghost=null;dot.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')return;dot.setPointerCapture(event.pointerId);ghost=document.createElement('div');ghost.className='concept-apple-ghost';ghost.textContent='🍎';document.body.append(ghost);move(event)});dot.addEventListener('pointermove',event=>{if(!ghost)return;move(event);const target=document.elementFromPoint(event.clientX,event.clientY);elements.conceptDropZone.classList.toggle('drag-over',elements.conceptDropZone.contains(target))});dot.addEventListener('pointerup',event=>{if(!ghost)return;const target=document.elementFromPoint(event.clientX,event.clientY);if(elements.conceptDropZone.contains(target))advanceConcept();ghost.remove();ghost=null;elements.conceptDropZone.classList.remove('drag-over')});function move(event){ghost.style.left=`${event.clientX}px`;ghost.style.top=`${event.clientY}px`}}
+function startConceptGame(operation){conceptState={operation,question:0,score:0,a:3,b:2,result:5,step:0,answer:'',remainderAnswer:'',activeAnswerField:'quotient',hasRemainder:false,remainder:0,locked:false,retry:0,faded:false};elements.conceptScore.textContent='0';showScreen('concept');nextConceptQuestion()}
+function nextConceptQuestion(){
+  if(conceptState.question>=6)return finishConceptGame();
+  const op=conceptState.operation;const prevA=conceptState.a,prevB=conceptState.b,prevRemainder=conceptState.remainder;
+  let a,b,hasRemainder,remainder,tries=0;
+  do{
+    a=randomInt(op==='-'?6:2,op==='-'?12:5);b=randomInt(2,5);if(op==='-'&&b>=a)b=a-1;
+    hasRemainder=op==='/'&&Math.random()<0.4;remainder=hasRemainder?randomInt(1,a-1):0;
+    tries+=1;
+  }while(conceptState.question>0&&tries<30&&a===prevA&&b===prevB&&remainder===prevRemainder);
+  conceptState.a=a;conceptState.b=b;conceptState.hasRemainder=hasRemainder;conceptState.remainder=remainder;
+  conceptState.result=op==='+'?conceptState.a+conceptState.b:op==='-'?conceptState.a-conceptState.b:op==='*'?conceptState.a*conceptState.b:conceptState.b;conceptState.total=op==='/'?conceptState.a*conceptState.b+conceptState.remainder:null;conceptState.perChild=op==='/'?new Array(conceptState.a).fill(0):[];conceptState.step=0;conceptState.answer='';conceptState.remainderAnswer='';conceptState.activeAnswerField='quotient';conceptState.locked=false;conceptState.retry=0;const names={'+':'Plus','-':'Minus','*':'Mal','/':'Geteilt'};elements.conceptTitle.textContent=names[op];elements.conceptSymbol.textContent={'+':'＋','-':'−','*':'×','/':'÷'}[op];elements.conceptProgress.style.width=`${conceptState.question/6*100}%`;elements.conceptFeedback.textContent='';elements.conceptFeedback.className='feedback';renderConcept()}
+const DICE5_PATTERNS=[[],[2],[0,4],[0,2,4],[0,1,3,4],[0,1,2,3,4]];
+function drawConceptQuantity(filled,capacity,splitAt=null,showRemoved=false){const patterns=DICE5_PATTERNS;const panels=Math.ceil(capacity/5);const board=document.createElement('div');board.className='dice-board';for(let panel=0;panel<panels;panel+=1){const five=document.createElement('span');five.className='dice-five';const filledHere=Math.max(0,Math.min(5,filled-panel*5));const capacityHere=Math.max(0,Math.min(5,capacity-panel*5));const active=patterns[filledHere],possible=patterns[capacityHere];for(let spot=0;spot<5;spot+=1){const dot=document.createElement('i');dot.className='dice-spot';const rank=active.indexOf(spot);if(rank>=0){const itemIndex=panel*5+rank;dot.textContent='🍎';dot.classList.add('filled');if(splitAt!==null&&itemIndex>=splitAt)dot.classList.add('added');if(conceptState.operation==='-'&&conceptState.step<conceptState.b)enablePoolDrag(dot)}else{dot.textContent='•';if(showRemoved&&possible.includes(spot))dot.classList.add('removed')}five.append(dot)}board.append(five)}elements.conceptObjects.append(board)}
+function enablePoolDrag(dot){dot.draggable=true;dot.classList.add('removable');dot.addEventListener('dragstart',event=>event.dataTransfer.setData('text/plain','pool-item'));let ghost=null,hoverTarget=null;dot.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')return;dot.setPointerCapture(event.pointerId);ghost=document.createElement('div');ghost.className='concept-apple-ghost';ghost.textContent='🍎';document.body.append(ghost);move(event)});dot.addEventListener('pointermove',event=>{if(!ghost)return;move(event);const target=document.elementFromPoint(event.clientX,event.clientY);const dz=target&&target.closest('.concept-drop-target');if(dz!==hoverTarget){hoverTarget?.classList.remove('drag-over');dz?.classList.add('drag-over');hoverTarget=dz}});dot.addEventListener('pointerup',event=>{if(!ghost)return;const target=document.elementFromPoint(event.clientX,event.clientY);const dz=target&&target.closest('.concept-drop-target');if(dz)advanceConcept(dz.dataset.childIndex!==undefined?Number(dz.dataset.childIndex):undefined);ghost.remove();ghost=null;hoverTarget?.classList.remove('drag-over');hoverTarget=null});function move(event){ghost.style.left=`${event.clientX}px`;ghost.style.top=`${event.clientY}px`}}
+function enableConceptDropTarget(el,childIndex){el.classList.add('concept-drop-target');if(childIndex!==undefined)el.dataset.childIndex=childIndex;el.addEventListener('dragover',event=>{event.preventDefault();el.classList.add('drag-over')});el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));el.addEventListener('drop',event=>{event.preventDefault();el.classList.remove('drag-over');advanceConcept(childIndex)})}
+function makeDiceBoard(count,{draggable=false,icon='🍎',compact=false}={}){const board=document.createElement('div');board.className=compact?'dice-board compact':'dice-board';const panels=Math.max(1,Math.ceil(count/5));for(let panel=0;panel<panels;panel+=1){const five=document.createElement('span');five.className='dice-five';const filledHere=Math.max(0,Math.min(5,count-panel*5));const active=DICE5_PATTERNS[filledHere];for(let spot=0;spot<5;spot+=1){const dot=document.createElement('i');dot.className='dice-spot';if(active.includes(spot)){dot.textContent=icon;dot.classList.add('filled');if(draggable)enablePoolDrag(dot)}else dot.textContent='•';five.append(dot)}board.append(five)}return board}
+function makeDivisionGroup(count,label,{draggable=false,kind='group',icon='🍎',compact=false}={}){const box=document.createElement('span');box.className=`concept-group kind-${kind}`;const title=document.createElement('small');title.textContent=label;box.append(title);box.append(makeDiceBoard(count,{draggable,icon,compact}));return box}
 function drawConceptGroups(groups,each,placed){for(let g=0;g<groups;g+=1){const count=Math.max(0,Math.min(each,placed-g*each));elements.conceptObjects.append(makeMiniDice(count,`Gruppe ${g+1} · ${count}/${each}`,{kind:'group'}))}}
-function drawConceptDivision(children,distributed,total,active){const remaining=total-distributed;const pool=document.createElement('span');pool.className='concept-pool dice-pool';if(remaining===0)pool.innerHTML='<small>Noch übrig</small><b>–</b>';else for(let panel=0;panel<Math.ceil(remaining/5);panel+=1)pool.append(makeMiniDice(Math.min(5,remaining-panel*5),panel===0?`Noch ${remaining} im Vorrat:`:'',{kind:'pool',draggable:active}));elements.conceptObjects.append(pool);for(let c=0;c<children;c+=1){const count=Math.floor(distributed/children)+(c<distributed%children?1:0);elements.conceptObjects.append(makeMiniDice(count,`Kind ${c+1} · ${count}`,{kind:'child'}))}}
-function makeMiniDice(count,label,{draggable=false,kind='group',icon='🍎'}={}){const patterns=[[],[2],[0,4],[0,2,4],[0,1,3,4],[0,1,2,3,4]];const box=document.createElement('span');box.className=`concept-group mini-dice-group kind-${kind}`;const title=document.createElement('small');title.textContent=label;box.append(title);const dice=document.createElement('b');dice.className='mini-dice';for(let spot=0;spot<5;spot+=1){const dot=document.createElement('i');const filled=patterns[count].includes(spot);dot.textContent=filled?icon:'•';dot.className=filled?'mini-filled':'';if(filled&&draggable)enablePoolDrag(dot);dice.append(dot)}box.append(dice);return box}
+function drawConceptDivision(children,distributed,total,active,showAsRest=false){const s=conceptState;const remaining=total-distributed;const pool=document.createElement('span');pool.className='concept-pool';if(remaining===0)pool.innerHTML='<small>Noch übrig</small><b>–</b>';else pool.append(makeDivisionGroup(remaining,showAsRest?`Rest: ${remaining}`:`Noch ${remaining} im Vorrat:`,{kind:showAsRest?'rest':'pool',draggable:active}));elements.conceptObjects.append(pool);for(let c=0;c<children;c+=1){const count=s.perChild[c]||0;const childBox=makeDivisionGroup(count,`Kind ${c+1} · ${count}`,{kind:'child',compact:true});if(active)enableConceptDropTarget(childBox,c);elements.conceptObjects.append(childBox)}}
+function makeMiniDice(count,label,{draggable=false,kind='group',icon='🍎'}={}){const patterns=DICE5_PATTERNS;const box=document.createElement('span');box.className=`concept-group mini-dice-group kind-${kind}`;const title=document.createElement('small');title.textContent=label;box.append(title);const dice=document.createElement('b');dice.className='mini-dice';for(let spot=0;spot<5;spot+=1){const dot=document.createElement('i');const filled=patterns[count].includes(spot);dot.textContent=filled?icon:'•';dot.className=filled?'mini-filled':'';if(filled&&draggable)enablePoolDrag(dot);dice.append(dot)}box.append(dice);return box}
 function appendDiceGroup(container,count,icon='🍓'){if(count<=0){const empty=document.createElement('span');empty.className='dice-group-empty';empty.textContent='–';container.append(empty);return}for(let panel=0;panel<Math.ceil(count/5);panel+=1)container.append(makeMiniDice(Math.min(5,count-panel*5),'',{icon}))}
 function renderConcept(){
-  const s=conceptState,o=s.operation;elements.conceptObjects.replaceChildren();let equation,instruction,action,done=false;
+  const s=conceptState,o=s.operation;s.faded=getConceptStage(getProfile(),o)==='faded';elements.conceptObjects.replaceChildren();
+  if(s.faded)return renderConceptFaded();
+  let equation,instruction,action,done=false;
   if(o==='+'){done=s.step>=s.b;equation=`${s.a} + ${s.b} = ?`;instruction=done?'Beide Mengen liegen jetzt zusammen.':'Lege genau einen weiteren Apfel dazu.';action='Einen Apfel dazulegen';elements.conceptStory.textContent=`Zu ${s.a} Äpfeln kommen ${s.b} weitere dazu.`;drawConceptQuantity(s.a+s.step,s.a+s.b,s.a)}
   else if(o==='-'){done=s.step>=s.b;equation=`${s.a} − ${s.b} = ?`;instruction=done?'Die Äpfel im Korb wurden wirklich weggenommen.':'Nimm genau einen Apfel aus dem Würfelbild.';action='Einen Apfel wegnehmen';elements.conceptStory.textContent=`Von ${s.a} Äpfeln werden ${s.b} weggenommen.`;drawConceptQuantity(s.a-s.step,s.a,null,true)}
   else if(o==='*'){done=s.step>=s.a*s.b;equation=`${s.a} × ${s.b} = ?`;const group=Math.min(s.a,Math.floor(s.step/s.b)+1);instruction=done?`${s.a} gleich große Gruppen mit je ${s.b} Äpfeln sind entstanden – nichts wurde verteilt, alles kam neu dazu.`:`Du hast unendlich viele Äpfel zur Verfügung. Lege genau einen weiteren Apfel in Gruppe ${group}.`;action='Einen Apfel in die nächste Gruppe legen';elements.conceptStory.textContent=`Baue ${s.a} gleich große Gruppen mit jeweils ${s.b} Äpfeln. Äpfel gibt es unbegrenzt.`;drawConceptGroups(s.a,s.b,s.step)}
-  else{done=s.step>=s.total;equation=`${s.total} ÷ ${s.a} = ?`;const child=s.step%s.a+1;instruction=done?`Alle ${s.total} Äpfel aus dem Vorrat sind verteilt. Jedes Kind hat gleich viele.`:`Zieh genau einen Apfel aus dem Vorrat zu Kind ${child}. Danach kommt das nächste Kind.`;action=`Einen Apfel aus dem Vorrat an Kind ${child} geben`;elements.conceptStory.textContent=`Du hast genau ${s.total} Äpfel im Vorrat – nicht mehr. Verteile sie gerecht auf ${s.a} Kinder.`;drawConceptDivision(s.a,s.step,s.total,!done)}
-  elements.conceptLiveEquation.textContent=equation;elements.conceptInstruction.textContent=instruction;elements.conceptDropZone.textContent=o==='+'?'Dazulegen':o==='-'?'Wegnehm-Korb':o==='*'?'Nächste Gruppe':'Nächstes Kind';elements.conceptDragArea.classList.toggle('hidden',done);elements.conceptAction.textContent=done?'Handlung abgeschlossen ✓':`${action} (ohne Ziehen)`;elements.conceptAction.disabled=done;renderConceptAnswer();
+  else{const fair=s.a*s.b;done=s.step>=fair;equation=s.hasRemainder?`${s.total} ÷ ${s.a} = ? Rest ?`:`${s.total} ÷ ${s.a} = ?`;const child=s.step%s.a+1;instruction=done?(s.hasRemainder?`Jedes Kind hat gleich viele Äpfel. ${s.remainder} ${s.remainder===1?'Apfel bleibt':'Äpfel bleiben'} übrig – sie lassen sich nicht mehr gerecht verteilen. Das ist der Rest.`:`Alle ${s.total} Äpfel aus dem Vorrat sind verteilt. Jedes Kind hat gleich viele.`):`Zieh Äpfel aus dem Vorrat direkt zu einem Kind – du entscheidest, wie viele. Am Ende müssen alle Kinder gleich viele haben.`;action=`Einen Apfel aus dem Vorrat an Kind ${child} geben`;elements.conceptStory.textContent=`Du hast genau ${s.total} Äpfel im Vorrat – nicht mehr. Verteile sie gerecht auf ${s.a} Kinder.`;drawConceptDivision(s.a,s.step,s.total,!done,done&&s.hasRemainder)}
+  elements.conceptLiveEquation.textContent=equation;elements.conceptInstruction.textContent=instruction;elements.conceptDropZone.textContent=o==='+'?'Dazulegen':o==='-'?'Wegnehm-Korb':o==='*'?'Nächste Gruppe':'Nächstes Kind';elements.conceptDragArea.classList.toggle('hidden',done);elements.conceptAction.classList.remove('hidden');elements.conceptAction.textContent=done?'Handlung abgeschlossen ✓':`${action} (ohne Ziehen)`;elements.conceptAction.disabled=done;renderConceptAnswer();
 }
-function advanceConcept(){const o=conceptState.operation;const limit=o==='*'?conceptState.a*conceptState.b:o==='/'?conceptState.total:conceptState.b;if(conceptState.step<limit){conceptState.step+=1;renderConcept()}}
-function addConceptDigit(d){if(conceptState.locked||conceptState.answer.length>=2)return;conceptState.answer+=d;renderConceptAnswer()}
-function removeConceptDigit(){if(conceptState.locked)return;conceptState.answer=conceptState.answer.slice(0,-1);renderConceptAnswer()}
-function renderConceptAnswer(){const s=conceptState,o=s.operation;const takeFromPicture=o==='-'||o==='/';const ready=s.step>=(o==='*'?s.a*s.b:o==='/'?s.total:s.b);elements.conceptAnswerArea.classList.remove('hidden');elements.conceptNumberArea.classList.remove('hidden');elements.conceptAppleToken.classList.toggle('hidden',takeFromPicture);elements.conceptDragArea.querySelector('span').textContent=takeFromPicture?'vom Bild hierhin ziehen':'direkt ins Bild ziehen';elements.conceptDropZone.classList.toggle('basket-with-dice',takeFromPicture);elements.conceptDropZone.classList.toggle('direct-picture-drop',!takeFromPicture);if(takeFromPicture){elements.conceptDragArea.append(elements.conceptDropZone);elements.conceptDropZone.replaceChildren(o==='-'?makeMiniDice(s.step,'Weggenommen'):makeMiniDice(Math.floor(s.step/s.a),`Kind ${s.step%s.a+1}`))}else{elements.conceptObjects.append(elements.conceptDropZone)}elements.conceptAnswerZone.textContent=s.answer||'?';elements.conceptCheck.disabled=!s.answer||s.locked||!ready}
-function checkConceptAnswer(){if(!conceptState.answer||conceptState.locked)return;if(Number(conceptState.answer)!==conceptState.result){conceptState.retry+=1;conceptState.answer='';elements.conceptFeedback.textContent='Schau noch einmal auf die Handlung und das Würfelbild.';elements.conceptFeedback.className='feedback wrong';renderConceptAnswer();return}conceptState.locked=true;conceptState.question+=1;if(conceptState.retry===0)conceptState.score+=1;const profile=getProfile();if(profile){addXp(profile,1);profile.concepts||={};profile.concepts[conceptState.operation]=(profile.concepts[conceptState.operation]||0)+1;saveProfiles();renderProfileHeader()}const s=conceptState,o=s.operation;elements.conceptLiveEquation.textContent=o==='+'?`${s.a} + ${s.b} = ${s.result}`:o==='-'?`${s.a} − ${s.b} = ${s.result}`:o==='*'?`${s.a} × ${s.b} = ${s.result}`:`${s.a} × ${s.b} = ${s.total}  ↔  ${s.total} ÷ ${s.a} = ${s.result}`;elements.conceptScore.textContent=conceptState.score;elements.conceptFeedback.textContent='Du hast die Handlung richtig verstanden! ✨';elements.conceptFeedback.className='feedback correct';window.setTimeout(nextConceptQuestion,850)}
+function renderConceptFaded(){
+  const s=conceptState,o=s.operation;
+  const equation=o==='+'?`${s.a} + ${s.b} = ?`:o==='-'?`${s.a} − ${s.b} = ?`:o==='*'?`${s.a} × ${s.b} = ?`:s.hasRemainder?`${s.total} ÷ ${s.a} = ? Rest ?`:`${s.total} ÷ ${s.a} = ?`;
+  const story={'+':`Zu ${s.a} Äpfeln kommen ${s.b} weitere dazu.`,'-':`Von ${s.a} Äpfeln werden ${s.b} weggenommen.`,'*':`Baue ${s.a} gleich große Gruppen mit jeweils ${s.b} Äpfeln.`,'/':`${s.total} Äpfel werden gerecht auf ${s.a} Kinder verteilt.`}[o];
+  elements.conceptStory.textContent=story;elements.conceptLiveEquation.textContent=equation;elements.conceptInstruction.textContent='Du kannst das schon im Kopf rechnen – trag dein Ergebnis ein!';
+  const prompt=document.createElement('div');prompt.className='concept-faded-prompt';prompt.innerHTML='<span>🧠</span><small>Ohne Würfelbild – du schaffst das!</small>';
+  elements.conceptObjects.append(prompt);
+  elements.conceptDragArea.classList.add('hidden');elements.conceptAction.classList.add('hidden');
+  renderConceptAnswer();
+}
+function advanceConcept(childIndex){const s=conceptState,o=s.operation;const limit=o==='*'?s.a*s.b:o==='/'?s.a*s.b:s.b;if(s.step>=limit)return;const idx=childIndex!==undefined?childIndex:s.step%s.a;s.step+=1;if(o==='/')s.perChild[idx]=(s.perChild[idx]||0)+1;renderConcept()}
+function addConceptDigit(d){const s=conceptState;if(s.locked)return;if(s.activeAnswerField==='remainder'){if(s.remainderAnswer.length>=1)return;s.remainderAnswer+=d}else{if(s.answer.length>=2)return;s.answer+=d}renderConceptAnswer()}
+function removeConceptDigit(){const s=conceptState;if(s.locked)return;if(s.activeAnswerField==='remainder')s.remainderAnswer=s.remainderAnswer.slice(0,-1);else s.answer=s.answer.slice(0,-1);renderConceptAnswer()}
+function setConceptAnswerField(field){if(conceptState.locked)return;conceptState.activeAnswerField=field;renderConceptAnswer()}
+function renderConceptAnswer(){const s=conceptState,o=s.operation;const ready=s.faded?true:s.step>=(o==='*'?s.a*s.b:o==='/'?s.a*s.b:s.b);elements.conceptAnswerArea.classList.remove('hidden');elements.conceptNumberArea.classList.remove('hidden');if(s.faded||o==='/'){elements.conceptDragArea.classList.add('hidden')}else{const takeFromPicture=o==='-';elements.conceptAppleToken.classList.toggle('hidden',takeFromPicture);elements.conceptDragArea.querySelector('span').textContent=takeFromPicture?'vom Bild hierhin ziehen':'direkt ins Bild ziehen';elements.conceptDropZone.classList.toggle('basket-with-dice',takeFromPicture);elements.conceptDropZone.classList.toggle('direct-picture-drop',!takeFromPicture);if(takeFromPicture){elements.conceptDragArea.append(elements.conceptDropZone);elements.conceptDropZone.replaceChildren(makeMiniDice(s.step,'Weggenommen'))}else{elements.conceptObjects.append(elements.conceptDropZone)}}elements.conceptRemainderArea.classList.toggle('hidden',!(o==='/'&&s.hasRemainder));elements.conceptAnswerZone.textContent=s.answer||'?';elements.conceptAnswerZone.classList.toggle('active',s.activeAnswerField==='quotient');elements.conceptRemainderZone.textContent=s.remainderAnswer||'?';elements.conceptRemainderZone.classList.toggle('active',s.activeAnswerField==='remainder');const needsRemainder=o==='/'&&s.hasRemainder;elements.conceptCheck.disabled=!s.answer||s.locked||!ready||(needsRemainder&&!s.remainderAnswer)}
+function checkConceptAnswer(){const s=conceptState;if(!s.answer||s.locked)return;const needsRemainder=s.operation==='/'&&s.hasRemainder;if(needsRemainder&&!s.remainderAnswer)return;const wrong=Number(s.answer)!==s.result||(needsRemainder&&Number(s.remainderAnswer)!==s.remainder);const area=OP_TO_AREA[s.operation];if(wrong){s.retry+=1;s.answer='';s.remainderAnswer='';s.activeAnswerField='quotient';const profile=getProfile();if(profile){pushAreaRecent(profile,area,false);saveProfiles()}elements.conceptFeedback.textContent='Schau noch einmal auf die Handlung und das Würfelbild.';elements.conceptFeedback.className='feedback wrong';renderConceptAnswer();return}s.locked=true;s.question+=1;if(s.retry===0)s.score+=1;const profile=getProfile();if(profile){addAreaStars(profile,area,1);pushAreaRecent(profile,area,true);profile.concepts||={};profile.concepts[s.operation]=(profile.concepts[s.operation]||0)+1;saveProfiles();renderProfileHeader()}const o=s.operation;elements.conceptLiveEquation.textContent=o==='+'?`${s.a} + ${s.b} = ${s.result}`:o==='-'?`${s.a} − ${s.b} = ${s.result}`:o==='*'?`${s.a} × ${s.b} = ${s.result}`:s.hasRemainder?`${s.total} ÷ ${s.a} = ${s.result} Rest ${s.remainder}`:`${s.a} × ${s.b} = ${s.total}  ↔  ${s.total} ÷ ${s.a} = ${s.result}`;elements.conceptScore.textContent=s.score;elements.conceptFeedback.textContent='Du hast die Handlung richtig verstanden! ✨';elements.conceptFeedback.className='feedback correct';window.setTimeout(nextConceptQuestion,850)}
 function finishConceptGame(){elements.conceptFinalScore.textContent=conceptState.score;elements.conceptFinishText.textContent=`${conceptState.score} von 6 Aufgaben hast du ohne Hilfe gelöst.`;showScreen('conceptFinish');maybeShowLevelUp()}
 
 function formatNumber(value){return new Intl.NumberFormat('de-DE').format(value)}
 const NUMBER_LINE_RANGE=6;
 function startNumberLineGame(){numberLineState={question:0,score:0,start:0,jump:0,result:0,step:10,jumps:0,retry:0,locked:false};elements.numberLineScore.textContent='0';showScreen('numberLine');nextNumberLineQuestion()}
-function nextNumberLineQuestion(){if(numberLineState.question>=8)return finishNumberLineGame();const levels=[10,100,1000];const step=levels[randomInt(0,Math.min(2,Math.floor(numberLineState.question/2)+1))];const direction=Math.random()<.5?-1:1;const jump=step*randomInt(1,4)*direction;let start=step*randomInt(5,Math.floor(9000/step));if(start+jump<0||start+jump>10000)start=step*randomInt(10,Math.floor(7000/step));numberLineState={question:numberLineState.question,score:numberLineState.score,start,jump,result:start+jump,step,jumps:0,retry:0,locked:false};elements.numberLineTask.textContent=`${formatNumber(start)} ${jump<0?'−':'＋'} ${formatNumber(Math.abs(jump))} = ?`;elements.numberLineHint.textContent=`Ein Strich bedeutet ${formatNumber(step)}. Zieh den Pfeil vom Start so weit ${jump<0?'nach links':'nach rechts'}, wie du springen musst.`;elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';elements.numberLineProgress.style.width=`${numberLineState.question/8*100}%`;renderNumberLine()}
+function nextNumberLineQuestion(){if(numberLineState.question>=8)return finishNumberLineGame();const prevStart=numberLineState.start,prevJump=numberLineState.jump;const levels=[10,100,1000];const step=levels[randomInt(0,Math.min(2,Math.floor(numberLineState.question/2)+1))];const direction=Math.random()<.5?-1:1;const jump=step*randomInt(1,4)*direction;let start=step*randomInt(5,Math.floor(9000/step));if(start+jump<0||start+jump>10000)start=step*randomInt(10,Math.floor(7000/step));if(numberLineState.question>0&&start===prevStart&&jump===prevJump)start+=step;numberLineState={question:numberLineState.question,score:numberLineState.score,start,jump,result:start+jump,step,jumps:0,retry:0,locked:false};elements.numberLineTask.textContent=`${formatNumber(start)} ${jump<0?'−':'＋'} ${formatNumber(Math.abs(jump))} = ?`;elements.numberLineHint.textContent=`Ein Strich bedeutet ${formatNumber(step)}. Zieh den Pfeil vom Start so weit ${jump<0?'nach links':'nach rechts'}, wie du springen musst.`;elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';elements.numberLineProgress.style.width=`${numberLineState.question/8*100}%`;renderNumberLine()}
 function renderNumberLine(){
   const s=numberLineState,range=NUMBER_LINE_RANGE;
   elements.numberLineVisual.replaceChildren();
@@ -258,29 +293,33 @@ function checkNumberLine(){
   elements.numberLineScore.textContent=s.score;
   elements.numberLineFeedback.textContent=`Genau dort landest du: ${formatNumber(s.result)}! ✨`;elements.numberLineFeedback.className='feedback correct';
   const badge=document.querySelector('#numberLineJumpBadge');if(badge)badge.textContent=formatNumber(s.result);
-  const profile=getProfile();if(profile&&!teacherPreview){addXp(profile,1);incrementActivity('numberLine');saveProfiles();renderProfileHeader()}
+  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'stellenwert',1);incrementActivity('numberLine');saveProfiles();renderProfileHeader()}
   window.setTimeout(nextNumberLineQuestion,900);
 }
 function finishNumberLineGame(){elements.numberLineFinalScore.textContent=numberLineState.score;elements.numberLineFinishText.textContent=`${numberLineState.score} von 8 großen Zahlensprüngen richtig eingezeichnet.`;showScreen('numberLineFinish');maybeShowLevelUp()}
 
 const PLACE_VALUES=[1000,100,10,1],PLACE_NAMES=['Tausender','Hunderter','Zehner','Einer'],PLACE_SHORT=['T','H','Z','E'];
 function openPlaceValueWorkshop(){showScreen('placeValueStart')}
-function startPlaceValueGame(mode){placeValueState={mode,question:0,score:0,target:0,counts:[0,0,0,0],initial:[],tradeIndex:3,subtrahend:0,startValue:0,locked:false};elements.placeValueScore.textContent='0';elements.placeValueModeTitle.textContent=mode==='build'?'Zahl bauen':mode==='trade'?'Tausch-Challenge':'Minus-Werkstatt';showScreen('placeValue');nextPlaceValueQuestion()}
+function startPlaceValueGame(mode){placeValueState={mode,question:0,score:0,target:0,counts:[0,0,0,0],initial:[],positions:[[],[],[],[]],tradeIndex:3,subtrahend:0,startValue:0,locked:false};elements.placeValueScore.textContent='0';elements.placeValueModeTitle.textContent=mode==='build'?'Zahl bauen':mode==='trade'?'Tausch-Challenge':'Minus-Werkstatt';showScreen('placeValue');nextPlaceValueQuestion()}
 function nextPlaceValueQuestion(){
   if(placeValueState.question>=6)return finishPlaceValueGame();
   const s=placeValueState;s.locked=false;
   if(s.mode==='build'){
-    s.target=randomInt(12,9999);s.counts=[0,0,0,0];s.initial=[0,0,0,0];
+    s.target=randomInt(12,9999);s.counts=[0,0,0,0];s.initial=[0,0,0,0];s.positions=[[],[],[],[]];
+    const digits=[Math.floor(s.target/1000)%10,Math.floor(s.target/100)%10,Math.floor(s.target/10)%10,s.target%10];
+    let first=digits.findIndex(d=>d>0);if(first===-1)first=3;
+    s.houseRange=[first,3];
     elements.placeValueInstruction.textContent='Zieh die passenden Punkte in die richtigen Häuser.';elements.placeValueTask.textContent=`Baue ${formatNumber(s.target)}`;
   }else if(s.mode==='trade'){
     s.tradeIndex=randomInt(1,3);s.counts=[0,0,0,0];s.counts[s.tradeIndex]=randomInt(10,18);if(s.tradeIndex<3)s.counts[s.tradeIndex+1]=randomInt(0,5);s.target=placeValueNumber(s.counts);s.initial=[...s.counts];
+    s.houseRange=[Math.max(0,s.tradeIndex-1),Math.min(3,s.tradeIndex+1)];
     elements.placeValueInstruction.textContent='Tausche, bis in keinem Haus zehn Punkte liegen.';elements.placeValueTask.textContent=`Stelle ${formatNumber(s.target)} geschickt dar`;
   }else{
     const startZ=randomInt(2,9),startE=randomInt(0,9);s.startValue=startZ*10+startE;s.subtrahend=randomInt(1,s.startValue-1);s.target=s.startValue-s.subtrahend;
     s.counts=[0,0,startZ,startE];s.initial=[...s.counts];
+    s.houseRange=[2,3];
     elements.placeValueInstruction.textContent='Nimm genau so viele Punkte weg. Reicht ein Haus nicht, entbündle zuerst einen Zehner.';elements.placeValueTask.textContent=`${formatNumber(s.startValue)} − ${formatNumber(s.subtrahend)} = ?`;
   }
-  resyncFilledSlots();
   elements.placeValueProgress.style.width=`${s.question/6*100}%`;elements.placeValueFeedback.textContent='';elements.placeValueFeedback.className='feedback';renderPlaceValue();
 }
 function placeValueNumber(counts){return counts.reduce((sum,count,index)=>sum+count*PLACE_VALUES[index],0)}
@@ -291,57 +330,80 @@ function makePlaceToken(index){
   for(let i=0;i<10;i+=1){const dot=document.createElement('i');dot.className='place-token-dot';oval.append(dot)}
   return oval;
 }
-function resyncFilledSlots(){placeValueState.filledSlots=placeValueState.counts.map(count=>Array.from({length:19},(_,i)=>i<count))}
-function makePlaceSlot(index,slotIndex){
-  const s=placeValueState;const filled=s.filledSlots[index][slotIndex];
-  const slotEl=document.createElement('button');slotEl.type='button';slotEl.className='place-slot';slotEl.dataset.slotIndex=slotIndex;
-  if(filled){slotEl.classList.add('filled');slotEl.append(makePlaceToken(index));if(s.mode==='build'||s.mode==='minus')slotEl.title='Zum Entfernen tippen'}
-  return slotEl;
+function makePlaceFive(index,filledHere){
+  const s=placeValueState;const five=document.createElement('div');five.className='place-five';
+  const active=DICE5_PATTERNS[filledHere];
+  for(let spot=0;spot<5;spot+=1){
+    const slotEl=document.createElement('button');slotEl.type='button';slotEl.className='place-slot';
+    if(active.includes(spot)){slotEl.classList.add('filled');slotEl.append(makePlaceToken(index));if(s.mode==='minus')slotEl.title='Zum Entfernen tippen'}
+    five.append(slotEl);
+  }
+  return five;
 }
-function removePlaceSlotAt(index,slotIndex){
-  const s=placeValueState;if(s.locked||!s.filledSlots[index][slotIndex])return;
-  s.filledSlots[index][slotIndex]=false;s.counts[index]=Math.max(0,s.counts[index]-1);
-  renderPlaceValue();
+function removePlaceCount(index){
+  const s=placeValueState;if(s.locked||s.counts[index]<=0)return;
+  s.counts[index]-=1;renderPlaceValue();
 }
-function addPlaceSlot(index){
+const FREE_FALLBACK_SPOTS=[[22,20],[58,15],[80,38],[18,50],[48,45],[78,68],[28,78],[62,80],[12,32],[70,22]];
+function fallbackFreePosition(order){
+  const [x,y]=FREE_FALLBACK_SPOTS[order%FREE_FALLBACK_SPOTS.length];
+  const jitter=Math.floor(order/FREE_FALLBACK_SPOTS.length)*3;
+  return{x:Math.min(88,x+jitter),y:Math.min(88,y+jitter)};
+}
+function addPlaceSlot(index,pos){
   const s=placeValueState;if(s.locked)return;
   const maximum=s.mode==='build'?9:19;
   if(s.counts[index]>=maximum){elements.placeValueFeedback.textContent='Dieses Haus hat schon 9 Punkte – mehr passt an dieser Stelle nicht hin.';elements.placeValueFeedback.className='feedback wrong';return}
-  const firstEmpty=s.filledSlots[index].findIndex((filled,i)=>!filled&&i<maximum);
-  if(firstEmpty===-1)return;
-  s.filledSlots[index][firstEmpty]=true;s.counts[index]+=1;
+  s.counts[index]+=1;
+  if(s.mode==='build'){s.positions[index]=s.positions[index]||[];s.positions[index].push(pos||fallbackFreePosition(s.positions[index].length))}
+  renderPlaceValue();
+}
+function removeFreePosition(index,posIndex){
+  const s=placeValueState;if(s.locked||!s.positions[index]||!s.positions[index].length)return;
+  s.positions[index].splice(posIndex,1);s.counts[index]=Math.max(0,s.counts[index]-1);
   renderPlaceValue();
 }
 function renderPlaceValue(){
-  const s=placeValueState;if(!s.filledSlots)resyncFilledSlots();elements.placeValueHouses.replaceChildren();
-  s.counts.forEach((count,index)=>{
-    const house=document.createElement('section');house.className=`place-house place-${index}`;
+  const s=placeValueState;elements.placeValueHouses.replaceChildren();
+  elements.placeValueHouses.style.gridTemplateColumns=`repeat(${s.houseRange[1]-s.houseRange[0]+1},1fr)`;
+  for(let index=s.houseRange[0];index<=s.houseRange[1];index+=1){
+    const count=s.counts[index];
+    const house=document.createElement('section');house.className=`place-house place-${index}`;house.dataset.placeIndex=index;
     const roof=document.createElement('header');roof.innerHTML=`<b>${PLACE_SHORT[index]}</b><small>${PLACE_NAMES[index]} · Wert ${formatNumber(PLACE_VALUES[index])}</small>`;
     const field=document.createElement('div');field.className='place-field';
-    for(let panel=0;panel<2;panel+=1){
-      const five=document.createElement('div');five.className='place-five';
-      for(let slot=0;slot<5;slot+=1)five.append(makePlaceSlot(index,panel*5+slot));
-      field.append(five);
-    }
-    if(count>10){
-      const overflowRow=document.createElement('div');overflowRow.className='place-overflow-row';
-      for(let slotIndex=10;slotIndex<19;slotIndex+=1){if(s.filledSlots[index][slotIndex])overflowRow.append(makePlaceSlot(index,slotIndex))}
-      field.append(overflowRow);
+    if(s.mode==='build'){
+      field.classList.add('place-field-free');
+      (s.positions[index]||[]).forEach((pos,posIndex)=>{
+        const tokenEl=document.createElement('button');tokenEl.type='button';tokenEl.className='place-free-token';
+        tokenEl.style.left=`${pos.x}%`;tokenEl.style.top=`${pos.y}%`;
+        tokenEl.append(makePlaceToken(index));tokenEl.title='Zum Entfernen tippen';
+        tokenEl.addEventListener('click',()=>removeFreePosition(index,posIndex));
+        field.append(tokenEl);
+      });
+    }else{
+      const blocks=Math.max(1,Math.ceil(count/10));
+      for(let block=0;block<blocks;block+=1){
+        const blockCount=Math.max(0,Math.min(10,count-block*10));
+        const bottomCount=Math.max(0,Math.min(5,blockCount));
+        const topCount=Math.max(0,Math.min(5,blockCount-5));
+        const tenEl=document.createElement('div');tenEl.className='place-ten';
+        tenEl.append(makePlaceFive(index,topCount),makePlaceFive(index,bottomCount));
+        field.append(tenEl);
+      }
+      if(s.mode==='minus'){
+        house.addEventListener('click',event=>{
+          if(!event.target.closest('.place-slot.filled'))return;
+          removePlaceCount(index);
+        });
+      }
     }
     house.append(roof,field);
-    if(s.mode==='build'||s.mode==='minus'){
-      house.addEventListener('click',event=>{
-        const slotEl=event.target.closest('.place-slot.filled');
-        if(!slotEl)return;
-        removePlaceSlotAt(index,Number(slotEl.dataset.slotIndex));
-      });
-    }
     if(s.mode==='build')enableHouseDrop(house,index);
     elements.placeValueHouses.append(house);
-  });
+  }
   elements.placeValueActions.replaceChildren();
-  if(s.mode==='trade'){for(let from=3;from>=1;from-=1){const button=document.createElement('button');button.type='button';button.className='trade-button';button.disabled=s.counts[from]<10;button.textContent=`10 ${PLACE_SHORT[from]} → 1 ${PLACE_SHORT[from-1]}`;button.addEventListener('click',()=>tradePlace(from));elements.placeValueActions.append(button)}}
-  else if(s.mode==='minus'){for(let from=0;from<=2;from+=1){const button=document.createElement('button');button.type='button';button.className='trade-button untrade-button';button.disabled=s.counts[from]<1;button.textContent=`1 ${PLACE_SHORT[from]} → 10 ${PLACE_SHORT[from+1]}`;button.addEventListener('click',()=>untradePlace(from));elements.placeValueActions.append(button)}}
+  if(s.mode==='trade'){for(let from=s.houseRange[1];from>s.houseRange[0];from-=1){const button=document.createElement('button');button.type='button';button.className='trade-button';button.disabled=s.counts[from]<10;button.textContent=`10 ${PLACE_SHORT[from]} → 1 ${PLACE_SHORT[from-1]}`;button.addEventListener('click',()=>tradePlace(from));elements.placeValueActions.append(button)}}
+  else if(s.mode==='minus'){for(let from=s.houseRange[0];from<s.houseRange[1];from+=1){const button=document.createElement('button');button.type='button';button.className='trade-button untrade-button';button.disabled=s.counts[from]<1;button.textContent=`1 ${PLACE_SHORT[from]} → 10 ${PLACE_SHORT[from+1]}`;button.addEventListener('click',()=>untradePlace(from));elements.placeValueActions.append(button)}}
   const current=placeValueNumber(s.counts);
   elements.placeValueReading.innerHTML=`Deine Darstellung: <strong>${formatNumber(current)}</strong><small>${s.counts.map((count,index)=>`${count} ${PLACE_SHORT[index]}`).join(' · ')}</small>`;
   renderPlaceValueTray();
@@ -350,7 +412,9 @@ function renderPlaceValueTray(){
   elements.placeValueTray.replaceChildren();
   elements.placeValueTray.classList.toggle('hidden',placeValueState.mode!=='build');
   if(placeValueState.mode!=='build')return;
+  const s=placeValueState;
   PLACE_SHORT.forEach((short,index)=>{
+    if(index<s.houseRange[0]||index>s.houseRange[1])return;
     const row=document.createElement('div');row.className='place-tray-row';
     const label=document.createElement('small');label.textContent=PLACE_NAMES[index];row.append(label);
     const strip=document.createElement('div');strip.className='place-tray-strip';
@@ -365,10 +429,14 @@ function renderPlaceValueTray(){
     elements.placeValueTray.append(row);
   });
 }
+function dropPositionInHouse(house,clientX,clientY){
+  const field=house.querySelector('.place-field');const rect=field.getBoundingClientRect();
+  return{x:Math.max(6,Math.min(88,((clientX-rect.left)/rect.width)*100)),y:Math.max(6,Math.min(88,((clientY-rect.top)/rect.height)*100))};
+}
 function enableHouseDrop(house,index){
   house.addEventListener('dragover',event=>{event.preventDefault();house.classList.add('drag-over')});
   house.addEventListener('dragleave',()=>house.classList.remove('drag-over'));
-  house.addEventListener('drop',event=>{event.preventDefault();house.classList.remove('drag-over');const dragged=Number(event.dataTransfer.getData('text/plain'));if(dragged===index)addPlaceSlot(index);else flashPlaceMismatch(house,index)});
+  house.addEventListener('drop',event=>{event.preventDefault();house.classList.remove('drag-over');const dragged=Number(event.dataTransfer.getData('text/plain'));if(dragged===index)addPlaceSlot(index,dropPositionInHouse(house,event.clientX,event.clientY));else flashPlaceMismatch(house,index)});
 }
 function flashPlaceMismatch(house,index){elements.placeValueFeedback.textContent=`Das gehört nicht hierher – das ist ein ${PLACE_NAMES[index]}-Punkt.`;elements.placeValueFeedback.className='feedback wrong';house.classList.add('shake');window.setTimeout(()=>house.classList.remove('shake'),400)}
 function enablePlaceTokenDrag(token,index){
@@ -377,12 +445,12 @@ function enablePlaceTokenDrag(token,index){
   let ghost=null;
   token.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')return;token.setPointerCapture(event.pointerId);ghost=document.createElement('div');ghost.className='place-token-ghost';ghost.append(makePlaceToken(index));document.body.append(ghost);move(event)});
   token.addEventListener('pointermove',event=>move(event));
-  token.addEventListener('pointerup',event=>{if(!ghost)return;const target=document.elementFromPoint(event.clientX,event.clientY);const house=target?.closest('.place-house');if(house){const houseIndex=[...elements.placeValueHouses.children].indexOf(house);if(houseIndex===index)addPlaceSlot(index);else flashPlaceMismatch(house,houseIndex)}ghost.remove();ghost=null});
+  token.addEventListener('pointerup',event=>{if(!ghost)return;const target=document.elementFromPoint(event.clientX,event.clientY);const house=target?.closest('.place-house');if(house){const houseIndex=Number(house.dataset.placeIndex);if(houseIndex===index)addPlaceSlot(index,dropPositionInHouse(house,event.clientX,event.clientY));else flashPlaceMismatch(house,houseIndex)}ghost.remove();ghost=null});
   function move(event){if(!ghost)return;ghost.style.left=`${event.clientX}px`;ghost.style.top=`${event.clientY}px`}
 }
 
-function tradePlace(from){const s=placeValueState;if(s.locked||s.counts[from]<10)return;s.counts[from]-=10;s.counts[from-1]+=1;resyncFilledSlots();elements.placeValueFeedback.textContent=`Genau: 10 ${PLACE_NAMES[from]} haben denselben Wert wie 1 ${PLACE_NAMES[from-1].slice(0,-2)}.`;elements.placeValueFeedback.className='feedback correct';renderPlaceValue()}
-function untradePlace(from){const s=placeValueState;if(s.locked||s.counts[from]<1)return;s.counts[from]-=1;s.counts[from+1]+=10;resyncFilledSlots();elements.placeValueFeedback.textContent=`Genau: 1 ${PLACE_NAMES[from].slice(0,-2)} ist so viel wert wie 10 ${PLACE_NAMES[from+1]}.`;elements.placeValueFeedback.className='feedback correct';renderPlaceValue()}
+function tradePlace(from){const s=placeValueState;if(s.locked||s.counts[from]<10)return;s.counts[from]-=10;s.counts[from-1]+=1;elements.placeValueFeedback.textContent=`Genau: 10 ${PLACE_NAMES[from]} haben denselben Wert wie 1 ${PLACE_NAMES[from-1].slice(0,-2)}.`;elements.placeValueFeedback.className='feedback correct';renderPlaceValue()}
+function untradePlace(from){const s=placeValueState;if(s.locked||s.counts[from]<1)return;s.counts[from]-=1;s.counts[from+1]+=10;elements.placeValueFeedback.textContent=`Genau: 1 ${PLACE_NAMES[from].slice(0,-2)} ist so viel wert wie 10 ${PLACE_NAMES[from+1]}.`;elements.placeValueFeedback.className='feedback correct';renderPlaceValue()}
 function checkPlaceValue(){
   const s=placeValueState;if(s.locked)return;
   const rightValue=placeValueNumber(s.counts)===s.target;const normalized=s.counts.every(count=>count<10);
@@ -394,20 +462,20 @@ function checkPlaceValue(){
   s.locked=true;s.score+=1;s.question+=1;elements.placeValueScore.textContent=s.score;
   elements.placeValueFeedback.textContent=s.mode==='minus'?`Richtig: ${formatNumber(s.startValue)} − ${formatNumber(s.subtrahend)} = ${formatNumber(s.target)}! ✨`:'Richtig gebaut – jede Stelle hat ihren Wert! ✨';
   elements.placeValueFeedback.className='feedback correct';
-  const profile=getProfile();if(profile&&!teacherPreview){addXp(profile,1);incrementActivity('placeValue');saveProfiles();renderProfileHeader()}
+  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'stellenwert',1);incrementActivity('placeValue');saveProfiles();renderProfileHeader()}
   window.setTimeout(nextPlaceValueQuestion,850);
 }
-function resetPlaceValue(){placeValueState.counts=[...placeValueState.initial];resyncFilledSlots();elements.placeValueFeedback.textContent='Noch einmal von vorne.';elements.placeValueFeedback.className='feedback';renderPlaceValue()}
+function resetPlaceValue(){const s=placeValueState;s.counts=[...s.initial];if(s.mode==='build')s.positions=[[],[],[],[]];elements.placeValueFeedback.textContent='Noch einmal von vorne.';elements.placeValueFeedback.className='feedback';renderPlaceValue()}
 function finishPlaceValueGame(){elements.placeValueFinalScore.textContent=placeValueState.score;elements.placeValueFinishText.textContent=`${placeValueState.score} von 6 Stellenwert-Aufgaben geschafft.`;showScreen('placeValueFinish');maybeShowLevelUp()}
 function startFamilyGame(){const used=new Set(),cards=[];while(used.size<6){const a=randomInt(2,10),b=randomInt(2,10),key=`${a}x${b}`;if(used.has(key)||used.has(`${b}x${a}`))continue;used.add(key);const result=a*b;cards.push({pair:key,text:`${a} × ${b} = ${result}`},{pair:key,text:Math.random()<.5?`${result} ÷ ${a} = ${b}`:`${result} ÷ ${b} = ${a}`})}familyState={cards:shuffled(cards),open:[],pairs:0,locked:false};elements.familyPairs.textContent='0/6';elements.familyFeedback.textContent='';showScreen('family');renderFamilyCards()}
 function renderFamilyCards(){elements.familyGrid.replaceChildren();familyState.cards.forEach((card,index)=>{const button=document.createElement('button');button.type='button';button.className=`family-card-tile${card.matched?' matched':''}${card.open?' open':''}`;button.disabled=card.matched;button.innerHTML=`<span>?</span><strong>${card.text}</strong>`;button.addEventListener('click',()=>openFamilyCard(index));elements.familyGrid.append(button)})}
-function openFamilyCard(index){const s=familyState,card=s.cards[index];if(s.locked||card.open||card.matched)return;card.open=true;s.open.push(index);renderFamilyCards();if(s.open.length<2)return;const [first,second]=s.open;if(s.cards[first].pair===s.cards[second].pair){s.cards[first].matched=s.cards[second].matched=true;s.open=[];s.pairs+=1;elements.familyPairs.textContent=`${s.pairs}/6`;elements.familyFeedback.textContent='Passt! Die Geteilt-Aufgabe macht die Mal-Aufgabe rückgängig. ✨';elements.familyFeedback.className='feedback correct';if(s.pairs===6){const profile=getProfile();if(profile&&!teacherPreview){addXp(profile,6);incrementActivity('family');saveProfiles();renderProfileHeader()}return window.setTimeout(()=>{showScreen('familyFinish');maybeShowLevelUp()},700)}renderFamilyCards()}else{s.locked=true;elements.familyFeedback.textContent='Diese Ergebnisse gehören nicht zur gleichen Rechenfamilie.';elements.familyFeedback.className='feedback wrong';window.setTimeout(()=>{s.cards[first].open=s.cards[second].open=false;s.open=[];s.locked=false;renderFamilyCards()},1050)}}
+function openFamilyCard(index){const s=familyState,card=s.cards[index];if(s.locked||card.open||card.matched)return;card.open=true;s.open.push(index);renderFamilyCards();if(s.open.length<2)return;const [first,second]=s.open;if(s.cards[first].pair===s.cards[second].pair){s.cards[first].matched=s.cards[second].matched=true;s.open=[];s.pairs+=1;elements.familyPairs.textContent=`${s.pairs}/6`;elements.familyFeedback.textContent='Passt! Die Geteilt-Aufgabe macht die Mal-Aufgabe rückgängig. ✨';elements.familyFeedback.className='feedback correct';if(s.pairs===6){const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',6);addAreaStars(profile,'geteilt',6);incrementActivity('family');saveProfiles();renderProfileHeader()}return window.setTimeout(()=>{showScreen('familyFinish');maybeShowLevelUp()},700)}renderFamilyCards()}else{s.locked=true;elements.familyFeedback.textContent='Diese Ergebnisse gehören nicht zur gleichen Rechenfamilie.';elements.familyFeedback.className='feedback wrong';window.setTimeout(()=>{s.cards[first].open=s.cards[second].open=false;s.open=[];s.locked=false;renderFamilyCards()},1050)}}
 
 function startRaceGame(){
   if(!getProfile())return showProfileSelection();
   if(getLevel(getProfile())<5&&!teacherPreview)return;
   clearInterval(raceState.timer);
-  raceState={score:0,timeLeft:60,a:2,b:2,operation:'*',result:4,answer:'',locked:false,timer:null,running:true};
+  raceState={score:0,timeLeft:60,a:2,b:2,operation:'*',result:4,answer:'',locked:false,timer:null,running:true,correctByOp:{'*':0,'/':0}};
   elements.raceScore.textContent='0';elements.raceTimer.textContent='60';elements.raceProgress.style.width='100%';elements.raceFeedback.textContent='';elements.raceFeedback.className='feedback';
   showScreen('race');
   nextRaceQuestion();
@@ -419,9 +487,15 @@ function tickRaceTimer(){
   if(raceState.timeLeft<=0)finishRaceGame();
 }
 function nextRaceQuestion(){
-  const operation=Math.random()<.5?'*':'/';
-  if(operation==='*'){raceState.a=randomInt(1,10);raceState.b=randomInt(1,10);raceState.result=raceState.a*raceState.b}
-  else{const divisor=randomInt(1,10),quotient=randomInt(1,10);raceState.a=divisor*quotient;raceState.b=divisor;raceState.result=quotient}
+  const prevA=raceState.a,prevB=raceState.b,prevOp=raceState.operation;
+  let operation,a,b,tries=0;
+  do{
+    operation=Math.random()<.5?'*':'/';
+    if(operation==='*'){a=randomInt(1,10);b=randomInt(1,10)}
+    else{const divisor=randomInt(1,10),quotient=randomInt(1,10);a=divisor*quotient;b=divisor}
+    tries+=1;
+  }while(prevOp!==undefined&&tries<30&&a===prevA&&b===prevB&&operation===prevOp);
+  raceState.a=a;raceState.b=b;raceState.result=operation==='*'?a*b:a/b;
   raceState.operation=operation;raceState.answer='';raceState.locked=false;
   elements.raceA.textContent=raceState.a;elements.raceB.textContent=raceState.b;elements.raceOperator.textContent=operation==='*'?'×':'÷';
   renderRaceAnswer();
@@ -433,13 +507,13 @@ function checkRaceAnswer(){
   if(!raceState.answer||raceState.locked||!raceState.running)return;
   raceState.locked=true;
   const correct=Number(raceState.answer)===raceState.result;
-  if(correct){raceState.score+=1;elements.raceScore.textContent=raceState.score;elements.raceFeedback.textContent='Richtig! ✨';elements.raceFeedback.className='feedback correct'}
+  if(correct){raceState.score+=1;raceState.correctByOp[raceState.operation]+=1;elements.raceScore.textContent=raceState.score;elements.raceFeedback.textContent='Richtig! ✨';elements.raceFeedback.className='feedback correct'}
   else{elements.raceFeedback.textContent=`Das waren ${raceState.result}.`;elements.raceFeedback.className='feedback wrong'}
   window.setTimeout(()=>{if(raceState.running)nextRaceQuestion()},correct?300:650);
 }
 function finishRaceGame(){
   raceState.running=false;clearInterval(raceState.timer);
-  const profile=getProfile();if(profile&&!teacherPreview&&raceState.score>0){addXp(profile,Math.ceil(raceState.score/3));incrementActivity('race');saveProfiles();renderProfileHeader()}
+  const profile=getProfile();if(profile&&!teacherPreview&&raceState.score>0){addAreaStars(profile,'mal',Math.ceil(raceState.correctByOp['*']/3));addAreaStars(profile,'geteilt',Math.ceil(raceState.correctByOp['/']/3));incrementActivity('race');saveProfiles();renderProfileHeader()}
   elements.raceFinalScore.textContent=raceState.score;elements.raceFinishText.textContent=`Du hast in 60 Sekunden ${raceState.score} Aufgaben richtig gelöst.`;
   showScreen('raceFinish');
   maybeShowLevelUp();
@@ -452,7 +526,9 @@ function nextKingTowerQuestion(){
   if(kingTowerState.question>=8)return finishKingTowerGame();
   const s=kingTowerState;s.locked=false;s.selected=[];s.op=null;
   const multipliers=Object.keys(KING_DERIVE).map(Number);
-  s.a=multipliers[randomInt(0,multipliers.length-1)];s.b=randomInt(2,10);s.target=s.a*s.b;s.rule=KING_DERIVE[s.a];
+  const prevA=s.a,prevB=s.b;let a,b,tries=0;
+  do{a=multipliers[randomInt(0,multipliers.length-1)];b=randomInt(2,10);tries+=1}while(s.question>0&&tries<30&&a===prevA&&b===prevB);
+  s.a=a;s.b=b;s.target=s.a*s.b;s.rule=KING_DERIVE[s.a];
   const correctMultipliers=s.rule.op==='double'?[s.rule.x]:[s.rule.x,s.rule.y];
   const distractorPool=shuffled(KING_BASE.filter(m=>!correctMultipliers.includes(m)));
   const tileMultipliers=shuffled([...new Set([...correctMultipliers,...distractorPool])]).slice(0,Math.max(4,correctMultipliers.length+2));
@@ -499,7 +575,7 @@ function checkKingTower(){
   if(sum!==s.target){elements.kingTowerFeedback.textContent=`Noch nicht. ${s.a} × ${s.b} ist ${s.target} – probiere andere Bausteine oder ein anderes Rechenzeichen.`;elements.kingTowerFeedback.className='feedback wrong';return}
   s.locked=true;s.score+=1;s.question+=1;elements.kingTowerScore.textContent=s.score;
   elements.kingTowerFeedback.textContent=`Genau: ${s.a} × ${s.b} = ${s.target}! ✨`;elements.kingTowerFeedback.className='feedback correct';
-  const profile=getProfile();if(profile&&!teacherPreview){addXp(profile,1);incrementActivity('kingTower');saveProfiles();renderProfileHeader()}
+  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',1);incrementActivity('kingTower');saveProfiles();renderProfileHeader()}
   window.setTimeout(nextKingTowerQuestion,1000);
 }
 function finishKingTowerGame(){elements.kingTowerFinalScore.textContent=kingTowerState.score;elements.kingTowerFinishText.textContent=`${kingTowerState.score} von 8 Türmen richtig gebaut.`;showScreen('kingTowerFinish');maybeShowLevelUp()}
@@ -508,7 +584,9 @@ function startNeighborGame(){neighborState={question:0,score:0,a:4,b:8,target:32
 function nextNeighborQuestion(){
   if(neighborState.question>=8)return finishNeighborGame();
   const s=neighborState;s.locked=false;s.answer='';s.opChosen=null;
-  s.a=randomInt(2,10);s.b=randomInt(2,10);s.target=s.a*s.b;
+  const prevA=s.a,prevB=s.b;let a,b,tries=0;
+  do{a=randomInt(2,10);b=randomInt(2,10);tries+=1}while(s.question>0&&tries<30&&a===prevA&&b===prevB);
+  s.a=a;s.b=b;s.target=s.a*s.b;
   if(s.b>2){s.helperB=s.b-1;s.op='+'}else{s.helperB=s.b+1;s.op='-'}
   s.helperResult=s.a*s.helperB;
   elements.neighborKnownEquation.textContent=`${s.a} × ${s.helperB} = ${s.helperResult}`;
@@ -539,7 +617,7 @@ function checkNeighbor(){
   }
   s.locked=true;s.score+=1;s.question+=1;elements.neighborScore.textContent=s.score;
   elements.neighborFeedback.textContent=`Genau: ${s.helperResult} ${s.op} ${s.a} = ${s.target}! ✨`;elements.neighborFeedback.className='feedback correct';
-  const profile=getProfile();if(profile&&!teacherPreview){addXp(profile,1);incrementActivity('neighbor');saveProfiles();renderProfileHeader()}
+  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',1);incrementActivity('neighbor');saveProfiles();renderProfileHeader()}
   window.setTimeout(nextNeighborQuestion,1000);
 }
 function finishNeighborGame(){elements.neighborFinalScore.textContent=neighborState.score;elements.neighborFinishText.textContent=`${neighborState.score} von 8 Nachbaraufgaben richtig genutzt.`;showScreen('neighborFinish');maybeShowLevelUp()}
@@ -548,7 +626,9 @@ function startDoubleChainGame(){doubleChainState={question:0,score:0,n:2,directi
 function nextDoubleChainQuestion(){
   if(doubleChainState.question>=6)return finishDoubleChainGame();
   const s=doubleChainState;s.locked=false;s.answer='';s.step=0;
-  s.n=randomInt(2,9);s.direction=Math.random()<.5?'up':'down';
+  const prevN=s.n,prevDirection=s.direction;let n,direction,tries=0;
+  do{n=randomInt(2,9);direction=Math.random()<.5?'up':'down';tries+=1}while(s.question>0&&tries<30&&n===prevN&&direction===prevDirection);
+  s.n=n;s.direction=direction;
   elements.doubleChainDirection.textContent=s.direction==='up'?'Verdopple weiter':'Halbiere weiter';
   elements.doubleChainProgress.style.width=`${s.question/6*100}%`;elements.doubleChainFeedback.textContent='';elements.doubleChainFeedback.className='feedback';
   renderDoubleChain();
@@ -584,7 +664,7 @@ function checkDoubleChain(){
   if(s.step>=mults.length-1){
     s.locked=true;s.score+=1;s.question+=1;elements.doubleChainScore.textContent=s.score;
     elements.doubleChainFeedback.textContent='Ganze Kette richtig verkettet! ✨';elements.doubleChainFeedback.className='feedback correct';
-    const profile=getProfile();if(profile&&!teacherPreview){addXp(profile,1);incrementActivity('doubleChain');saveProfiles();renderProfileHeader()}
+    const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',1);incrementActivity('doubleChain');saveProfiles();renderProfileHeader()}
     renderDoubleChain();
     window.setTimeout(nextDoubleChainQuestion,1100);
     return;
@@ -675,7 +755,13 @@ function makeOperationRound() {
     };
     return difficulty(right) - difficulty(left);
   });
-  return shuffled([...operations, ...operations]);
+  const round = shuffled([...operations, ...operations]);
+  for (let i = 1; i < round.length; i += 1) {
+    if (round[i] !== round[i - 1]) continue;
+    const swapIndex = round.findIndex((op, j) => j > i && op !== round[i]);
+    if (swapIndex !== -1) [round[i], round[swapIndex]] = [round[swapIndex], round[i]];
+  }
+  return round;
 }
 
 function nextShopQuestion() {
@@ -795,7 +881,7 @@ function checkWrittenEquation() {
 function completeShopTask() {
   shopState.locked = true; shopState.question += 1;
   if (!shopState.hadHelp) shopState.score += 1;
-  const profile = getProfile(); if (profile) { addXp(profile,1); saveProfiles(); renderProfileHeader(); }
+  const profile = getProfile(); if (profile) { addAreaStars(profile,OP_TO_AREA[shopState.task.operation],1); saveProfiles(); renderProfileHeader(); }
   incrementActivity('shop'); saveProfiles();
   elements.shopScore.textContent = shopState.score; elements.shopProgress.style.width = `${(shopState.question / SHOP_QUESTIONS) * 100}%`;
   elements.shopFeedback.textContent = shopState.hadHelp ? 'Geschafft – gut nachgedacht! 💪' : 'Geschichte richtig verstanden! ✨'; elements.shopFeedback.className = 'feedback correct';
@@ -833,7 +919,7 @@ function nextCatchWaveQuestion(){
 }
 function spawnCatchWave(){clearCatchBubbles();const correct=catchState.a*catchState.b;const values=new Set([correct]);while(values.size<4)values.add(Math.max(1,correct+randomInt(-12,12)));const width=elements.catchArena.clientWidth;const laneWidth=width/4;shuffled([...values]).forEach((value,index)=>{const node=document.createElement('div');node.className='falling-answer multi-answer';node.textContent=value;elements.catchArena.append(node);const bubble={node,value,correct:value===correct,x:index*laneWidth+(laneWidth-62)/2,y:-80-randomInt(0,125),speed:.15+randomInt(0,4)/100+catchState.question*.005};node.style.left=`${bubble.x}px`;node.style.top=`${bubble.y}px`;catchState.bubbles.push(bubble)});catchState.lastTime=performance.now();cancelAnimationFrame(catchState.frame);catchState.frame=requestAnimationFrame(animateCatchWave)}
 function animateCatchWave(time){if(!catchState.running||screens.catch.classList.contains('hidden'))return;const delta=Math.min(40,time-catchState.lastTime);catchState.lastTime=time;const line=elements.catchArena.clientHeight-95;for(const bubble of [...catchState.bubbles]){bubble.y+=delta*bubble.speed;bubble.node.style.top=`${bubble.y}px`;if(bubble.y+60>=line&&bubble.y<=line+48&&Math.abs((bubble.x+31)-(catchState.basketX+38))<50){if(bubble.correct)return catchCorrectWave();catchState.mistake=true;flashCatchError();elements.catchFeedback.textContent=`${bubble.value} passt nicht – weiter auf die Aufgabe schauen!`;removeCatchBubble(bubble)}else if(bubble.y>elements.catchArena.clientHeight)removeCatchBubble(bubble)}if(!catchState.bubbles.length){elements.catchFeedback.textContent='Die richtige Lösung ist vorbeigefallen – neue Welle!';return window.setTimeout(spawnCatchWave,350)}catchState.frame=requestAnimationFrame(animateCatchWave)}
-function catchCorrectWave(){catchState.question+=1;catchState.score+=1;const profile=getProfile();if(profile&&!teacherPreview){addXp(profile,1);saveProfiles();renderProfileHeader()}incrementActivity('catch');rememberCatchFact();elements.catchScore.textContent=catchState.score;elements.catchProgress.style.width=`${catchState.question*10}%`;elements.catchFeedback.textContent='Richtig aufgefangen! ✨';clearCatchBubbles();window.setTimeout(nextCatchWaveQuestion,400)}
+function catchCorrectWave(){catchState.question+=1;catchState.score+=1;const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',1);saveProfiles();renderProfileHeader()}incrementActivity('catch');rememberCatchFact();elements.catchScore.textContent=catchState.score;elements.catchProgress.style.width=`${catchState.question*10}%`;elements.catchFeedback.textContent='Richtig aufgefangen! ✨';clearCatchBubbles();window.setTimeout(nextCatchWaveQuestion,400)}
 function removeCatchBubble(bubble){bubble.node.remove();catchState.bubbles=catchState.bubbles.filter(item=>item!==bubble)}
 function clearCatchBubbles(){catchState.bubbles.forEach(bubble=>bubble.node.remove());catchState.bubbles=[];cancelAnimationFrame(catchState.frame)}
 
@@ -878,7 +964,7 @@ function catchBubble() {
   const correct = elements.fallingAnswer.dataset.correct === 'true';
   if (!correct) { catchState.mistake = true; elements.catchFeedback.textContent = 'Diese Lösung gehört nicht zur Aufgabe – weiter aufpassen!'; return window.setTimeout(launchCatchAnswer, 350); }
   catchState.question += 1; catchState.score += 1;
-  const profile = getProfile(); if (profile) { profile.xp += 1; saveProfiles(); renderProfileHeader(); }
+  const profile = getProfile(); if (profile) { addAreaStars(profile,'mal',1); saveProfiles(); renderProfileHeader(); }
   incrementActivity('catch'); saveProfiles();
   rememberCatchFact(); elements.catchScore.textContent = catchState.score; elements.catchProgress.style.width = `${catchState.question * 10}%`;
   elements.catchFeedback.textContent = 'Richtig aufgefangen! ✨'; window.setTimeout(nextCatchQuestion, 450);
@@ -908,10 +994,117 @@ function finishCatchGame() {
   maybeShowLevelUp();
 }
 
+function startPipeGame(){
+  clearPipeBubbles();cancelAnimationFrame(pipeState.frame);
+  pipeState={question:0,score:0,a:2,b:2,op:'*',result:4,running:true,bubbles:[],pipesBusy:new Array(PIPE_COUNT).fill(false),lastTime:0,nextSpawnAt:0,frame:0};
+  elements.pipeScore.textContent='0';elements.pipeProgress.style.width='0%';
+  showScreen('pipe');
+  buildPipeColumns();
+  nextPipeQuestion();
+}
+function buildPipeColumns(){
+  elements.pipeArena.replaceChildren();
+  for(let i=0;i<PIPE_COUNT;i+=1){
+    const column=document.createElement('div');column.className='pipe-column';
+    const tube=document.createElement('div');tube.className='pipe-tube';
+    column.append(tube);
+    elements.pipeArena.append(column);
+  }
+}
+function nextPipeQuestion(){
+  if(!pipeState.running)return;
+  if(pipeState.question>=8)return finishPipeGame();
+  clearPipeBubbles();
+  const prevA=pipeState.a,prevB=pipeState.b,prevOp=pipeState.op;
+  let op,a,b,tries=0;
+  do{
+    op=Math.random()<0.5?'*':'/';
+    if(op==='*'){a=randomInt(2,10);b=randomInt(2,10)}
+    else{const divisor=randomInt(2,10),quotient=randomInt(2,10);a=divisor*quotient;b=divisor}
+    tries+=1;
+  }while(pipeState.question>0&&tries<30&&a===prevA&&b===prevB&&op===prevOp);
+  pipeState.op=op;pipeState.a=a;pipeState.b=b;pipeState.result=op==='*'?a*b:a/b;
+  elements.pipeQuestionBoard.textContent=op==='*'?`${a} × ${b} = ?`:`${a} ÷ ${b} = ?`;
+  elements.pipeFeedback.textContent='Klick auf die richtige Lösung – nicht auf die Bombe!';elements.pipeFeedback.className='pipe-feedback';
+  pipeState.lastTime=performance.now();pipeState.nextSpawnAt=200;
+  cancelAnimationFrame(pipeState.frame);
+  pipeState.frame=requestAnimationFrame(animatePipeArena);
+}
+function animatePipeArena(time){
+  if(!pipeState.running||screens.pipe.classList.contains('hidden'))return;
+  const delta=Math.min(40,time-pipeState.lastTime);pipeState.lastTime=time;
+  pipeState.nextSpawnAt-=delta;
+  if(pipeState.nextSpawnAt<=0){trySpawnPipeBubble();pipeState.nextSpawnAt=900+randomInt(0,500)}
+  for(const bubble of [...pipeState.bubbles]){
+    bubble.y+=delta*.055;bubble.node.style.bottom=`${bubble.y}px`;
+    if(bubble.y>bubble.node.parentElement.clientHeight)removePipeBubble(bubble);
+  }
+  pipeState.frame=requestAnimationFrame(animatePipeArena);
+}
+function trySpawnPipeBubble(){
+  const freeLanes=pipeState.pipesBusy.map((busy,i)=>busy?-1:i).filter(i=>i!==-1);
+  if(!freeLanes.length)return;
+  const lane=freeLanes[randomInt(0,freeLanes.length-1)];
+  const isBomb=Math.random()<0.22;
+  let value=0,correct=false;
+  if(!isBomb){
+    const hasCorrectActive=pipeState.bubbles.some(b=>b.correct);
+    if(!hasCorrectActive&&Math.random()<0.45){value=pipeState.result;correct=true}
+    else{value=Math.max(1,pipeState.result+randomInt(-8,8));if(value===pipeState.result)value+=1}
+  }
+  const node=document.createElement('button');node.type='button';node.className=`pipe-bubble${isBomb?' pipe-bomb':''}`;node.textContent=isBomb?'💣':value;
+  const column=elements.pipeArena.children[lane];column.append(node);node.style.bottom='0px';
+  const bubble={node,value,correct,isBomb,lane,y:0};
+  node.addEventListener('click',()=>handlePipeBubbleClick(bubble));
+  pipeState.bubbles.push(bubble);pipeState.pipesBusy[lane]=true;
+}
+function handlePipeBubbleClick(bubble){
+  if(!pipeState.running||!pipeState.bubbles.includes(bubble))return;
+  removePipeBubble(bubble);
+  if(bubble.correct)correctPipeClick();else wrongPipeClick(bubble.isBomb,bubble.value);
+}
+function removePipeBubble(bubble){
+  bubble.node.remove();pipeState.pipesBusy[bubble.lane]=false;
+  pipeState.bubbles=pipeState.bubbles.filter(item=>item!==bubble);
+}
+function clearPipeBubbles(){
+  pipeState.bubbles.forEach(bubble=>bubble.node.remove());pipeState.bubbles=[];
+  pipeState.pipesBusy=pipeState.pipesBusy.map(()=>false);
+  cancelAnimationFrame(pipeState.frame);
+}
+function correctPipeClick(){
+  pipeState.question+=1;pipeState.score+=1;
+  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,pipeState.op==='*'?'mal':'geteilt',1);saveProfiles();renderProfileHeader()}
+  incrementActivity('pipe');
+  elements.pipeScore.textContent=pipeState.score;elements.pipeProgress.style.width=`${pipeState.question/8*100}%`;
+  elements.pipeFeedback.textContent='Richtig! ✨';elements.pipeFeedback.className='pipe-feedback correct';
+  window.setTimeout(nextPipeQuestion,500);
+}
+function wrongPipeClick(wasBomb,value){
+  pipeState.score=Math.max(0,pipeState.score-1);
+  elements.pipeScore.textContent=pipeState.score;
+  elements.pipeFeedback.textContent=wasBomb?'💥 Autsch, das war die Bombe! −1 Punkt.':`${value} passt nicht – schau nochmal auf die Aufgabe. −1 Punkt.`;
+  elements.pipeFeedback.className='pipe-feedback wrong';
+  elements.pipeArena.classList.add('pipe-shake');
+  window.setTimeout(()=>elements.pipeArena.classList.remove('pipe-shake'),350);
+}
+function finishPipeGame(){
+  pipeState.running=false;clearPipeBubbles();
+  elements.pipeFinalScore.textContent=pipeState.score;
+  elements.pipeFinishText.textContent=`Du hast ${pipeState.question} von 8 Aufgaben aus den Rohren gerechnet.`;
+  showScreen('pipeFinish');
+  maybeShowLevelUp();
+}
+
 function startDivisionGame(mode='understand'){ divisionState={question:0,score:0,total:12,divisor:3,result:4,type:'share',answer:'',retry:0,locked:false,mode,conceptStep:0}; elements.divisionScore.textContent='0'; showScreen('division'); nextDivisionQuestion(); }
 function nextDivisionQuestion(){
   if(divisionState.question>=10)return finishDivisionGame();
-  divisionState.divisor=divisionState.mode==='understand'?randomInt(2,6):divisionState.mode==='mixed'?randomInt(1,10):divisionState.mode;divisionState.result=divisionState.mode==='understand'?randomInt(2,6):randomInt(1,10);divisionState.total=divisionState.divisor*divisionState.result;divisionState.type=divisionState.mode==='understand'?(divisionState.question%2===0?'share':'groups'):'fact';divisionState.answer='';divisionState.retry=0;divisionState.locked=false;divisionState.conceptStep=0;
+  const prevDivisor=divisionState.divisor,prevResult=divisionState.result;let divisor,result,tries=0;
+  do{
+    divisor=divisionState.mode==='understand'?randomInt(2,6):divisionState.mode==='mixed'?randomInt(1,10):divisionState.mode;result=divisionState.mode==='understand'?randomInt(2,6):randomInt(1,10);
+    tries+=1;
+  }while(divisionState.question>0&&tries<30&&divisor===prevDivisor&&result===prevResult);
+  divisionState.divisor=divisor;divisionState.result=result;divisionState.total=divisionState.divisor*divisionState.result;divisionState.type=divisionState.mode==='understand'?(divisionState.question%2===0?'share':'groups'):'fact';divisionState.answer='';divisionState.retry=0;divisionState.locked=false;divisionState.conceptStep=0;
   elements.divisionA.textContent=divisionState.total;elements.divisionB.textContent=divisionState.divisor;elements.divisionKind.textContent=divisionState.type==='share'?'Gerecht verteilen':'Gruppen bilden';
   elements.divisionKind.textContent=divisionState.type==='share'?'Gerecht verteilen':divisionState.type==='groups'?'Gruppen bilden':divisionState.mode==='mixed'?'Alles gemischt':`Geteilt durch ${divisionState.divisor}`;
   elements.divisionStory.textContent=divisionState.type==='share'?`${divisionState.total} Erdbeeren werden gerecht auf ${divisionState.divisor} Kinder verteilt. Wie viele bekommt jedes Kind?`:divisionState.type==='groups'?`Du hast ${divisionState.total} Erdbeeren. Jedes Kind bekommt ${divisionState.divisor}. Für wie viele Kinder reicht es?`:`Wie viel ist ${divisionState.total} geteilt durch ${divisionState.divisor}?`;
@@ -926,7 +1119,7 @@ function renderDivisionAnswer(){elements.divisionAnswerZone.textContent=division
 function checkDivisionAnswer(){
   if(!divisionState.answer||divisionState.locked)return;
   if(Number(divisionState.answer)!==divisionState.result){divisionState.retry+=1;divisionState.answer='';elements.divisionFeedback.textContent=getDivisionHint();elements.divisionFeedback.className='feedback wrong';if(divisionState.type!=='fact')renderDivisionHelpGroups();renderDivisionAnswer();return}
-  divisionState.locked=true;divisionState.question+=1;if(divisionState.retry===0)divisionState.score+=1;const profile=getProfile();if(profile){addXp(profile,1);incrementActivity('division');saveProfiles();renderProfileHeader()}elements.divisionScore.textContent=divisionState.score;elements.divisionProgress.style.width=`${divisionState.question*10}%`;elements.divisionFeedback.textContent='Richtig geteilt! ✨';elements.divisionFeedback.className='feedback correct';window.setTimeout(nextDivisionQuestion,650)
+  divisionState.locked=true;divisionState.question+=1;if(divisionState.retry===0)divisionState.score+=1;const profile=getProfile();if(profile){addAreaStars(profile,'geteilt',1);incrementActivity('division');saveProfiles();renderProfileHeader()}elements.divisionScore.textContent=divisionState.score;elements.divisionProgress.style.width=`${divisionState.question*10}%`;elements.divisionFeedback.textContent='Richtig geteilt! ✨';elements.divisionFeedback.className='feedback correct';window.setTimeout(nextDivisionQuestion,650)
 }
 function finishDivisionGame(){elements.divisionFinalScore.textContent=divisionState.score;elements.divisionFinishText.textContent=`${divisionState.score} von 10 Aufgaben hast du ohne Hilfe gelöst.`;showScreen('divisionFinish');maybeShowLevelUp()}
 function getDivisionHint(){if(divisionState.retry>=2)return`${divisionState.total} ÷ ${divisionState.divisor} = ${divisionState.result}. Die Umkehraufgabe ist ${divisionState.divisor} × ${divisionState.result} = ${divisionState.total}. Gib das Ergebnis nun selbst ein.`;if(divisionState.type==='share')return`Gib jedem der ${divisionState.divisor} Kinder immer eine Erdbeere. Alle bekommen gleich viel. Denke auch rückwärts: ${divisionState.divisor} × ? = ${divisionState.total}.`;if(divisionState.type==='groups')return`Bilde aus den ${divisionState.total} Erdbeeren Päckchen mit jeweils ${divisionState.divisor}. Die Anzahl der Päckchen ist gesucht – Malnehmen setzt sie wieder zur Gesamtmenge zusammen.`;return`Denk rückwärts an das Einmaleins: ${divisionState.divisor} × ? = ${divisionState.total}.`}
@@ -1118,7 +1311,7 @@ function rememberAnswer(correct) {
   profile.facts[key] ||= { attempts: 0, correct: 0, wrong: 0 };
   profile.facts[key].attempts += 1;
   profile.facts[key][correct ? 'correct' : 'wrong'] += 1;
-  if (correct) addXp(profile, 1);
+  if (correct) addAreaStars(profile, 'mal', 1);
   if (correct) incrementActivity('multiplication');
   saveProfiles();
   renderProfileHeader();
@@ -1154,7 +1347,8 @@ function openTeacherArea() {
 function getTeacherProfile(){return profiles.find(profile=>profile.id===elements.teacherProfileSelect.value)}
 function renderTeacherDashboard(){
   const profile=getTeacherProfile();if(!profile)return;const facts=Object.entries(profile.facts||{});const attempts=facts.reduce((sum,[,s])=>sum+s.attempts,0);const correct=facts.reduce((sum,[,s])=>sum+s.correct,0);const accuracy=attempts?Math.round(correct/attempts*100):0;
-  elements.teacherStats.innerHTML=`<div><strong>Level ${getLevel(profile)}</strong><small>${profile.xp||0} Erfahrungspunkte</small></div><div><strong>${accuracy}%</strong><small>Einmaleins richtig</small></div><div><strong>${attempts}</strong><small>Einmaleins-Versuche</small></div>`;
+  const totalStars=AREAS.reduce((sum,a)=>sum+(profile.areaStars?.[a]||0),0);
+  elements.teacherStats.innerHTML=`<div><strong>Level ${getLevel(profile)}</strong><small>${totalStars} Sterne gesamt</small></div><div><strong>${accuracy}%</strong><small>Einmaleins richtig</small></div><div><strong>${attempts}</strong><small>Einmaleins-Versuche</small></div>`;
   const weak=[...facts].filter(([,s])=>s.wrong>0).sort((a,b)=>(b[1].wrong/b[1].attempts)-(a[1].wrong/a[1].attempts)).slice(0,8);
   elements.weakFacts.innerHTML=weak.length?weak.map(([key,s])=>`<span>${key.replace('x',' × ')} <small>${s.wrong} Fehler</small></span>`).join(''):'<em>Noch keine schwierigen Aufgaben gespeichert.</em>';
   const labels={'+':'Plus','-':'Minus','*':'Mal','/':'Geteilt'};elements.operationStats.innerHTML=Object.entries(labels).map(([key,label])=>{const s=profile.operations?.[key];const value=s?.attempts?Math.round(s.correct/s.attempts*100):0;return`<div><span>${label}</span><i><b style="width:${value}%"></b></i><strong>${s?.attempts?`${value}%`:'–'}</strong></div>`}).join('');
@@ -1165,22 +1359,57 @@ function saveTeacherAssignment(){const profile=getTeacherProfile();if(!profile)r
 function removeTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;delete profile.assignment;saveProfiles();elements.teacherMessage.textContent='Auftrag entfernt.';if(profile.id===activeProfileId)renderStudentAssignment()}
 
 function loadProfiles() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+  let loaded;
+  try { loaded = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { loaded = []; }
+  loaded.forEach(migrateProfileAreas);
+  return loaded;
+}
+function migrateProfileAreas(profile) {
+  if (profile.areaStars) return;
+  profile.areaStars = {
+    mal: Object.values(profile.facts || {}).reduce((sum, f) => sum + (f.correct || 0), 0) + (profile.concepts?.['*'] || 0),
+    geteilt: (profile.activityCounts?.division || 0) + (profile.concepts?.['/'] || 0),
+    plus: profile.concepts?.['+'] || 0,
+    minus: profile.concepts?.['-'] || 0,
+    stellenwert: (profile.activityCounts?.placeValue || 0) + (profile.activityCounts?.numberLine || 0),
+  };
+  profile.areaRecent = Object.fromEntries(AREAS.map(a => [a, []]));
 }
 
 function saveProfiles() { if(!teacherPreview)localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles)); }
 function startTeacherPreview(){teacherPreviewSnapshot=JSON.stringify(profiles);teacherPreview=true;selectProfile(elements.teacherProfileSelect.value);renderProfileHeader();showScreen('activities')}
 function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;renderProfileHeader();renderProfileSelection();saveProfiles();showScreen('activities')}
 function getProfile() { return profiles.find((profile) => profile.id === activeProfileId); }
-function getLevel(profile) { return Math.floor((profile?.xp || 0) / 20) + 1; }
+function getAreaLevel(profile, area) { return Math.floor((profile?.areaStars?.[area] || 0) / 20) + 1; }
+function getLevel(profile) { return Math.min(...AREAS.map(a => getAreaLevel(profile, a))); }
+function getLimitingArea(profile) { return AREAS.reduce((min, a) => getAreaLevel(profile, a) < getAreaLevel(profile, min) ? a : min); }
+function getLevelProgress(profile) {
+  const area = getLimitingArea(profile);
+  const stars = profile?.areaStars?.[area] || 0;
+  return { level: getLevel(profile), area, progress: stars % 20, missing: 20 - (stars % 20) };
+}
 
 let pendingLevelUp=null;
-function addXp(profile,amount){
-  if(!profile||teacherPreview)return;
+function addAreaStars(profile,area,amount){
+  if(!profile||teacherPreview||!amount)return;
   const before=getLevel(profile);
-  profile.xp+=amount;
+  profile.areaStars[area]=(profile.areaStars[area]||0)+amount;
   const after=getLevel(profile);
   if(after>before)queueLevelUpNotice(before,after);
+}
+function pushAreaRecent(profile,area,correct){
+  if(!profile)return;
+  profile.areaRecent[area]=profile.areaRecent[area]||[];
+  profile.areaRecent[area].push(correct);
+  if(profile.areaRecent[area].length>5)profile.areaRecent[area].shift();
+}
+const CONCEPT_FADE_THRESHOLD=40;
+function getConceptStage(profile,op){
+  const area=OP_TO_AREA[op];
+  const stars=profile?.areaStars?.[area]||0;
+  const recent=profile?.areaRecent?.[area]||[];
+  const struggling=recent.slice(-3).filter(x=>x===false).length>=2;
+  return(stars>=CONCEPT_FADE_THRESHOLD&&!struggling)?'faded':'full';
 }
 function getNewUnlocks(fromLevel,toLevel){
   const items=[];
@@ -1202,7 +1431,7 @@ function maybeShowLevelUp(){
 }
 
 function createProfile(name, emoji) {
-  const profile = { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: name.trim(), emoji, xp: 0, facts: {}, masteredRows: [], theme: 'classic', tileStyle: 'classic' };
+  const profile = { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: name.trim(), emoji, xp: 0, facts: {}, masteredRows: [], theme: 'classic', tileStyle: 'classic', areaStars: Object.fromEntries(AREAS.map(a => [a, 0])), areaRecent: Object.fromEntries(AREAS.map(a => [a, []])) };
   profiles.push(profile);
   selectProfile(profile.id);
   saveProfiles();
@@ -1232,8 +1461,8 @@ function renderProfileHeader() {
   elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':'ab Level 5';elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
   const raceUnlocked=level>=5||teacherPreview;
   elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Level 5';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
-  const xp=profile?.xp||0;const progress=xp%20;const nextRewards=[...EMOJIS.map(item=>({level:item.level,text:`Figur ${item.icon}`})),...THEMES.map(item=>({level:item.level,text:`Farbwelt „${item.name}“`})),...TILE_STYLES.map(item=>({level:item.level,text:`Zahlenkarten „${item.name}“`})),...GAME_REWARDS.map(item=>({level:item.level,text:`Spiel „${item.name}“`}))].filter(item=>item.level>level).sort((a,b)=>a.level-b.level);const next=nextRewards[0];
-  elements.levelAvatar.textContent=profile?.emoji||'🌟';elements.levelNow.textContent=`Level ${level}`;elements.levelRewardText.textContent=next?`Auf Level ${next.level}: ${next.text}`:'Alle bisherigen Belohnungen freigeschaltet';elements.levelProgressBar.style.width=`${progress/20*100}%`;elements.levelProgressText.textContent=`${progress} von 20 Sternen · noch ${20-progress} bis Level ${level+1}`;elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
+  const{area:limitingArea,progress,missing}=getLevelProgress(profile);const nextRewards=[...EMOJIS.map(item=>({level:item.level,text:`Figur ${item.icon}`})),...THEMES.map(item=>({level:item.level,text:`Farbwelt „${item.name}“`})),...TILE_STYLES.map(item=>({level:item.level,text:`Zahlenkarten „${item.name}“`})),...GAME_REWARDS.map(item=>({level:item.level,text:`Spiel „${item.name}“`}))].filter(item=>item.level>level).sort((a,b)=>a.level-b.level);const next=nextRewards[0];
+  elements.levelAvatar.textContent=profile?.emoji||'🌟';elements.levelNow.textContent=`Level ${level}`;elements.levelRewardText.textContent=next?`Auf Level ${next.level}: ${next.text}`:'Alle bisherigen Belohnungen freigeschaltet';elements.levelProgressBar.style.width=`${progress/20*100}%`;elements.levelProgressText.textContent=`${progress} von 20 Sternen bei ${AREA_NAMES[limitingArea]} · noch ${missing} bis Level ${level+1}`;elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
 }
 
 function openRewards() {
@@ -1245,7 +1474,8 @@ function renderRewards() {
   const profile = getProfile();
   if (!profile) return;
   const level = getLevel(profile);
-  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${profile.xp % 20} von 20 Sternen bis zum nächsten Level</small>`;
+  const rewardProgress=getLevelProgress(profile);
+  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${rewardProgress.progress} von 20 Sternen bei ${AREA_NAMES[rewardProgress.area]} bis zum nächsten Level</small>`;
   renderRewardGroup(elements.themeGrid, THEMES, profile.theme || 'classic', (id) => { profile.theme = id; });
   renderRewardGroup(elements.tileGrid, TILE_STYLES, profile.tileStyle || 'classic', (id) => { profile.tileStyle = id; });
   elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(game=>{const locked=level<game.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${game.icon}</span><strong>${game.name}</strong><small>${locked?`ab Level ${game.level}`:'freigeschaltet'}</small></div>`}).join('');
@@ -1333,8 +1563,8 @@ function renderEmojis() {
   elements.emojiGrid.replaceChildren();
   if (!profile) return;
   const level = getLevel(profile);
-  const currentLevelXp = profile.xp % 20;
-  elements.profileLevelSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${currentLevelXp} von 20 Sternen bis zum nächsten Level</small>`;
+  const emojiProgress = getLevelProgress(profile);
+  elements.profileLevelSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${emojiProgress.progress} von 20 Sternen bei ${AREA_NAMES[emojiProgress.area]} bis zum nächsten Level</small>`;
   EMOJIS.forEach(({ icon, level: needed }) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -1364,7 +1594,8 @@ elements.shopAnswerZone.addEventListener('drop', (event) => { event.preventDefau
 elements.divisionAnswerZone.addEventListener('dragover',(event)=>{event.preventDefault();elements.divisionAnswerZone.classList.add('drag-over')});
 elements.divisionAnswerZone.addEventListener('dragleave',()=>elements.divisionAnswerZone.classList.remove('drag-over'));
 elements.divisionAnswerZone.addEventListener('drop',(event)=>{event.preventDefault();elements.divisionAnswerZone.classList.remove('drag-over');addDivisionDigit(event.dataTransfer.getData('text/plain'))});
-elements.conceptAnswerZone.addEventListener('dragover',event=>{event.preventDefault();elements.conceptAnswerZone.classList.add('drag-over')});elements.conceptAnswerZone.addEventListener('dragleave',()=>elements.conceptAnswerZone.classList.remove('drag-over'));elements.conceptAnswerZone.addEventListener('drop',event=>{event.preventDefault();elements.conceptAnswerZone.classList.remove('drag-over');addConceptDigit(event.dataTransfer.getData('text/plain'))});
+elements.conceptAnswerZone.addEventListener('click',()=>setConceptAnswerField('quotient'));elements.conceptAnswerZone.addEventListener('dragover',event=>{event.preventDefault();elements.conceptAnswerZone.classList.add('drag-over')});elements.conceptAnswerZone.addEventListener('dragleave',()=>elements.conceptAnswerZone.classList.remove('drag-over'));elements.conceptAnswerZone.addEventListener('drop',event=>{event.preventDefault();elements.conceptAnswerZone.classList.remove('drag-over');setConceptAnswerField('quotient');addConceptDigit(event.dataTransfer.getData('text/plain'))});
+elements.conceptRemainderZone.addEventListener('click',()=>setConceptAnswerField('remainder'));elements.conceptRemainderZone.addEventListener('dragover',event=>{event.preventDefault();elements.conceptRemainderZone.classList.add('drag-over')});elements.conceptRemainderZone.addEventListener('dragleave',()=>elements.conceptRemainderZone.classList.remove('drag-over'));elements.conceptRemainderZone.addEventListener('drop',event=>{event.preventDefault();elements.conceptRemainderZone.classList.remove('drag-over');setConceptAnswerField('remainder');addConceptDigit(event.dataTransfer.getData('text/plain'))});
 elements.conceptAppleToken.addEventListener('dragstart',event=>event.dataTransfer.setData('text/plain','apple'));elements.conceptDropZone.addEventListener('dragover',event=>{event.preventDefault();elements.conceptDropZone.classList.add('drag-over')});elements.conceptDropZone.addEventListener('dragleave',()=>elements.conceptDropZone.classList.remove('drag-over'));elements.conceptDropZone.addEventListener('drop',event=>{event.preventDefault();elements.conceptDropZone.classList.remove('drag-over');advanceConcept()});
 let conceptGhost=null;elements.conceptAppleToken.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')return;elements.conceptAppleToken.setPointerCapture(event.pointerId);conceptGhost=document.createElement('div');conceptGhost.className='concept-apple-ghost';conceptGhost.textContent='🍎';document.body.append(conceptGhost);moveConceptGhost(event)});elements.conceptAppleToken.addEventListener('pointermove',event=>{if(!conceptGhost)return;moveConceptGhost(event);const target=document.elementFromPoint(event.clientX,event.clientY);elements.conceptDropZone.classList.toggle('drag-over',elements.conceptDropZone.contains(target))});elements.conceptAppleToken.addEventListener('pointerup',event=>{if(!conceptGhost)return;const target=document.elementFromPoint(event.clientX,event.clientY);if(elements.conceptDropZone.contains(target))advanceConcept();conceptGhost.remove();conceptGhost=null;elements.conceptDropZone.classList.remove('drag-over')});function moveConceptGhost(event){if(!conceptGhost)return;conceptGhost.style.left=`${event.clientX}px`;conceptGhost.style.top=`${event.clientY}px`}
 elements.raceAnswerZone.addEventListener('dragover',event=>{event.preventDefault();elements.raceAnswerZone.classList.add('drag-over')});elements.raceAnswerZone.addEventListener('dragleave',()=>elements.raceAnswerZone.classList.remove('drag-over'));elements.raceAnswerZone.addEventListener('drop',event=>{event.preventDefault();elements.raceAnswerZone.classList.remove('drag-over');addRaceDigit(event.dataTransfer.getData('text/plain'))});
@@ -1418,12 +1649,13 @@ elements.againButton.addEventListener('click', () => startGame(state.mode));
 elements.chooseButton.addEventListener('click', () => showScreen('start'));
 elements.profileButton.addEventListener('click', openProfileSettings);
 elements.activityProfileButton.addEventListener('click', openProfileSettings);
-elements.understandActivity.addEventListener('click',()=>showScreen('conceptStart'));elements.conceptBack.addEventListener('click',()=>showScreen('activities'));elements.conceptHome.addEventListener('click',()=>confirmLeaveGame('conceptStart'));document.querySelectorAll('[data-concept]').forEach(button=>button.addEventListener('click',()=>startConceptGame(button.dataset.concept)));elements.conceptAction.addEventListener('click',advanceConcept);elements.conceptDelete.addEventListener('click',removeConceptDigit);elements.conceptCheck.addEventListener('click',checkConceptAnswer);elements.conceptAgain.addEventListener('click',()=>startConceptGame(conceptState.operation));elements.conceptChoose.addEventListener('click',()=>showScreen('conceptStart'));
+elements.understandActivity.addEventListener('click',()=>showScreen('conceptStart'));elements.conceptBack.addEventListener('click',()=>showScreen('activities'));elements.conceptHome.addEventListener('click',()=>confirmLeaveGame('conceptStart'));document.querySelectorAll('[data-concept]').forEach(button=>button.addEventListener('click',()=>startConceptGame(button.dataset.concept)));elements.conceptAction.addEventListener('click',()=>advanceConcept());elements.conceptDelete.addEventListener('click',removeConceptDigit);elements.conceptCheck.addEventListener('click',checkConceptAnswer);elements.conceptAgain.addEventListener('click',()=>startConceptGame(conceptState.operation));elements.conceptChoose.addEventListener('click',()=>showScreen('conceptStart'));
 elements.gamesActivity.addEventListener('click',()=>showScreen('games'));elements.gamesBack.addEventListener('click',()=>showScreen('activities'));
 elements.gamesTimesCard.addEventListener('click', () => showScreen('start'));
 elements.gamesDivisionCard.addEventListener('click',()=>showScreen('divisionStart'));
 elements.gamesFamilyCard.addEventListener('click',startFamilyGame);
 elements.gamesCatchCard.addEventListener('click',startCatchGame);
+elements.gamesPipeCard.addEventListener('click',startPipeGame);
 elements.gamesRaceCard.addEventListener('click',startRaceGame);
 elements.gamesShopCard.addEventListener('click', openShopWorld);
 elements.gamesPlaceValueCard.addEventListener('click', openPlaceValueWorkshop);
@@ -1444,6 +1676,9 @@ elements.shopChoose.addEventListener('click', () => showScreen('games'));
 elements.catchHome.addEventListener('click', () => confirmLeaveGame('games',()=>{catchState.running=false;clearCatchBubbles();cancelAnimationFrame(catchState.frame)}));
 elements.catchAgain.addEventListener('click', startCatchGame);
 elements.catchChoose.addEventListener('click', () => showScreen('games'));
+elements.pipeHome.addEventListener('click', () => confirmLeaveGame('games',()=>{pipeState.running=false;clearPipeBubbles()}));
+elements.pipeAgain.addEventListener('click', startPipeGame);
+elements.pipeChoose.addEventListener('click', () => showScreen('games'));
 elements.raceHome.addEventListener('click', () => confirmLeaveGame('games',()=>{raceState.running=false;clearInterval(raceState.timer)}));
 elements.raceDelete.addEventListener('click', removeRaceDigit);
 elements.raceCheck.addEventListener('click', checkRaceAnswer);

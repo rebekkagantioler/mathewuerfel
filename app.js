@@ -82,12 +82,12 @@ const elements = {
   activityProfileName: document.querySelector('#activityProfileName'),
   backToActivities: document.querySelector('#backToActivities'),
   profileModal: document.querySelector('#profileModal'), closeProfiles: document.querySelector('#closeProfiles'),
-  profileSelectGrid: document.querySelector('#profileSelectGrid'), addProfileButton: document.querySelector('#addProfileButton'),
+  profileSelectGrid: document.querySelector('#profileSelectGrid'), addProfileButton: document.querySelector('#addProfileButton'), openCloudProfileButton: document.querySelector('#openCloudProfileButton'),
   profileForm: document.querySelector('#profileForm'), starterEmojiGrid: document.querySelector('#starterEmojiGrid'),
-  newProfileName: document.querySelector('#newProfileName'), emojiPicker: document.querySelector('#emojiPicker'),
+  newProfileName: document.querySelector('#newProfileName'), newProfilePin: document.querySelector('#newProfilePin'), emojiPicker: document.querySelector('#emojiPicker'),
   emojiGrid: document.querySelector('#emojiGrid'), profileModalTitle: document.querySelector('#profileModalTitle'),
   profileLevelSummary: document.querySelector('#profileLevelSummary'), switchProfileButton: document.querySelector('#switchProfileButton'),
-  editProfileName: document.querySelector('#editProfileName'), saveProfileName: document.querySelector('#saveProfileName'),
+  editProfileName: document.querySelector('#editProfileName'), saveProfileName: document.querySelector('#saveProfileName'), cloudBackupButton: document.querySelector('#cloudBackupButton'),
   activityRewardsButton: document.querySelector('#activityRewardsButton'), levelOverview:document.querySelector('#levelOverview'),
   rewardsModal: document.querySelector('#rewardsModal'), closeRewards: document.querySelector('#closeRewards'),
   rewardSummary: document.querySelector('#rewardSummary'), themeGrid: document.querySelector('#themeGrid'), tileGrid: document.querySelector('#tileGrid'), gameRewardGrid:document.querySelector('#gameRewardGrid'),
@@ -148,6 +148,9 @@ const elements = {
 let state = { mode: 2, question: 0, score: 0, streak: 0, a: 2, b: 1, answer: '', locked: false, retryCount: 0, total: FREE_QUESTIONS, roundFacts:{} };
 let profiles = loadProfiles();
 let activeProfileId = localStorage.getItem(`${STORAGE_KEY}:active`) || null;
+const cloudClient = window.SUPABASE_CONFIG && window.supabase ? window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.publishableKey) : null;
+const cloudPins = new Map();
+let cloudSyncTimer;
 let lastFact = '';
 let confidenceBoost = false;
 let starterEmoji = '🌟';
@@ -1376,7 +1379,7 @@ function migrateProfileAreas(profile) {
   profile.areaRecent = Object.fromEntries(AREAS.map(a => [a, []]));
 }
 
-function saveProfiles() { if(!teacherPreview)localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles)); }
+function saveProfiles() { if(!teacherPreview){localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));scheduleCloudSync();} }
 function startTeacherPreview(){teacherPreviewSnapshot=JSON.stringify(profiles);teacherPreview=true;selectProfile(elements.teacherProfileSelect.value);renderProfileHeader();showScreen('activities')}
 function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;renderProfileHeader();renderProfileSelection();saveProfiles();showScreen('activities')}
 function getProfile() { return profiles.find((profile) => profile.id === activeProfileId); }
@@ -1430,12 +1433,66 @@ function maybeShowLevelUp(){
   elements.levelUpModal.classList.remove('hidden');
 }
 
-function createProfile(name, emoji) {
+async function createProfile(name, emoji, pin) {
   const profile = { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: name.trim(), emoji, xp: 0, facts: {}, masteredRows: [], theme: 'classic', tileStyle: 'classic', areaStars: Object.fromEntries(AREAS.map(a => [a, 0])), areaRecent: Object.fromEntries(AREAS.map(a => [a, []])) };
+  if (cloudClient) {
+    const { data, error } = await cloudClient.rpc('create_student_profile', { p_name: profile.name, p_pin: pin, p_profile_data: profile });
+    if (error) return window.alert(`Das Online-Profil konnte nicht angelegt werden: ${error.message}`);
+    profile.cloudId = data;
+    cloudPins.set(profile.cloudId, pin);
+  }
   profiles.push(profile);
   selectProfile(profile.id);
   saveProfiles();
   elements.profileModal.classList.add('hidden');
+  showScreen('activities');
+}
+
+function scheduleCloudSync() {
+  if (!cloudClient || teacherPreview) return;
+  window.clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = window.setTimeout(async () => {
+    for (const profile of profiles) {
+      const pin = cloudPins.get(profile.cloudId);
+      if (!profile.cloudId || !pin) continue;
+      const { error } = await cloudClient.rpc('save_student_profile', { p_id: profile.cloudId, p_pin: pin, p_profile_data: profile });
+      if (error) console.warn('Online-Sicherung fehlgeschlagen:', error.message);
+    }
+  }, 700);
+}
+
+async function backUpProfileOnline() {
+  const profile = getProfile();
+  if (!profile || !cloudClient) return window.alert('Die Online-Sicherung ist noch nicht eingerichtet.');
+  const pin = window.prompt('Lege einen PIN mit mindestens 6 Ziffern fest.');
+  if (!pin) return;
+  if (!/^\d{6,}$/.test(pin)) return window.alert('Der PIN muss mindestens 6 Ziffern haben.');
+  const { data, error } = await cloudClient.rpc('create_student_profile', { p_name: profile.name, p_pin: pin, p_profile_data: profile });
+  if (error) return window.alert(`Die Online-Sicherung ist fehlgeschlagen: ${error.message}`);
+  profile.cloudId = data;
+  cloudPins.set(data, pin);
+  saveProfiles();
+  window.alert('Dein Profil ist jetzt online gesichert.');
+}
+
+async function openCloudProfile() {
+  if (!cloudClient) return window.alert('Die Online-Sicherung ist noch nicht eingerichtet.');
+  const name = window.prompt('Wie heißt dein Profil?');
+  if (!name) return;
+  const pin = window.prompt('Gib deinen Online-PIN ein.');
+  if (!pin) return;
+  const { data, error } = await cloudClient.rpc('open_student_profile', { p_name: name.trim(), p_pin: pin });
+  if (error) return window.alert(`Das Online-Profil konnte nicht geöffnet werden: ${error.message}`);
+  const cloudProfile = data?.[0];
+  if (!cloudProfile) return window.alert('Kein passendes Online-Profil gefunden. Prüfe Name und PIN.');
+  const profile = cloudProfile.profile_data;
+  profile.cloudId = cloudProfile.id;
+  migrateProfileAreas(profile);
+  const index = profiles.findIndex(item => item.cloudId === profile.cloudId || item.id === profile.id);
+  if (index >= 0) profiles[index] = profile; else profiles.push(profile);
+  cloudPins.set(profile.cloudId, pin);
+  selectProfile(profile.id);
+  saveProfiles();
   showScreen('activities');
 }
 
@@ -1522,6 +1579,7 @@ function openNewProfile() {
   elements.profileForm.classList.remove('hidden');
   elements.emojiPicker.classList.add('hidden');
   elements.newProfileName.value = '';
+  elements.newProfilePin.value = '';
   renderStarterEmojis();
   elements.profileModal.classList.remove('hidden');
   elements.newProfileName.focus();
@@ -1712,6 +1770,7 @@ elements.catchArena.addEventListener('pointermove', (event) => {
   const bounds = elements.catchArena.getBoundingClientRect(); moveBasket(event.clientX - bounds.left - 38);
 });
 elements.addProfileButton.addEventListener('click', openNewProfile);
+elements.openCloudProfileButton.addEventListener('click', openCloudProfile);
 elements.teacherAreaButton.addEventListener('click',()=>{const code=window.prompt('Lehrpersonen-Code:');if(code==='2468')openTeacherArea();else if(code!==null)window.alert('Der Code ist nicht richtig.')});elements.teacherBack.addEventListener('click',()=>showScreen('profiles'));elements.teacherProfileSelect.addEventListener('change',renderTeacherDashboard);elements.saveAssignment.addEventListener('click',saveTeacherAssignment);elements.removeAssignment.addEventListener('click',removeTeacherAssignment);
 elements.teacherPreviewButton.addEventListener('click',startTeacherPreview);elements.endPreview.addEventListener('click',endTeacherPreview);
 elements.stayButton.addEventListener('click',closeLeaveModal);
@@ -1733,12 +1792,14 @@ elements.saveProfileName.addEventListener('click', () => {
   renderProfileHeader();
   renderProfileSelection();
 });
+elements.cloudBackupButton.addEventListener('click', backUpProfileOnline);
 elements.closeProfiles.addEventListener('click', () => elements.profileModal.classList.add('hidden'));
-elements.profileForm.addEventListener('submit', (event) => {
+elements.profileForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (!elements.newProfileName.value.trim()) return;
-  createProfile(elements.newProfileName.value, starterEmoji);
+  if (!elements.newProfileName.value.trim() || !/^\d{6,}$/.test(elements.newProfilePin.value)) return;
+  await createProfile(elements.newProfileName.value, starterEmoji, elements.newProfilePin.value);
   elements.newProfileName.value = '';
+  elements.newProfilePin.value = '';
 });
 renderProfileHeader();
 renderProfileSelection();

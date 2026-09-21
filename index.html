@@ -28,6 +28,7 @@
         </div>
         <div id="profileSelectGrid" class="profile-select-grid"></div>
         <button id="addProfileButton" class="add-profile-button" type="button"><span>＋</span><strong>Neuer Benutzer</strong></button>
+        <button id="openCloudProfileButton" class="text-button" type="button">☁️ Vorhandenes Online-Profil öffnen</button>
         <button id="teacherAreaButton" class="teacher-link" type="button">🔒 Bereich für Lehrpersonen</button>
       </section>
 
@@ -367,6 +368,8 @@
         <form id="profileForm" class="profile-form">
           <label for="newProfileName">Wie heißt du?</label>
           <input id="newProfileName" maxlength="16" autocomplete="off" placeholder="Dein Name" required />
+          <label for="newProfilePin">Dein Online-PIN (mindestens 6 Ziffern)</label>
+          <input id="newProfilePin" type="password" inputmode="numeric" pattern="[0-9]{6,}" minlength="6" autocomplete="new-password" placeholder="z. B. 123456" required />
           <label>Suche dir eine Figur aus</label>
           <div id="starterEmojiGrid" class="emoji-grid starter-grid"></div>
           <button class="check-button large" type="submit">Profil anlegen</button>
@@ -377,6 +380,7 @@
           <h3>Figur auswählen</h3>
           <p>Mit höheren Levels schaltest du neue Figuren und Schätze frei.</p>
           <div id="emojiGrid" class="emoji-grid"></div>
+          <button id="cloudBackupButton" class="secondary-button" type="button">☁️ Online sichern</button>
           <button id="switchProfileButton" class="secondary-button switch-profile" type="button">Benutzer wechseln</button>
         </section>
       </div>
@@ -400,6 +404,8 @@
     <div id="leaveModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="leaveTitle"><div class="leave-box"><div class="leave-icon">🚪</div><h2 id="leaveTitle">Schon aufhören?</h2><p>Deine gesammelten Sterne bleiben sicher gespeichert.</p><div class="leave-level"><strong id="leaveLevelText"></strong><div class="level-progress"><i id="leaveLevelBar"></i></div><small id="leaveRewardText"></small></div><div class="leave-actions"><button id="stayButton" class="check-button" type="button">Weiterspielen</button><button id="leaveButton" class="secondary-button" type="button">Spiel verlassen</button></div></div></div>
     <div id="levelUpModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="levelUpTitle"><div class="leave-box level-up-box"><div class="leave-icon">🎉</div><h2 id="levelUpTitle">Level <span id="levelUpNumber">2</span> erreicht!</h2><p>Das hast du neu freigeschaltet:</p><div id="levelUpUnlocks" class="level-up-unlocks"></div><button id="levelUpClose" class="check-button large" type="button">Weiter geht's!</button></div></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

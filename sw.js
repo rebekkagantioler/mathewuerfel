@@ -1,8 +1,9 @@
-const CACHE_NAME = 'zahlen-abenteuer-v2';
+const CACHE_NAME = 'zahlen-abenteuer-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
   './app.js',
+  './supabase-config.js',
   './styles.css',
   './manifest.json',
   './icons/icon-192.png',

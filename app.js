@@ -157,7 +157,7 @@ let confidenceBoost = false;
 let starterEmoji = '🌟';
 let shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: [], station: 'fruit', difficulty: 1 };
 let catchState = { question: 0, score: 0, a: 2, b: 2, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: false, mistake: false, bubbles: [] };
-const PIPE_COUNT = 4;
+const PIPE_COUNT = 9;
 let pipeState = { question: 0, score: 0, a: 2, b: 2, op: '*', result: 4, running: false, bubbles: [], pipesBusy: new Array(PIPE_COUNT).fill(false), lastTime: 0, nextSpawnAt: 0, frame: 0 };
 let divisionState = { question:0, score:0, total:12, divisor:3, result:4, type:'share', answer:'', retry:0, locked:false, mode:'understand', conceptStep:0 };
 let conceptState={operation:'+',question:0,score:0,a:3,b:2,result:5,step:0,answer:'',locked:false,retry:0,perChild:[]};
@@ -1018,9 +1018,8 @@ function buildPipeColumns(){
   elements.pipeArena.replaceChildren();
   for(let i=0;i<PIPE_COUNT;i+=1){
     const column=document.createElement('div');column.className='pipe-column';
-    const tube=document.createElement('div');tube.className='pipe-tube';
-    column.append(tube);
-    elements.pipeArena.append(column);
+    const tube=document.createElement('div');tube.className='pipe-tube';tube.setAttribute('aria-hidden','true');
+    column.append(tube);elements.pipeArena.append(column);
   }
 }
 function nextPipeQuestion(){
@@ -1046,9 +1045,9 @@ function animatePipeArena(time){
   if(!pipeState.running||screens.pipe.classList.contains('hidden'))return;
   const delta=Math.min(40,time-pipeState.lastTime);pipeState.lastTime=time;
   pipeState.nextSpawnAt-=delta;
-  if(pipeState.nextSpawnAt<=0){trySpawnPipeBubble();pipeState.nextSpawnAt=900+randomInt(0,500)}
+  if(pipeState.nextSpawnAt<=0){trySpawnPipeBubble();pipeState.nextSpawnAt=420+randomInt(0,380)}
   for(const bubble of [...pipeState.bubbles]){
-    bubble.y+=delta*.055;bubble.node.style.bottom=`${bubble.y}px`;
+    bubble.y+=delta*.1;bubble.node.style.bottom=`${bubble.y}px`;
     if(bubble.y>bubble.node.parentElement.clientHeight)removePipeBubble(bubble);
   }
   pipeState.frame=requestAnimationFrame(animatePipeArena);

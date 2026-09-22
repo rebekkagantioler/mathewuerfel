@@ -178,6 +178,17 @@ function showScreen(name) {
   Object.entries(screens).forEach(([key, screen]) => screen.classList.toggle('hidden', key !== name));
 }
 
+function stopActiveGame(){
+  catchState.running=false;clearCatchBubbles();pipeState.running=false;clearPipeBubbles();raceState.running=false;clearInterval(raceState.timer);
+}
+function addGlobalHomeButtons(){
+  document.querySelectorAll('.game-header').forEach(header=>{
+    if(header.querySelector('.global-home-button'))return;
+    const button=document.createElement('button');button.type='button';button.className='icon-button global-home-button';button.setAttribute('aria-label','Zur Startseite');button.title='Zur Startseite';button.textContent='⌂';
+    button.addEventListener('click',()=>confirmLeaveGame('activities',stopActiveGame));header.prepend(button);
+  });
+}
+
 function openGamesCategory(category) {
   const copy={mal:['Mal & Geteilt','Rechnen, verstehen und spielen'],zahlen:['Große Zahlen','Stellenwerte bauen und Zahlensprünge entdecken'],alltag:['Rechnen im Alltag','Finde die passende Rechenart in Geschichten']}[category];
   document.querySelectorAll('[data-game-category]').forEach(item=>item.classList.toggle('hidden',item.dataset.gameCategory!==category));
@@ -1055,9 +1066,10 @@ function animatePipeArena(time){
   pipeState.nextSpawnAt-=delta;
   if(pipeState.nextSpawnAt<=0){trySpawnPipeBubble();pipeState.nextSpawnAt=420+randomInt(0,380)}
   for(const bubble of [...pipeState.bubbles]){
-    const travel=Math.max(38,bubble.node.parentElement.clientHeight-68);
-    bubble.y+=delta*.1*bubble.direction;
-    if(bubble.direction>0&&bubble.y>=travel){bubble.y=travel;bubble.direction=-1}
+    const level=Math.min(getLevel(getProfile()),12);const travel=Math.max(44,bubble.node.parentElement.clientHeight-62);
+    if(bubble.direction===0){if(time>=bubble.pauseUntil)bubble.direction=-1;else continue}
+    bubble.y+=delta*(.052+level*.0035)*bubble.direction;
+    if(bubble.direction>0&&bubble.y>=travel){bubble.y=travel;bubble.direction=0;bubble.pauseUntil=time+Math.max(360,950-level*45)}
     else if(bubble.direction<0&&bubble.y<=0){removePipeBubble(bubble);continue}
     bubble.node.style.bottom=`${bubble.y}px`;
   }
@@ -1077,7 +1089,7 @@ function trySpawnPipeBubble(){
   }
   const node=document.createElement('button');node.type='button';node.className=`pipe-bubble${isBomb?' pipe-bomb':''}${isStar?' pipe-star':''}`;node.textContent=isBomb?'💣':isStar?'⭐':value;
   const column=elements.pipeArena.children[lane];column.append(node);node.style.bottom='0px';
-  const bubble={node,value,correct,isBomb,isStar,lane,y:0,direction:1};
+  const bubble={node,value,correct,isBomb,isStar,lane,y:0,direction:1,pauseUntil:0};
   node.addEventListener('click',()=>handlePipeBubbleClick(bubble));
   pipeState.bubbles.push(bubble);pipeState.pipesBusy[lane]=true;
 }
@@ -1851,7 +1863,10 @@ elements.profileForm.addEventListener('submit', async (event) => {
 renderProfileHeader();
 renderProfileSelection();
 applyRewards();
+addGlobalHomeButtons();
 showScreen('profiles');
+document.addEventListener('dblclick',event=>event.preventDefault(),{passive:false});
+document.addEventListener('gesturestart',event=>event.preventDefault(),{passive:false});
 document.addEventListener('keydown', (event) => {
   if (!screens.game.classList.contains('hidden')) {
     if (/^[0-9]$/.test(event.key)) addDigit(event.key);

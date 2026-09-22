@@ -82,7 +82,7 @@ const elements = {
   activityProfileName: document.querySelector('#activityProfileName'),
   backToActivities: document.querySelector('#backToActivities'),
   profileModal: document.querySelector('#profileModal'), closeProfiles: document.querySelector('#closeProfiles'),
-  profileSelectGrid: document.querySelector('#profileSelectGrid'), addProfileButton: document.querySelector('#addProfileButton'), openCloudProfileButton: document.querySelector('#openCloudProfileButton'),
+  profileSelectGrid: document.querySelector('#profileSelectGrid'), addProfileButton: document.querySelector('#addProfileButton'), openCloudProfileButton: document.querySelector('#openCloudProfileButton'), cloudProfileModal: document.querySelector('#cloudProfileModal'), closeCloudProfiles: document.querySelector('#closeCloudProfiles'), cloudProfileSearch: document.querySelector('#cloudProfileSearch'), cloudProfileMatches: document.querySelector('#cloudProfileMatches'), cloudProfilePin: document.querySelector('#cloudProfilePin'), cloudProfileMessage: document.querySelector('#cloudProfileMessage'), loadCloudProfile: document.querySelector('#loadCloudProfile'),
   profileForm: document.querySelector('#profileForm'), starterEmojiGrid: document.querySelector('#starterEmojiGrid'),
   newProfileName: document.querySelector('#newProfileName'), newProfilePin: document.querySelector('#newProfilePin'), emojiPicker: document.querySelector('#emojiPicker'),
   emojiGrid: document.querySelector('#emojiGrid'), profileModalTitle: document.querySelector('#profileModalTitle'),
@@ -152,6 +152,8 @@ let activeProfileId = localStorage.getItem(`${STORAGE_KEY}:active`) || null;
 const cloudClient = window.SUPABASE_CONFIG && window.supabase ? window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.publishableKey) : null;
 const cloudPins = new Map();
 let cloudSyncTimer;
+let cloudSearchTimer;
+let cloudProfileMatches=[];
 let lastFact = '';
 let confidenceBoost = false;
 let starterEmoji = '🌟';
@@ -1053,8 +1055,11 @@ function animatePipeArena(time){
   pipeState.nextSpawnAt-=delta;
   if(pipeState.nextSpawnAt<=0){trySpawnPipeBubble();pipeState.nextSpawnAt=420+randomInt(0,380)}
   for(const bubble of [...pipeState.bubbles]){
-    bubble.y+=delta*.1;bubble.node.style.bottom=`${bubble.y}px`;
-    if(bubble.y>bubble.node.parentElement.clientHeight)removePipeBubble(bubble);
+    const travel=Math.max(38,bubble.node.parentElement.clientHeight-68);
+    bubble.y+=delta*.1*bubble.direction;
+    if(bubble.direction>0&&bubble.y>=travel){bubble.y=travel;bubble.direction=-1}
+    else if(bubble.direction<0&&bubble.y<=0){removePipeBubble(bubble);continue}
+    bubble.node.style.bottom=`${bubble.y}px`;
   }
   pipeState.frame=requestAnimationFrame(animatePipeArena);
 }
@@ -1062,22 +1067,24 @@ function trySpawnPipeBubble(){
   const freeLanes=pipeState.pipesBusy.map((busy,i)=>busy?-1:i).filter(i=>i!==-1);
   if(!freeLanes.length)return;
   const lane=freeLanes[randomInt(0,freeLanes.length-1)];
-  const isBomb=Math.random()<0.22;
+  const isStar=Math.random()<0.03;
+  const isBomb=!isStar&&Math.random()<0.22;
   let value=0,correct=false;
   if(!isBomb){
     const hasCorrectActive=pipeState.bubbles.some(b=>b.correct);
     if(!hasCorrectActive&&Math.random()<0.45){value=pipeState.result;correct=true}
     else{value=Math.max(1,pipeState.result+randomInt(-8,8));if(value===pipeState.result)value+=1}
   }
-  const node=document.createElement('button');node.type='button';node.className=`pipe-bubble${isBomb?' pipe-bomb':''}`;node.textContent=isBomb?'💣':value;
+  const node=document.createElement('button');node.type='button';node.className=`pipe-bubble${isBomb?' pipe-bomb':''}${isStar?' pipe-star':''}`;node.textContent=isBomb?'💣':isStar?'⭐':value;
   const column=elements.pipeArena.children[lane];column.append(node);node.style.bottom='0px';
-  const bubble={node,value,correct,isBomb,lane,y:0};
+  const bubble={node,value,correct,isBomb,isStar,lane,y:0,direction:1};
   node.addEventListener('click',()=>handlePipeBubbleClick(bubble));
   pipeState.bubbles.push(bubble);pipeState.pipesBusy[lane]=true;
 }
 function handlePipeBubbleClick(bubble){
   if(!pipeState.running||!pipeState.bubbles.includes(bubble))return;
   removePipeBubble(bubble);
+  if(bubble.isStar)return catchPipeStar();
   if(bubble.correct)correctPipeClick();else wrongPipeClick(bubble.isBomb,bubble.value);
 }
 function removePipeBubble(bubble){
@@ -1096,6 +1103,10 @@ function correctPipeClick(){
   elements.pipeScore.textContent=pipeState.score;elements.pipeProgress.style.width=`${pipeState.question/8*100}%`;
   elements.pipeFeedback.textContent='Richtig! ✨';elements.pipeFeedback.className='pipe-feedback correct';
   window.setTimeout(nextPipeQuestion,500);
+}
+function catchPipeStar(){
+  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,pipeState.op==='*'?'mal':'geteilt',1);saveProfiles();renderProfileHeader()}
+  elements.pipeFeedback.textContent='⭐ Bonusstern gefangen! Er zählt für deinen Level-Fortschritt.';elements.pipeFeedback.className='pipe-feedback correct';
 }
 function wrongPipeClick(wasBomb,value){
   pipeState.score=Math.max(0,pipeState.score-1);
@@ -1499,13 +1510,20 @@ async function backUpProfileOnline() {
   window.alert('Dein Profil ist jetzt online gesichert.');
 }
 
-async function openCloudProfile() {
-  if (!cloudClient) return window.alert('Die Online-Sicherung ist noch nicht eingerichtet.');
-  const name = window.prompt('Wie heißt dein Profil?');
-  if (!name) return;
-  const pin = window.prompt('Gib deinen Online-PIN ein.');
-  if (!pin) return;
-  const { data, error } = await cloudClient.rpc('open_student_profile', { p_name: name.trim(), p_pin: pin });
+function openCloudProfile(){
+  if(!cloudClient)return window.alert('Die Online-Sicherung ist noch nicht eingerichtet.');
+  cloudProfileMatches=[];elements.cloudProfileSearch.value='';elements.cloudProfileMatches.replaceChildren();elements.cloudProfilePin.value='';elements.cloudProfileMessage.textContent='Gib mindestens zwei Buchstaben ein, um dein Profil zu finden.';elements.cloudProfileModal.classList.remove('hidden');elements.cloudProfileSearch.focus();
+}
+async function searchCloudProfiles(){
+  const prefix=elements.cloudProfileSearch.value.trim();cloudProfileMatches=[];elements.cloudProfileMatches.replaceChildren();if(prefix.length<2){elements.cloudProfileMessage.textContent='Gib mindestens zwei Buchstaben ein.';return}
+  elements.cloudProfileMessage.textContent='Profile werden gesucht …';const {data,error}=await cloudClient.rpc('find_student_profiles',{p_prefix:prefix});
+  if(error){elements.cloudProfileMessage.textContent='Die Profilsuche ist gerade nicht verfügbar.';return}
+  cloudProfileMatches=data||[];elements.cloudProfileMessage.textContent=cloudProfileMatches.length?'Wähle dein Profil aus.':'Kein Profil mit diesem Anfang gefunden.';
+  cloudProfileMatches.forEach(match=>{const button=document.createElement('button');button.type='button';button.className='cloud-profile-match';button.innerHTML=`<span>${match.profile_emoji||'🌟'}</span><strong>${escapeHtml(match.profile_name)}</strong><small>auswählen</small>`;button.addEventListener('click',()=>{cloudProfileMatches.forEach(item=>item.selected=false);match.selected=true;elements.cloudProfileMatches.querySelectorAll('button').forEach(item=>item.classList.remove('selected'));button.classList.add('selected');elements.cloudProfileMessage.textContent=`${match.profile_name} ausgewählt – jetzt PIN eingeben.`;elements.cloudProfilePin.focus()});elements.cloudProfileMatches.append(button)})
+}
+async function loadSelectedCloudProfile(){
+  const match=cloudProfileMatches.find(item=>item.selected),pin=elements.cloudProfilePin.value;if(!match)return elements.cloudProfileMessage.textContent='Wähle zuerst dein Profil aus.';if(!/^\d{6,}$/.test(pin))return elements.cloudProfileMessage.textContent='Gib deinen PIN mit mindestens 6 Ziffern ein.';
+  const {data,error}=await cloudClient.rpc('open_student_profile_by_id',{p_id:match.id,p_pin:pin});
   if (error) return window.alert(`Das Online-Profil konnte nicht geöffnet werden: ${error.message}`);
   const cloudProfile = data?.[0];
   if (!cloudProfile) return window.alert('Kein passendes Online-Profil gefunden. Prüfe Name und PIN.');
@@ -1514,7 +1532,7 @@ async function openCloudProfile() {
   migrateProfileAreas(profile);
   const index = profiles.findIndex(item => item.cloudId === profile.cloudId || item.id === profile.id);
   if (index >= 0) profiles[index] = profile; else profiles.push(profile);
-  cloudPins.set(profile.cloudId, pin);
+  cloudPins.set(profile.cloudId, pin);elements.cloudProfileModal.classList.add('hidden');
   selectProfile(profile.id);
   saveProfiles();
   showScreen('activities');
@@ -1797,7 +1815,7 @@ elements.catchArena.addEventListener('pointermove', (event) => {
   const bounds = elements.catchArena.getBoundingClientRect(); moveBasket(event.clientX - bounds.left - 38);
 });
 elements.addProfileButton.addEventListener('click', openNewProfile);
-elements.openCloudProfileButton.addEventListener('click', openCloudProfile);
+elements.openCloudProfileButton.addEventListener('click', openCloudProfile);elements.closeCloudProfiles.addEventListener('click',()=>elements.cloudProfileModal.classList.add('hidden'));elements.cloudProfileSearch.addEventListener('input',()=>{window.clearTimeout(cloudSearchTimer);cloudSearchTimer=window.setTimeout(searchCloudProfiles,250)});elements.loadCloudProfile.addEventListener('click',loadSelectedCloudProfile);elements.cloudProfilePin.addEventListener('keydown',event=>{if(event.key==='Enter')loadSelectedCloudProfile()});elements.cloudProfileModal.addEventListener('click',event=>{if(event.target===elements.cloudProfileModal)elements.cloudProfileModal.classList.add('hidden')});
 elements.teacherAreaButton.addEventListener('click',()=>{const code=window.prompt('Lehrpersonen-Code:');if(code==='2468')openTeacherArea();else if(code!==null)window.alert('Der Code ist nicht richtig.')});elements.teacherBack.addEventListener('click',()=>showScreen('profiles'));elements.teacherProfileSelect.addEventListener('change',renderTeacherDashboard);elements.saveAssignment.addEventListener('click',saveTeacherAssignment);elements.removeAssignment.addEventListener('click',removeTeacherAssignment);
 elements.teacherPreviewButton.addEventListener('click',startTeacherPreview);elements.endPreview.addEventListener('click',endTeacherPreview);
 elements.stayButton.addEventListener('click',closeLeaveModal);

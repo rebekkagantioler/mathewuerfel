@@ -40,6 +40,37 @@ begin
 end;
 $$;
 
+-- Only names and avatars are shown while searching. Learning data remains
+-- protected and is returned only after the selected profile's PIN is checked.
+create or replace function public.find_student_profiles(p_prefix text)
+returns table (id uuid, profile_name text, profile_emoji text)
+language sql
+security definer
+set search_path = public
+as $$
+  select sp.id, sp.profile_name, coalesce(sp.profile_data->>'emoji', '🌟')
+  from public.student_profiles sp
+  where lower(sp.profile_name) like lower(trim(p_prefix)) || '%'
+  order by sp.profile_name
+  limit 8;
+$$;
+
+create or replace function public.open_student_profile_by_id(p_id uuid, p_pin text)
+returns table (id uuid, profile_data jsonb)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if char_length(p_pin) < 6 or p_pin !~ '^[0-9]+$' then
+    raise exception 'Die PIN muss mindestens sechs Ziffern haben.';
+  end if;
+  return query
+  select sp.id, sp.profile_data from public.student_profiles sp
+  where sp.id = p_id and sp.pin_hash = crypt(p_pin, sp.pin_hash);
+end;
+$$;
+
 create or replace function public.create_student_profile(p_name text, p_pin text, p_profile_data jsonb)
 returns uuid
 language plpgsql
@@ -77,8 +108,12 @@ end;
 $$;
 
 revoke all on function public.open_student_profile(text, text) from public;
+revoke all on function public.find_student_profiles(text) from public;
+revoke all on function public.open_student_profile_by_id(uuid, text) from public;
 revoke all on function public.create_student_profile(text, text, jsonb) from public;
 revoke all on function public.save_student_profile(uuid, text, jsonb) from public;
 grant execute on function public.open_student_profile(text, text) to anon, authenticated;
+grant execute on function public.find_student_profiles(text) to anon, authenticated;
+grant execute on function public.open_student_profile_by_id(uuid, text) to anon, authenticated;
 grant execute on function public.create_student_profile(text, text, jsonb) to anon, authenticated;
 grant execute on function public.save_student_profile(uuid, text, jsonb) to anon, authenticated;

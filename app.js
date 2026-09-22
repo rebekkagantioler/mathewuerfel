@@ -130,7 +130,7 @@ const elements = {
   catchFlash: document.querySelector('#catchFlash'),
   leaveModal: document.querySelector('#leaveModal'), leaveLevelText: document.querySelector('#leaveLevelText'), leaveLevelBar: document.querySelector('#leaveLevelBar'), leaveRewardText: document.querySelector('#leaveRewardText'), stayButton: document.querySelector('#stayButton'), leaveButton: document.querySelector('#leaveButton'),
   levelUpModal: document.querySelector('#levelUpModal'), levelUpNumber: document.querySelector('#levelUpNumber'), levelUpUnlocks: document.querySelector('#levelUpUnlocks'), levelUpClose: document.querySelector('#levelUpClose'),
-  understandActivity: document.querySelector('#understandActivity'), gamesActivity: document.querySelector('#gamesActivity'), gamesBack: document.querySelector('#gamesBack'), conceptBack: document.querySelector('#conceptBack'), conceptHome: document.querySelector('#conceptHome'),
+  understandActivity: document.querySelector('#understandActivity'), malActivity: document.querySelector('#malActivity'), numbersActivity: document.querySelector('#numbersActivity'), everydayActivity: document.querySelector('#everydayActivity'), gamesBack: document.querySelector('#gamesBack'), gamesEyebrow: document.querySelector('#gamesEyebrow'), gamesTitle: document.querySelector('#gamesTitle'), gamesDescription: document.querySelector('#gamesDescription'), conceptBack: document.querySelector('#conceptBack'), conceptHome: document.querySelector('#conceptHome'),
   gamesTimesCard: document.querySelector('#gamesTimesCard'), gamesDivisionCard: document.querySelector('#gamesDivisionCard'), gamesFamilyCard: document.querySelector('#gamesFamilyCard'),
   gamesCatchCard: document.querySelector('#gamesCatchCard'), gamesCatchStatus: document.querySelector('#gamesCatchStatus'), gamesCatchLock: document.querySelector('#gamesCatchLock'),
   gamesPipeCard: document.querySelector('#gamesPipeCard'),
@@ -174,6 +174,12 @@ let pendingLeaveAction=null;
 
 function showScreen(name) {
   Object.entries(screens).forEach(([key, screen]) => screen.classList.toggle('hidden', key !== name));
+}
+
+function openGamesCategory(category) {
+  const copy={mal:['Mal & Geteilt','Rechnen, verstehen und spielen'],zahlen:['Große Zahlen','Stellenwerte bauen und Zahlensprünge entdecken'],alltag:['Rechnen im Alltag','Finde die passende Rechenart in Geschichten']}[category];
+  document.querySelectorAll('[data-game-category]').forEach(item=>item.classList.toggle('hidden',item.dataset.gameCategory!==category));
+  elements.gamesEyebrow.textContent='Mathe trainieren';elements.gamesTitle.textContent=copy[0];elements.gamesDescription.textContent=copy[1];showScreen('games');
 }
 
 function confirmLeaveGame(destination, stopAction = null) {
@@ -1728,7 +1734,7 @@ elements.chooseButton.addEventListener('click', () => showScreen('start'));
 elements.profileButton.addEventListener('click', openProfileSettings);
 elements.activityProfileButton.addEventListener('click', openProfileSettings);
 elements.understandActivity.addEventListener('click',()=>showScreen('conceptStart'));elements.conceptBack.addEventListener('click',()=>showScreen('activities'));elements.conceptHome.addEventListener('click',()=>confirmLeaveGame('conceptStart'));document.querySelectorAll('[data-concept]').forEach(button=>button.addEventListener('click',()=>startConceptGame(button.dataset.concept)));elements.conceptAction.addEventListener('click',()=>advanceConcept());elements.conceptDelete.addEventListener('click',removeConceptDigit);elements.conceptCheck.addEventListener('click',checkConceptAnswer);elements.conceptAgain.addEventListener('click',()=>startConceptGame(conceptState.operation));elements.conceptChoose.addEventListener('click',()=>showScreen('conceptStart'));
-elements.gamesActivity.addEventListener('click',()=>showScreen('games'));elements.gamesBack.addEventListener('click',()=>showScreen('activities'));
+elements.malActivity.addEventListener('click',()=>openGamesCategory('mal'));elements.numbersActivity.addEventListener('click',()=>openGamesCategory('zahlen'));elements.everydayActivity.addEventListener('click',()=>openGamesCategory('alltag'));elements.gamesBack.addEventListener('click',()=>showScreen('activities'));
 elements.gamesTimesCard.addEventListener('click', () => showScreen('start'));
 elements.gamesDivisionCard.addEventListener('click',()=>showScreen('divisionStart'));
 elements.gamesFamilyCard.addEventListener('click',()=>showScreen('familyStart'));

@@ -1400,6 +1400,13 @@ function getLevelProgress(profile) {
   const stars = profile?.areaStars?.[area] || 0;
   return { level: getLevel(profile), area, progress: stars % 20, missing: 20 - (stars % 20) };
 }
+function getSuccessProgress(profile) {
+  const level = getLevel(profile);
+  const totalStars = AREAS.reduce((sum, area) => sum + (profile?.areaStars?.[area] || 0), 0);
+  const target = level * 20 * AREAS.length;
+  const missing = AREAS.map(area => ({ area, stars: profile?.areaStars?.[area] || 0, needed: Math.max(0, level * 20 - (profile?.areaStars?.[area] || 0)) })).filter(item => item.needed > 0);
+  return { totalStars, progress: Math.min(100, totalStars / target * 100), missing };
+}
 function formatAreaStars(profile) {
   return AREAS.map(area => `★ ${AREA_NAMES[area]} ${profile?.areaStars?.[area] || 0}`).join(' · ');
 }
@@ -1530,8 +1537,9 @@ function renderProfileHeader() {
   elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':'ab Level 5';elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
   const raceUnlocked=level>=5||teacherPreview;
   elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Level 5';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
-  const{area:limitingArea,progress,missing}=getLevelProgress(profile);const nextRewards=[...EMOJIS.map(item=>({level:item.level,text:`Figur ${item.icon}`})),...THEMES.map(item=>({level:item.level,text:`Farbwelt „${item.name}“`})),...TILE_STYLES.map(item=>({level:item.level,text:`Zahlenkarten „${item.name}“`})),...GAME_REWARDS.map(item=>({level:item.level,text:`Spiel „${item.name}“`}))].filter(item=>item.level>level).sort((a,b)=>a.level-b.level);const next=nextRewards[0];
-  elements.levelAvatar.textContent=profile?.emoji||'🌟';elements.levelNow.textContent=`Level ${level}`;elements.levelRewardText.textContent=next?`Auf Level ${next.level}: ${next.text}`:'Alle bisherigen Belohnungen freigeschaltet';elements.levelProgressBar.style.width=`${progress/20*100}%`;elements.levelProgressText.textContent=`${formatAreaStars(profile)} · noch ${missing} bei ${AREA_NAMES[limitingArea]} bis Level ${level+1}`;elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
+  const success=getSuccessProgress(profile);const nextRewards=[...EMOJIS.map(item=>({level:item.level,text:`Figur ${item.icon}`})),...THEMES.map(item=>({level:item.level,text:`Farbwelt „${item.name}“`})),...TILE_STYLES.map(item=>({level:item.level,text:`Zahlenkarten „${item.name}“`})),...GAME_REWARDS.map(item=>({level:item.level,text:`Spiel „${item.name}“`}))].filter(item=>item.level>level).sort((a,b)=>a.level-b.level);const next=nextRewards[0];
+  const missingText=success.missing.length?success.missing.map(item=>`${AREA_NAMES[item.area]} ${item.needed}`).join(' · '):'alle Bereiche geschafft';
+  elements.levelAvatar.textContent=profile?.emoji||'🌟';elements.levelNow.textContent=`Level ${level}`;elements.levelRewardText.textContent=next?`Auf Level ${next.level}: ${next.text}`:'Alle bisherigen Belohnungen freigeschaltet';elements.levelProgressBar.style.width=`${success.progress}%`;elements.levelProgressText.textContent=`${success.totalStars} Sterne gesammelt · Für Level ${level+1} fehlen: ${missingText}`;elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
 }
 
 function openRewards() {

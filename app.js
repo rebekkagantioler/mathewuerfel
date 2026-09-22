@@ -22,7 +22,7 @@ const TILE_STYLES = [
 const GAME_REWARDS=[
   {name:'Einmaleins üben',icon:'✖️',level:1},{name:'Geteilt üben',icon:'➗',level:1},
   {name:'Königsaufgaben-Turm',icon:'👑',level:1},{name:'Nachbaraufgaben-Domino',icon:'🁣',level:1},{name:'Verdopplungskette',icon:'🔗',level:1},
-  {name:'Umkehraufgaben-Memory',icon:'🧩',level:1},{name:'Ladenwelt',icon:'🛒',level:1},
+  {name:'Rechenwege verbinden',icon:'🧩',level:1},{name:'Ladenwelt',icon:'🛒',level:1},
   {name:'Zahl bauen',icon:'🏗️',level:1},{name:'Tausch-Challenge',icon:'🔄',level:1},{name:'Minus-Werkstatt',icon:'✂️',level:1},
   {name:'Zahlenstrahl',icon:'📏',level:1},
   {name:'Lösungen auffangen',icon:'🧺',level:5},{name:'Tempo-Rennen',icon:'⏱️',level:5},
@@ -41,7 +41,7 @@ const screens = {
   shopWorld: document.querySelector('#shopWorldScreen'),
   shop: document.querySelector('#shopScreen'),
   shopFinish: document.querySelector('#shopFinishScreen'),
-  catch: document.querySelector('#catchScreen'), catchFinish: document.querySelector('#catchFinishScreen'),
+  catchStart: document.querySelector('#catchStartScreen'), catch: document.querySelector('#catchScreen'), catchFinish: document.querySelector('#catchFinishScreen'),
   pipe: document.querySelector('#pipeScreen'), pipeFinish: document.querySelector('#pipeFinishScreen'),
   divisionStart: document.querySelector('#divisionStartScreen'), division: document.querySelector('#divisionScreen'), divisionFinish: document.querySelector('#divisionFinishScreen'),
   teacher: document.querySelector('#teacherScreen'),
@@ -49,7 +49,7 @@ const screens = {
   conceptStart: document.querySelector('#conceptStartScreen'), concept: document.querySelector('#conceptScreen'), conceptFinish: document.querySelector('#conceptFinishScreen'),
   numberLine:document.querySelector('#numberLineScreen'),numberLineFinish:document.querySelector('#numberLineFinishScreen'),
   placeValueStart:document.querySelector('#placeValueStartScreen'),placeValue:document.querySelector('#placeValueScreen'),placeValueFinish:document.querySelector('#placeValueFinishScreen'),
-  family:document.querySelector('#familyScreen'),familyFinish:document.querySelector('#familyFinishScreen'),
+  familyStart:document.querySelector('#familyStartScreen'),family:document.querySelector('#familyScreen'),familyFinish:document.querySelector('#familyFinishScreen'),
   race:document.querySelector('#raceScreen'),raceFinish:document.querySelector('#raceFinishScreen'),
   kingTower:document.querySelector('#kingTowerScreen'),kingTowerFinish:document.querySelector('#kingTowerFinishScreen'),
   neighbor:document.querySelector('#neighborScreen'),neighborFinish:document.querySelector('#neighborFinishScreen'),
@@ -107,6 +107,7 @@ const elements = {
   shopWriteCheck: document.querySelector('#shopWriteCheck'),
   shopPreviewA: document.querySelector('#shopPreviewA'), shopPreviewB: document.querySelector('#shopPreviewB'),
   catchHome: document.querySelector('#catchHome'), catchQuestion: document.querySelector('#catchQuestion'), catchScore: document.querySelector('#catchScore'),
+  catchBack: document.querySelector('#catchBack'), catchModeGrid: document.querySelector('#catchModeGrid'), catchMixedMode: document.querySelector('#catchMixedMode'),
   catchProgress: document.querySelector('#catchProgress'), catchArena: document.querySelector('#catchArena'), fallingAnswer: document.querySelector('#fallingAnswer'),
   catchQuestionBoard: document.querySelector('#catchQuestionBoard'),
   catchBasket: document.querySelector('#catchBasket'), catchFeedback: document.querySelector('#catchFeedback'), catchFinalScore: document.querySelector('#catchFinalScore'),
@@ -138,7 +139,7 @@ const elements = {
   conceptDragArea: document.querySelector('#conceptDragArea'), conceptAppleToken: document.querySelector('#conceptAppleToken'), conceptDropZone: document.querySelector('#conceptDropZone'),
   numberLineHome:document.querySelector('#numberLineHome'),numberLineScore:document.querySelector('#numberLineScore'),numberLineProgress:document.querySelector('#numberLineProgress'),numberLineTask:document.querySelector('#numberLineTask'),numberLineHint:document.querySelector('#numberLineHint'),numberLineVisual:document.querySelector('#numberLineVisual'),numberLineFeedback:document.querySelector('#numberLineFeedback'),numberLineCheck:document.querySelector('#numberLineCheck'),numberLineFinalScore:document.querySelector('#numberLineFinalScore'),numberLineFinishText:document.querySelector('#numberLineFinishText'),numberLineAgain:document.querySelector('#numberLineAgain'),numberLineChoose:document.querySelector('#numberLineChoose'),
   placeValueBack:document.querySelector('#placeValueBack'),placeValueHome:document.querySelector('#placeValueHome'),placeValueModeTitle:document.querySelector('#placeValueModeTitle'),placeValueScore:document.querySelector('#placeValueScore'),placeValueProgress:document.querySelector('#placeValueProgress'),placeValueInstruction:document.querySelector('#placeValueInstruction'),placeValueTask:document.querySelector('#placeValueTask'),placeValueHouses:document.querySelector('#placeValueHouses'),placeValueTray:document.querySelector('#placeValueTray'),placeValueActions:document.querySelector('#placeValueActions'),placeValueReading:document.querySelector('#placeValueReading'),placeValueFeedback:document.querySelector('#placeValueFeedback'),placeValueReset:document.querySelector('#placeValueReset'),placeValueCheck:document.querySelector('#placeValueCheck'),placeValueFinalScore:document.querySelector('#placeValueFinalScore'),placeValueFinishText:document.querySelector('#placeValueFinishText'),placeValueAgain:document.querySelector('#placeValueAgain'),placeValueChoose:document.querySelector('#placeValueChoose'),
-  familyHome:document.querySelector('#familyHome'),familyPairs:document.querySelector('#familyPairs'),familyGrid:document.querySelector('#familyGrid'),familyFeedback:document.querySelector('#familyFeedback'),familyAgain:document.querySelector('#familyAgain'),familyChoose:document.querySelector('#familyChoose'),
+  familyBack:document.querySelector('#familyBack'),familyExactMode:document.querySelector('#familyExactMode'),familyRemainderMode:document.querySelector('#familyRemainderMode'),familyHome:document.querySelector('#familyHome'),familyKind:document.querySelector('#familyKind'),familyPairs:document.querySelector('#familyPairs'),familyPrompt:document.querySelector('#familyPrompt'),familySource:document.querySelector('#familySource'),familyGrid:document.querySelector('#familyGrid'),familyFeedback:document.querySelector('#familyFeedback'),familyFinishText:document.querySelector('#familyFinishText'),familyAgain:document.querySelector('#familyAgain'),familyChoose:document.querySelector('#familyChoose'),
   raceHome:document.querySelector('#raceHome'),raceTimer:document.querySelector('#raceTimer'),raceProgress:document.querySelector('#raceProgress'),raceA:document.querySelector('#raceA'),raceOperator:document.querySelector('#raceOperator'),raceB:document.querySelector('#raceB'),raceAnswerZone:document.querySelector('#raceAnswerZone'),raceDelete:document.querySelector('#raceDelete'),raceCheck:document.querySelector('#raceCheck'),raceFeedback:document.querySelector('#raceFeedback'),raceNumberTray:document.querySelector('#raceNumberTray'),raceScore:document.querySelector('#raceScore'),raceFinalScore:document.querySelector('#raceFinalScore'),raceFinishText:document.querySelector('#raceFinishText'),raceAgain:document.querySelector('#raceAgain'),raceChoose:document.querySelector('#raceChoose'),
   gamesKingTowerCard:document.querySelector('#gamesKingTowerCard'),kingTowerHome:document.querySelector('#kingTowerHome'),kingTowerScore:document.querySelector('#kingTowerScore'),kingTowerProgress:document.querySelector('#kingTowerProgress'),kingTowerA:document.querySelector('#kingTowerA'),kingTowerB:document.querySelector('#kingTowerB'),kingTowerInstruction:document.querySelector('#kingTowerInstruction'),kingTowerTiles:document.querySelector('#kingTowerTiles'),kingTowerOps:document.querySelector('#kingTowerOps'),kingTowerSum:document.querySelector('#kingTowerSum'),kingTowerCheck:document.querySelector('#kingTowerCheck'),kingTowerFeedback:document.querySelector('#kingTowerFeedback'),kingTowerFinalScore:document.querySelector('#kingTowerFinalScore'),kingTowerFinishText:document.querySelector('#kingTowerFinishText'),kingTowerAgain:document.querySelector('#kingTowerAgain'),kingTowerChoose:document.querySelector('#kingTowerChoose'),
   gamesNeighborCard:document.querySelector('#gamesNeighborCard'),neighborHome:document.querySelector('#neighborHome'),neighborScore:document.querySelector('#neighborScore'),neighborProgress:document.querySelector('#neighborProgress'),neighborKnownEquation:document.querySelector('#neighborKnownEquation'),neighborOpChoice:document.querySelector('#neighborOpChoice'),neighborTargetEquation:document.querySelector('#neighborTargetEquation'),neighborAnswerZone:document.querySelector('#neighborAnswerZone'),neighborDelete:document.querySelector('#neighborDelete'),neighborCheck:document.querySelector('#neighborCheck'),neighborFeedback:document.querySelector('#neighborFeedback'),neighborNumberTray:document.querySelector('#neighborNumberTray'),neighborFinalScore:document.querySelector('#neighborFinalScore'),neighborFinishText:document.querySelector('#neighborFinishText'),neighborAgain:document.querySelector('#neighborAgain'),neighborChoose:document.querySelector('#neighborChoose'),
@@ -162,7 +163,7 @@ let divisionState = { question:0, score:0, total:12, divisor:3, result:4, type:'
 let conceptState={operation:'+',question:0,score:0,a:3,b:2,result:5,step:0,answer:'',locked:false,retry:0,perChild:[]};
 let numberLineState={question:0,score:0,start:0,jump:0,result:0,step:10,locked:false};
 let placeValueState={mode:'build',question:0,score:0,target:0,counts:[0,0,0,0],initial:[],tradeIndex:3,locked:false};
-let familyState={cards:[],open:[],pairs:0,locked:false};
+let familyState={mode:'exact',question:0,score:0,selected:[],choices:[],locked:false};
 let raceState={score:0,timeLeft:60,a:2,b:2,operation:'*',result:4,answer:'',locked:false,timer:null,running:false};
 let kingTowerState={question:0,score:0,a:6,b:7,target:42,rule:null,tiles:[],selected:[],op:null,locked:false};
 let neighborState={question:0,score:0,a:4,b:8,target:32,helperB:7,helperResult:28,op:'+',answer:'',opChosen:null,locked:false};
@@ -183,7 +184,8 @@ function confirmLeaveGame(destination, stopAction = null) {
 
 function closeLeaveModal(){elements.leaveModal.classList.add('hidden');pendingLeaveAction=null}
 
-function flashCatchError(){
+function flashCatchError(message='⚡ Falsch gefangen!'){
+  elements.catchFlash.textContent=message;
   elements.catchFlash.classList.remove('show');
   elements.catchArena.classList.remove('wrong-catch');
   void elements.catchFlash.offsetWidth;
@@ -470,9 +472,11 @@ function checkPlaceValue(){
 }
 function resetPlaceValue(){const s=placeValueState;s.counts=[...s.initial];if(s.mode==='build')s.positions=[[],[],[],[]];elements.placeValueFeedback.textContent='Noch einmal von vorne.';elements.placeValueFeedback.className='feedback';renderPlaceValue()}
 function finishPlaceValueGame(){elements.placeValueFinalScore.textContent=placeValueState.score;elements.placeValueFinishText.textContent=`${placeValueState.score} von 6 Stellenwert-Aufgaben geschafft.`;showScreen('placeValueFinish');maybeShowLevelUp()}
-function startFamilyGame(){const used=new Set(),cards=[];while(used.size<6){const a=randomInt(2,10),b=randomInt(2,10),key=`${a}x${b}`;if(used.has(key)||used.has(`${b}x${a}`))continue;used.add(key);const result=a*b;cards.push({pair:key,text:`${a} × ${b} = ${result}`},{pair:key,text:Math.random()<.5?`${result} ÷ ${a} = ${b}`:`${result} ÷ ${b} = ${a}`})}familyState={cards:shuffled(cards),open:[],pairs:0,locked:false};elements.familyPairs.textContent='0/6';elements.familyFeedback.textContent='';showScreen('family');renderFamilyCards()}
-function renderFamilyCards(){elements.familyGrid.replaceChildren();familyState.cards.forEach((card,index)=>{const button=document.createElement('button');button.type='button';button.className=`family-card-tile${card.matched?' matched':''}${card.open?' open':''}`;button.disabled=card.matched;button.innerHTML=`<span>?</span><strong>${card.text}</strong>`;button.addEventListener('click',()=>openFamilyCard(index));elements.familyGrid.append(button)})}
-function openFamilyCard(index){const s=familyState,card=s.cards[index];if(s.locked||card.open||card.matched)return;card.open=true;s.open.push(index);renderFamilyCards();if(s.open.length<2)return;const [first,second]=s.open;if(s.cards[first].pair===s.cards[second].pair){s.cards[first].matched=s.cards[second].matched=true;s.open=[];s.pairs+=1;elements.familyPairs.textContent=`${s.pairs}/6`;elements.familyFeedback.textContent='Passt! Die Geteilt-Aufgabe macht die Mal-Aufgabe rückgängig. ✨';elements.familyFeedback.className='feedback correct';if(s.pairs===6){const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',6);addAreaStars(profile,'geteilt',6);incrementActivity('family');saveProfiles();renderProfileHeader()}return window.setTimeout(()=>{showScreen('familyFinish');maybeShowLevelUp()},700)}renderFamilyCards()}else{s.locked=true;elements.familyFeedback.textContent='Diese Ergebnisse gehören nicht zur gleichen Rechenfamilie.';elements.familyFeedback.className='feedback wrong';window.setTimeout(()=>{s.cards[first].open=s.cards[second].open=false;s.open=[];s.locked=false;renderFamilyCards()},1050)}}
+function startFamilyGame(mode='exact'){familyState={mode,question:0,score:0,selected:[],choices:[],locked:false};elements.familyPairs.textContent='0/6';elements.familyKind.textContent=mode==='exact'?'Mal ↔ Geteilt ohne Rest':'Geteilt mit Rest';showScreen('family');nextFamilyQuestion()}
+function nextFamilyQuestion(){const s=familyState;if(s.question>=6)return finishFamilyGame();s.selected=[];s.locked=false;elements.familyPairs.textContent=`${s.score}/6`;elements.familyFeedback.textContent='';elements.familyFeedback.className='feedback';if(s.mode==='exact'){const a=randomInt(2,10),b=randomInt(2,10),result=a*b;s.source=`${Array(a).fill(b).join(' + ')} = ${result}`;elements.familyPrompt.textContent='Wähle Mal-Aufgabe und Geteilt-Aufgabe, die diesen Weg beschreiben.';s.choices=shuffled([{text:`${a} × ${b} = ${result}`,correct:true,label:'Mal-Aufgabe'},{text:`${result} ÷ ${a} = ${b}`,correct:true,label:'Geteilt-Aufgabe'},{text:`${a} × ${Math.max(1,b-1)} = ${a*Math.max(1,b-1)}`,correct:false,label:'Mal-Aufgabe'},{text:`${result} ÷ ${b} = ${a+1}`,correct:false,label:'Geteilt-Aufgabe'}])}else{const divisor=randomInt(2,9),quotient=randomInt(2,9),remainder=randomInt(1,divisor-1),total=divisor*quotient+remainder;s.source=`${total} Murmeln werden auf ${divisor} Kinder verteilt. Es bleiben ${remainder} Murmel(n) übrig.`;elements.familyPrompt.textContent='Wähle die Geteilt-Aufgabe und den Malweg mit Rest.';s.choices=shuffled([{text:`${total} ÷ ${divisor} = ${quotient} Rest ${remainder}`,correct:true,label:'Geteilt-Aufgabe'},{text:`${quotient} × ${divisor} + ${remainder} = ${total}`,correct:true,label:'Malweg mit Rest'},{text:`${total} ÷ ${divisor} = ${quotient+1}`,correct:false,label:'Geteilt-Aufgabe'},{text:`${quotient} × ${divisor} = ${total}`,correct:false,label:'Malweg'}])}renderFamilyChoices()}
+function renderFamilyChoices(){elements.familyGrid.replaceChildren();familyState.choices.forEach((choice,index)=>{const button=document.createElement('button');button.type='button';button.className=`family-choice${familyState.selected.includes(index)?' selected':''}`;button.disabled=familyState.locked;button.innerHTML=`<small>${choice.label}</small><strong>${choice.text}</strong>`;button.addEventListener('click',()=>chooseFamilyPath(index));elements.familyGrid.append(button)})}
+function chooseFamilyPath(index){const s=familyState;if(s.locked||s.selected.includes(index))return;s.selected.push(index);renderFamilyChoices();if(s.selected.length<2)return;const correct=s.selected.every(choiceIndex=>s.choices[choiceIndex].correct);if(correct){s.locked=true;s.score+=1;s.question+=1;elements.familyPairs.textContent=`${s.score}/6`;elements.familyFeedback.textContent='Genau, diese beiden Wege gehören zusammen! ✨';elements.familyFeedback.className='feedback correct';const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',1);addAreaStars(profile,'geteilt',1);incrementActivity('family');saveProfiles();renderProfileHeader()}window.setTimeout(nextFamilyQuestion,850)}else{s.locked=true;elements.familyFeedback.textContent='Schau noch einmal: Beide Karten müssen genau dieselbe Rechengeschichte beschreiben.';elements.familyFeedback.className='feedback wrong';window.setTimeout(()=>{s.selected=[];s.locked=false;renderFamilyChoices()},1100)}}
+function finishFamilyGame(){elements.familyFinishText.textContent=familyState.mode==='exact'?`${familyState.score} von 6 Rechenfamilien ohne Rest verbunden.`:`${familyState.score} von 6 Rechenwege mit Rest richtig verbunden.`;showScreen('familyFinish');maybeShowLevelUp()}
 
 function startRaceGame(){
   if(!getProfile())return showProfileSelection();
@@ -688,6 +692,7 @@ for (let row = 1; row <= 10; row += 1) {
 }
 
 for(let divisor=1;divisor<=10;divisor+=1){const button=document.createElement('button');button.type='button';button.className='mode-button';button.innerHTML=`÷ ${divisor}<small>durch ${divisor}</small>`;button.addEventListener('click',()=>startDivisionGame(divisor));elements.divisionModeGrid.append(button)}
+for(let row=1;row<=10;row+=1){const button=document.createElement('button');button.type='button';button.className='mode-button';button.innerHTML=`${row}<small>er-Reihe</small>`;button.setAttribute('aria-label',`${row}er-Reihe auffangen`);button.addEventListener('click',()=>startCatchGame(row));elements.catchModeGrid.append(button)}
 
 for (let digit = 0; digit <= 9; digit += 1) {
   const tile = document.createElement('button');
@@ -905,10 +910,10 @@ function finishShopGame() {
   maybeShowLevelUp();
 }
 
-function startCatchGame() {
+function startCatchGame(mode='mixed') {
   if (getLevel(getProfile()) < 5 && !teacherPreview) return;
   clearCatchBubbles();cancelAnimationFrame(catchState.frame);
-  catchState = { question: 0, score: 0, a: 2, b: 2, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: true, mistake: false, bubbles: [] };
+  catchState = { question: 0, score: 0, a: 2, b: 2, mode, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: true, mistake: false, bubbles: [] };
   elements.catchScore.textContent = '0'; elements.catchProgress.style.width = '0%';
   showScreen('catch');
   requestAnimationFrame(() => {
@@ -918,11 +923,13 @@ function startCatchGame() {
 }
 
 function nextCatchWaveQuestion(){
-  if(!catchState.running)return;if(catchState.question>=10)return finishCatchGame();clearCatchBubbles();const previous=state.mode;state.mode='mixed';[catchState.a,catchState.b]=chooseAdaptiveFact();state.mode=previous;catchState.mistake=false;elements.catchQuestion.textContent=`${catchState.a} × ${catchState.b}`;elements.catchQuestionBoard.textContent=`${catchState.a} × ${catchState.b} = ?`;elements.catchFeedback.textContent='Fange nur die richtige Lösung!';spawnCatchWave();
+  if(!catchState.running)return;if(catchState.question>=10)return finishCatchGame();clearCatchBubbles();const previous=state.mode;state.mode=catchState.mode;[catchState.a,catchState.b]=chooseAdaptiveFact();state.mode=previous;catchState.mistake=false;elements.catchQuestion.textContent=`${catchState.a} × ${catchState.b}`;elements.catchQuestionBoard.textContent=`${catchState.a} × ${catchState.b} = ?`;elements.catchFeedback.textContent='Fange nur die richtige Lösung – die Bombe nicht!';spawnCatchWave();
 }
-function spawnCatchWave(){clearCatchBubbles();const correct=catchState.a*catchState.b;const values=new Set([correct]);while(values.size<4)values.add(Math.max(1,correct+randomInt(-12,12)));const width=elements.catchArena.clientWidth;const laneWidth=width/4;shuffled([...values]).forEach((value,index)=>{const node=document.createElement('div');node.className='falling-answer multi-answer';node.textContent=value;elements.catchArena.append(node);const bubble={node,value,correct:value===correct,x:index*laneWidth+(laneWidth-62)/2,y:-80-randomInt(0,125),speed:.15+randomInt(0,4)/100+catchState.question*.005};node.style.left=`${bubble.x}px`;node.style.top=`${bubble.y}px`;catchState.bubbles.push(bubble)});catchState.lastTime=performance.now();cancelAnimationFrame(catchState.frame);catchState.frame=requestAnimationFrame(animateCatchWave)}
-function animateCatchWave(time){if(!catchState.running||screens.catch.classList.contains('hidden'))return;const delta=Math.min(40,time-catchState.lastTime);catchState.lastTime=time;const line=elements.catchArena.clientHeight-95;for(const bubble of [...catchState.bubbles]){bubble.y+=delta*bubble.speed;bubble.node.style.top=`${bubble.y}px`;if(bubble.y+60>=line&&bubble.y<=line+48&&Math.abs((bubble.x+31)-(catchState.basketX+38))<50){if(bubble.correct)return catchCorrectWave();catchState.mistake=true;flashCatchError();elements.catchFeedback.textContent=`${bubble.value} passt nicht – weiter auf die Aufgabe schauen!`;removeCatchBubble(bubble)}else if(bubble.y>elements.catchArena.clientHeight)removeCatchBubble(bubble)}if(!catchState.bubbles.length){elements.catchFeedback.textContent='Die richtige Lösung ist vorbeigefallen – neue Welle!';return window.setTimeout(spawnCatchWave,350)}catchState.frame=requestAnimationFrame(animateCatchWave)}
+function spawnCatchWave(){clearCatchBubbles();const correct=catchState.a*catchState.b;const hasBomb=Math.random()<.65;const values=new Set([correct]);while(values.size<(hasBomb?3:4))values.add(Math.max(1,correct+randomInt(-12,12)));const drops=shuffled([...values].map(value=>({value,correct:value===correct,bomb:false})).concat(hasBomb?[{value:'💣',correct:false,bomb:true}]:[]));const width=elements.catchArena.clientWidth;const laneWidth=width/drops.length;drops.forEach((drop,index)=>{const node=document.createElement('div');node.className=`falling-answer multi-answer${drop.bomb?' bomb':''}`;node.textContent=drop.value;elements.catchArena.append(node);const bubble={node,...drop,x:index*laneWidth+(laneWidth-62)/2,y:-80-randomInt(0,125),speed:.15+randomInt(0,4)/100+catchState.question*.005};node.style.left=`${bubble.x}px`;node.style.top=`${bubble.y}px`;catchState.bubbles.push(bubble)});catchState.lastTime=performance.now();cancelAnimationFrame(catchState.frame);catchState.frame=requestAnimationFrame(animateCatchWave)}
+function bubbleIsInBasket(bubble){const basketTop=elements.catchArena.clientHeight-79;const basketMouth=basketTop+30;const bubbleCenter=bubble.y+31;return bubbleCenter>=basketMouth&&bubbleCenter<=basketMouth+30&&Math.abs((bubble.x+31)-(catchState.basketX+38))<50}
+function animateCatchWave(time){if(!catchState.running||screens.catch.classList.contains('hidden'))return;const delta=Math.min(40,time-catchState.lastTime);catchState.lastTime=time;for(const bubble of [...catchState.bubbles]){bubble.y+=delta*bubble.speed;bubble.node.style.top=`${bubble.y}px`;if(bubbleIsInBasket(bubble)){if(bubble.correct)return catchCorrectWave();return failCatchWave(bubble.bomb?'💣 Die Bombe darf nicht in den Korb!':`${bubble.value} passt nicht zur Aufgabe!`)}else if(bubble.y>elements.catchArena.clientHeight)removeCatchBubble(bubble)}if(!catchState.bubbles.length){elements.catchFeedback.textContent='Die richtige Lösung ist vorbeigefallen – neue Welle!';return window.setTimeout(spawnCatchWave,350)}catchState.frame=requestAnimationFrame(animateCatchWave)}
 function catchCorrectWave(){catchState.question+=1;catchState.score+=1;const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'mal',1);saveProfiles();renderProfileHeader()}incrementActivity('catch');rememberCatchFact();elements.catchScore.textContent=catchState.score;elements.catchProgress.style.width=`${catchState.question*10}%`;elements.catchFeedback.textContent='Richtig aufgefangen! ✨';clearCatchBubbles();window.setTimeout(nextCatchWaveQuestion,400)}
+function failCatchWave(message){catchState.question+=1;catchState.mistake=true;rememberCatchFact(false);elements.catchProgress.style.width=`${catchState.question*10}%`;flashCatchError(message);elements.catchFeedback.textContent=`${message} Diese Aufgabe zählt leider nicht.`;clearCatchBubbles();window.setTimeout(nextCatchWaveQuestion,700)}
 function removeCatchBubble(bubble){bubble.node.remove();catchState.bubbles=catchState.bubbles.filter(item=>item!==bubble)}
 function clearCatchBubbles(){catchState.bubbles.forEach(bubble=>bubble.node.remove());catchState.bubbles=[];cancelAnimationFrame(catchState.frame)}
 
@@ -978,11 +985,13 @@ function missBubble() {
   launchCatchAnswer();
 }
 
-function rememberCatchFact() {
+function rememberCatchFact(correct=true) {
   if(teacherPreview)return;
   const profile = getProfile(); if (!profile) return;
   const key = factKey(catchState.a, catchState.b); profile.facts[key] ||= { attempts:0, correct:0, wrong:0 };
-  profile.facts[key].attempts += 1; profile.facts[key].correct += 1; saveProfiles();
+  profile.facts[key].attempts += 1;
+  if(correct)profile.facts[key].correct += 1;else profile.facts[key].wrong += 1;
+  saveProfiles();
 }
 
 function moveBasket(x) {
@@ -992,7 +1001,7 @@ function moveBasket(x) {
 
 function finishCatchGame() {
   catchState.running = false; clearCatchBubbles(); cancelAnimationFrame(catchState.frame);
-  elements.catchFinalScore.textContent = catchState.score; elements.catchFinishText.textContent = 'Du hast zehn richtige Lösungen sicher in den Korb gebracht.';
+  elements.catchFinalScore.textContent = catchState.score; elements.catchFinishText.textContent = catchState.score===10?'Du hast alle zehn Lösungen sicher in den Korb gebracht!':`Du hast ${catchState.score} von 10 Lösungen richtig gefangen. Beim nächsten Mal schaffst du noch mehr!`;
   showScreen('catchFinish');
   maybeShowLevelUp();
 }
@@ -1331,7 +1340,7 @@ function renderStudentAssignment() {
   const profile = getProfile(); const assignment = profile?.assignment;
   elements.studentAssignment.classList.toggle('hidden', !assignment);
   if (!assignment) return;
-  const names = { multiplication:'Einmaleins gemischt', division:'Geteilt rechnen', shop:'Einkaufsgeschichten', catch:'Lösungen auffangen', family:'Umkehraufgaben-Memory', placeValue:'Stellenwert-Werkstatt bis 10.000', numberLine:'Zahlenstrahl-Sprünge', race:'Tempo-Rennen', kingTower:'Königsaufgaben-Turm', neighbor:'Nachbaraufgaben-Domino', doubleChain:'Verdopplungskette' };
+  const names = { multiplication:'Einmaleins gemischt', division:'Geteilt rechnen', shop:'Einkaufsgeschichten', catch:'Lösungen auffangen', family:'Rechenwege verbinden', placeValue:'Stellenwert-Werkstatt bis 10.000', numberLine:'Zahlenstrahl-Sprünge', race:'Tempo-Rennen', kingTower:'Königsaufgaben-Turm', neighbor:'Nachbaraufgaben-Domino', doubleChain:'Verdopplungskette' };
   const current = profile.activityCounts?.[assignment.activity] || 0;
   const done = Math.min(assignment.target, Math.max(0, current - assignment.baseline));
   elements.assignmentTitle.textContent = assignment.note || names[assignment.activity];
@@ -1714,8 +1723,8 @@ elements.understandActivity.addEventListener('click',()=>showScreen('conceptStar
 elements.gamesActivity.addEventListener('click',()=>showScreen('games'));elements.gamesBack.addEventListener('click',()=>showScreen('activities'));
 elements.gamesTimesCard.addEventListener('click', () => showScreen('start'));
 elements.gamesDivisionCard.addEventListener('click',()=>showScreen('divisionStart'));
-elements.gamesFamilyCard.addEventListener('click',startFamilyGame);
-elements.gamesCatchCard.addEventListener('click',startCatchGame);
+elements.gamesFamilyCard.addEventListener('click',()=>showScreen('familyStart'));
+elements.gamesCatchCard.addEventListener('click',()=>showScreen('catchStart'));
 elements.gamesPipeCard.addEventListener('click',startPipeGame);
 elements.gamesRaceCard.addEventListener('click',startRaceGame);
 elements.gamesShopCard.addEventListener('click', openShopWorld);
@@ -1723,7 +1732,7 @@ elements.gamesPlaceValueCard.addEventListener('click', openPlaceValueWorkshop);
 elements.gamesNumberLineCard.addEventListener('click', startNumberLineGame);
 elements.numberLineHome.addEventListener('click',()=>confirmLeaveGame('games'));elements.numberLineCheck.addEventListener('click',checkNumberLine);elements.numberLineAgain.addEventListener('click',startNumberLineGame);elements.numberLineChoose.addEventListener('click',()=>showScreen('games'));
 elements.placeValueBack.addEventListener('click',()=>showScreen('games'));elements.placeValueHome.addEventListener('click',()=>confirmLeaveGame('placeValueStart'));document.querySelectorAll('[data-place-mode]').forEach(button=>button.addEventListener('click',()=>startPlaceValueGame(button.dataset.placeMode)));elements.placeValueReset.addEventListener('click',resetPlaceValue);elements.placeValueCheck.addEventListener('click',checkPlaceValue);elements.placeValueAgain.addEventListener('click',()=>startPlaceValueGame(placeValueState.mode));elements.placeValueChoose.addEventListener('click',openPlaceValueWorkshop);
-elements.familyHome.addEventListener('click',()=>confirmLeaveGame('games'));elements.familyAgain.addEventListener('click',startFamilyGame);elements.familyChoose.addEventListener('click',()=>showScreen('games'));
+elements.familyBack.addEventListener('click',()=>showScreen('games'));elements.familyExactMode.addEventListener('click',()=>startFamilyGame('exact'));elements.familyRemainderMode.addEventListener('click',()=>startFamilyGame('remainder'));elements.familyHome.addEventListener('click',()=>confirmLeaveGame('familyStart'));elements.familyAgain.addEventListener('click',()=>startFamilyGame(familyState.mode));elements.familyChoose.addEventListener('click',()=>showScreen('familyStart'));
 elements.backToActivities.addEventListener('click', () => showScreen('games'));
 elements.leaveShopButton.addEventListener('click', () => showScreen('games'));
 elements.shopHomeButton.addEventListener('click',()=>confirmLeaveGame('shopWorld',openShopWorld));
@@ -1735,7 +1744,8 @@ elements.shopWriteCheck.addEventListener('click', checkWrittenEquation);
 elements.shopAgain.addEventListener('click', startShopGame);
 elements.shopChoose.addEventListener('click', () => showScreen('games'));
 elements.catchHome.addEventListener('click', () => confirmLeaveGame('games',()=>{catchState.running=false;clearCatchBubbles();cancelAnimationFrame(catchState.frame)}));
-elements.catchAgain.addEventListener('click', startCatchGame);
+elements.catchBack.addEventListener('click',()=>showScreen('games'));elements.catchMixedMode.addEventListener('click',()=>startCatchGame('mixed'));
+elements.catchAgain.addEventListener('click', () => startCatchGame(catchState.mode));
 elements.catchChoose.addEventListener('click', () => showScreen('games'));
 elements.pipeHome.addEventListener('click', () => confirmLeaveGame('games',()=>{pipeState.running=false;clearPipeBubbles()}));
 elements.pipeAgain.addEventListener('click', startPipeGame);

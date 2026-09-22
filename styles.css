@@ -12,7 +12,9 @@
 body {
   margin: 0;
   min-height: 100vh;
+  height: 100dvh;
   overflow-x: hidden;
+  overflow-y: hidden;
   overscroll-behavior: none;
   touch-action: manipulation;
   background:
@@ -39,8 +41,8 @@ button { font: inherit; }
 .shape-one { width: 260px; height: 260px; background: rgba(146, 119, 255, .1); top: -120px; right: -70px; }
 .shape-two { width: 220px; height: 220px; background: rgba(255, 175, 101, .12); bottom: -110px; left: -70px; }
 
-.app-shell { width: min(920px, 100%); min-height: 100vh; margin: 0 auto; padding: 42px 24px; position: relative; }
-.screen { animation: appear .35s ease both; }
+.app-shell { width: min(920px, 100%); height: 100dvh; min-height: 0; margin: 0 auto; padding: clamp(14px,4vh,42px) clamp(14px,3vw,24px); position: relative; overflow: hidden; }
+.screen { height:100%; max-height:100%; animation: appear .35s ease both; overflow:hidden; }
 @keyframes appear { from { opacity: 0; transform: translateY(10px); } }
 
 .hero { text-align: center; }
@@ -299,3 +301,15 @@ body.tiles-rainbow .number-tile:nth-child(3n+1) { background:#fff0f4;border-bott
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+@media (max-width: 600px) {
+  .games-grid{grid-template-columns:repeat(2,1fr);gap:9px}.games-grid .activity-card{min-height:108px;padding:11px;border-radius:18px}.games-grid .activity-picture{width:40px;height:40px;margin-bottom:7px;border-radius:12px;font-size:1.35rem}.games-grid .activity-card small{font-size:.48rem}.games-grid .activity-card strong{font-size:.78rem;margin:2px 0}.games-grid .activity-card em{display:none}.games-grid .activity-card b{font-size:.9rem}.games-grid .game-group-heading{margin:4px 0 -1px;padding:7px 9px}
+}
+
+@media (min-width: 601px) {
+  .games-grid{grid-template-columns:repeat(3,1fr);gap:12px}.games-grid .activity-card{min-height:150px;padding:17px}.games-grid .activity-picture{width:52px;height:52px;margin-bottom:12px;font-size:1.75rem}.games-grid .activity-card strong{font-size:1rem}.games-grid .activity-card em{font-size:.66rem}
+}
+
+@media (max-height: 760px) {
+  .activity-header{margin:16px 0 14px}.activity-header h1{font-size:clamp(1.65rem,5vw,2.4rem)}.activity-header>p:last-child{margin:7px 0;font-size:.78rem}.level-overview{margin-bottom:10px}.activity-card{min-height:120px;padding:14px}.activity-picture{width:48px;height:48px;margin-bottom:9px;font-size:1.55rem}.activity-card strong{font-size:1rem}.activity-card em{font-size:.64rem}.games-grid .activity-card{min-height:88px}.profile-welcome .welcome-mark{width:48px;height:48px;margin-bottom:8px}.profile-welcome>p:last-child{margin:7px 0 14px}.profile-select-grid{gap:12px}.profile-select .avatar-circle{width:64px;height:64px;font-size:2rem}.add-profile-button{margin-top:14px}.finish-screen{margin:0 auto;padding:24px}.finish-stars{margin-bottom:10px}.result-circle{width:104px;height:104px;margin:16px auto;border-width:7px;outline-width:4px}.result-circle span{font-size:2.4rem}.catch-arena{height:calc(100dvh - 210px);min-height:290px}.pipe-arena{min-height:260px;height:calc(100dvh - 250px);padding:11px;gap:8px}.pipe-column{min-height:75px}.pipe-question-board{margin:4px auto 8px;padding:10px;font-size:clamp(1.7rem,7vw,2.5rem)}.progress-track{margin:12px 0}.family-panel,.place-value-panel,.number-line-panel{margin-top:8px;padding:15px}.number-line-visual{margin:35px 8px}.division-card-panel{padding-bottom:14px}.division-objects{min-height:95px;margin-bottom:12px;padding:12px}
+}

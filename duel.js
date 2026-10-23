@@ -43,6 +43,14 @@ function makeDuelTasks(rows){
   }
   return shuffled(pool).slice(0,10);
 }
+function makeDuelTaskOrders(tasks){
+  const second=[...tasks];
+  // Sattolo's shuffle changes every position while keeping exactly the same tasks.
+  for(let i=second.length-1;i>0;i--){
+    const j=randomInt(0,i-1);[second[i],second[j]]=[second[j],second[i]];
+  }
+  return [[...tasks],second];
+}
 function makeDuelLandscape(){
   const objects=[];
   for(let row=-1;row<17;row++)for(let column=-1;column<12;column++){
@@ -65,7 +73,8 @@ function startDuel(){if(requestRows('duel',beginDuel))return;beginDuel()}
 function beginDuel(){
   stopDuel();
   duelState.tasks=makeDuelTasks(activeRows);
-  duelState.players=[0,1].map(()=>({step:0,answer:'',phase:'driving',x:130,y:1180,heading:0,speed:0,progress:0,controls:{up:new Set(),down:new Set(),left:new Set(),right:new Set()},feedback:'Gas halten und selbst durch die Kurven lenken.'}));
+  const orders=makeDuelTaskOrders(duelState.tasks);
+  duelState.players=[0,1].map(index=>({tasks:orders[index],step:0,answer:'',phase:'driving',x:130,y:1180,heading:0,speed:0,progress:0,controls:{up:new Set(),down:new Set(),left:new Set(),right:new Set()},feedback:'Gas halten und selbst durch die Kurven lenken.'}));
   duelState.running=true;duelState.lastTime=0;
   document.querySelector('#duelResult').classList.add('hidden');
   const container=document.querySelector('#duelPlayers');container.replaceChildren();
@@ -117,7 +126,7 @@ function renderDuelPlayer(index){
   panel.querySelector('.duel-count').textContent=`${player.step} / 10`;
   panel.querySelector('.duel-question').classList.toggle('hidden',!atGate);
   // Do not reveal the next multiplication until the car reaches its gate.
-  const task=atGate?duelState.tasks[player.step]:null;
+  const task=atGate?player.tasks[player.step]:null;
   panel.querySelector('.duel-task').textContent=task?`${task.a} × ${task.b} =`:'';
   panel.querySelector('.duel-answer').textContent=atGate?(player.answer||'?'):'';
   panel.querySelector('.duel-feedback').textContent=player.feedback;
@@ -157,7 +166,7 @@ function duelInput(index,key){
     renderDuelPlayer(index);return;
   }
   if(!player.answer)return;
-  const task=duelState.tasks[player.step];
+  const task=player.tasks[player.step];
   if(Number(player.answer)!==task.a*task.b){
     const distance=player.step===0?0:DUEL_COURSE.gates[player.step-1]+30;
     const previous=duelCoursePoint(distance);

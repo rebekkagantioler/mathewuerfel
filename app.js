@@ -1936,7 +1936,7 @@ function requestRows(key,start,initial=null){
     label.append(input,text);document.querySelector('#rowsOptions').append(label);
   }
   document.querySelector('#rowsError').textContent='';
-  document.querySelector('#rowsDescription').textContent=key==='duel'?'Steuert selbst durch den Parcours: Gas halten und mit Links/Rechts lenken. Erst an einer Schranke erscheint die Malaufgabe. Beide fahren dieselbe Strecke mit denselben zehn unterschiedlichen Aufgaben. Bei einer falschen Antwort geht es zur vorherigen Schranke zurück.':'Wähle eine oder mehrere Reihen. Nur diese Reihen kommen vor. Bei gemischten Spielen gilt die Auswahl auch für passende Geteilt-Aufgaben.';
+  document.querySelector('#rowsDescription').textContent=key==='duel'?'Steuert selbst durch den Parcours: Gas halten und mit Links/Rechts lenken. Erst an einer Schranke erscheint die Malaufgabe. Beide fahren dieselbe Strecke mit denselben zehn unterschiedlichen Aufgaben, aber in unterschiedlicher Reihenfolge. Bei einer falschen Antwort geht es zur vorherigen Schranke zurück.':'Wähle eine oder mehrere Reihen. Nur diese Reihen kommen vor. Bei gemischten Spielen gilt die Auswahl auch für passende Geteilt-Aufgaben.';
   pendingRowsStart=()=>{
     const rows=[...dialog.querySelectorAll('input:checked')].map(input=>Number(input.value));
     if(!rows.length){document.querySelector('#rowsError').textContent='Wähle mindestens eine Malreihe aus.';return}

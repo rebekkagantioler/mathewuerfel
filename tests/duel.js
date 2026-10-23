@@ -4,6 +4,10 @@ return (()=>{try {
    const tasks=makeDuelTasks(rows),keys=tasks.map(t=>[t.a,t.b].sort((a,b)=>a-b).join('x'));
    assert(tasks.length===10&&new Set(keys).size===10,'Duplicate multiplication');
    assert(tasks.every(t=>rows.includes(t.a)&&t.b>=1&&t.b<=10),'Disallowed row');
+   const orders=makeDuelTaskOrders(tasks),key=t=>`${t.a}x${t.b}`;
+   assert(orders.every(order=>order.map(key).sort().join(',')===tasks.map(key).sort().join(',')),'Different task sets');
+   assert(orders[0].every((task,i)=>key(task)!==key(orders[1][i])),'Same task at same checkpoint');
+   assert(new Set(orders[1].map(key)).size===10,'Order introduced repeats');
  }
  assert(DUEL_LANDSCAPE.length>30&&new Set(DUEL_LANDSCAPE.map(item=>item.type)).size===3,'Scenery missing');
  assert(DUEL_LANDSCAPE.every(item=>projectDuelPosition(item.x,item.y).distance>=DUEL_ROAD_WIDTH/2+38),'Scenery blocks road');
@@ -39,7 +43,7 @@ return (()=>{try {
  let frames=0,gateChecks=0;const testedPenalties=new Set();
  while(duelState.running&&frames<30000){
    if(p.phase==='question'){
-     const stopped={x:p.x,y:p.y};const task=duelState.tasks[p.step];
+     const stopped={x:p.x,y:p.y};const task=p.tasks[p.step];
      if(gateChecks===0&&!testedPenalties.has(0)){
        const buttons=[...panel.querySelectorAll('.duel-keypad button')];
        const buttonFor=key=>buttons.find(button=>button.textContent===key);
@@ -60,7 +64,7 @@ return (()=>{try {
        duelInput(0,'9');duelInput(0,'9');duelInput(0,'9');duelInput(0,'Prüfen');
        const previous=DUEL_COURSE.gates[3]+30;
        assert(p.step===4&&p.progress===previous&&p.phase==='driving'&&p.speed===0,'Did not return to previous solved gate');
-       assert(duelState.tasks[p.step]===task,'Penalty changed the unresolved task');
+       assert(p.tasks[p.step]===task,'Penalty changed the unresolved task');
        const reset={x:p.x,y:p.y};for(let i=0;i<100;i++)updateDuelPlayer(0,.01);
        assert(p.x===reset.x&&p.y===reset.y,'Penalty started automatic driving');
        duelInput(0,'2');assert(p.answer==='','Could answer before returning to gate');

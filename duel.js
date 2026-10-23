@@ -35,6 +35,26 @@ function projectDuelPosition(x,y){
   }
   return nearest;
 }
+function makeDuelTasks(rows){
+  const pool=[],seen=new Set();
+  for(const a of rows)for(let b=1;b<=10;b++){
+    const key=[a,b].sort((x,y)=>x-y).join('×');
+    if(!seen.has(key)){seen.add(key);pool.push({a,b})}
+  }
+  return shuffled(pool).slice(0,10);
+}
+function makeDuelLandscape(){
+  const objects=[];
+  for(let row=-1;row<17;row++)for(let column=-1;column<12;column++){
+    const seed=((row+3)*73856093^(column+3)*19349663)>>>0;
+    const x=column*90+(seed%43)-21,y=row*90+((seed>>>7)%43)-21;
+    if(projectDuelPosition(x,y).distance<DUEL_ROAD_WIDTH/2+38)continue;
+    const type=seed%10<6?'tree':seed%10<8?'flowers':'rock';
+    objects.push({x,y,type,size:19+(seed%12),variant:seed%3});
+  }
+  return objects;
+}
+const DUEL_LANDSCAPE=makeDuelLandscape();
 function stopDuel(){
   duelState.running=false;cancelAnimationFrame(duelState.frame);clearDuelControls();
 }
@@ -44,7 +64,7 @@ function clearDuelControls(){
 function startDuel(){if(requestRows('duel',beginDuel))return;beginDuel()}
 function beginDuel(){
   stopDuel();
-  duelState.tasks=Array.from({length:10},()=>({a:pickRow(),b:randomInt(1,10)}));
+  duelState.tasks=makeDuelTasks(activeRows);
   duelState.players=[0,1].map(()=>({step:0,answer:'',phase:'driving',x:130,y:1180,heading:0,speed:0,progress:0,controls:{up:new Set(),down:new Set(),left:new Set(),right:new Set()},feedback:'Gas halten und selbst durch die Kurven lenken.'}));
   duelState.running=true;duelState.lastTime=0;
   document.querySelector('#duelResult').classList.add('hidden');
@@ -138,7 +158,15 @@ function duelInput(index,key){
   }
   if(!player.answer)return;
   const task=duelState.tasks[player.step];
-  if(Number(player.answer)!==task.a*task.b){player.answer='';player.feedback='Noch einmal! Die Schranke bleibt zu.';renderDuelPlayer(index);return}
+  if(Number(player.answer)!==task.a*task.b){
+    const distance=player.step===0?0:DUEL_COURSE.gates[player.step-1]+30;
+    const previous=duelCoursePoint(distance);
+    player.x=previous.x;player.y=previous.y;player.heading=previous.angle;player.progress=distance;
+    player.answer='';player.phase='driving';player.speed=0;
+    Object.values(player.controls).forEach(control=>control.clear());
+    player.feedback=player.step===0?'Nicht richtig: zurück zum Start! Fahre noch einmal zur ersten Schranke.':`Nicht richtig: zurück zu Schranke ${player.step}! Fahre wieder zu Schranke ${player.step+1}.`;
+    renderDuelPlayer(index);drawDuel();return;
+  }
   player.step++;player.answer='';player.phase='driving';player.speed=0;
   Object.values(player.controls).forEach(control=>control.clear());
   player.feedback=player.step===10?'Alle Schranken offen! Fahre selbst bis zur Zielflagge.':'Schranke offen! Gib Gas und lenke zur nächsten.';
@@ -171,9 +199,30 @@ function drawDuelCourse(player,index){
   ctx.fillStyle='#9fca80';ctx.fillRect(0,0,width,height);
   const zoom=Math.max(.5,Math.min(1.15,width/380));
   ctx.save();ctx.translate(width/2,height/2);ctx.scale(zoom,zoom);ctx.translate(-player.x-Math.cos(player.heading)*65,-player.y-Math.sin(player.heading)*65);
-  ctx.strokeStyle='#8db66f';ctx.lineWidth=1;
-  for(let x=0;x<1000;x+=90){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,1400);ctx.stroke()}
-  for(let y=0;y<1400;y+=90){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1000,y);ctx.stroke()}
+  const cameraX=player.x+Math.cos(player.heading)*65,cameraY=player.y+Math.sin(player.heading)*65;
+  // Both tracks share the same scenery, kept clear of the drivable road.
+  for(const item of DUEL_LANDSCAPE){
+    if(Math.abs(item.x-cameraX)>width/zoom/2+50||Math.abs(item.y-cameraY)>height/zoom/2+50)continue;
+    ctx.save();ctx.translate(item.x,item.y);
+    if(item.type==='tree'){
+      ctx.fillStyle='#44784a35';ctx.beginPath();ctx.ellipse(9,12,item.size+4,item.size*.7,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#8b6040';ctx.fillRect(-4,0,8,item.size+7);
+      ctx.fillStyle=['#377d4c','#438b47','#598b41'][item.variant];ctx.beginPath();ctx.arc(0,-4,item.size,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ffffff18';ctx.beginPath();ctx.arc(-7,-11,item.size*.55,0,Math.PI*2);ctx.fill();
+    }else if(item.type==='flowers'){
+      for(let flower=0;flower<4;flower++){
+        const x=(flower%2)*14-7,y=Math.floor(flower/2)*14-7;
+        ctx.fillStyle=['#fff7d0','#e8d3f5','#f4a7b1'][item.variant];
+        for(let petal=0;petal<5;petal++){const angle=petal*Math.PI*2/5;ctx.beginPath();ctx.arc(x+Math.cos(angle)*4,y+Math.sin(angle)*4,3,0,Math.PI*2);ctx.fill()}
+        ctx.fillStyle='#eebf43';ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();
+      }
+    }else{
+      ctx.fillStyle='#5e785526';ctx.beginPath();ctx.ellipse(4,7,17,10,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#9ca8a0';ctx.beginPath();ctx.ellipse(0,0,14,10,-.3,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#c5cfc1';ctx.beginPath();ctx.ellipse(-3,-4,8,4,-.3,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+  }
   ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();DUEL_COURSE.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
   ctx.strokeStyle='#f7edce';ctx.lineWidth=DUEL_ROAD_WIDTH+10;ctx.stroke();ctx.strokeStyle='#59636f';ctx.lineWidth=DUEL_ROAD_WIDTH;ctx.stroke();
   ctx.strokeStyle='#f5f0cf';ctx.lineWidth=3;ctx.setLineDash([17,19]);ctx.stroke();ctx.setLineDash([]);

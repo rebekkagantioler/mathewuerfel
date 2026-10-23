@@ -1,5 +1,12 @@
 return (()=>{try {
  const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
+ for(const rows of [[1],[3],[3,7],Array.from({length:10},(_,i)=>i+1)])for(let round=0;round<100;round++){
+   const tasks=makeDuelTasks(rows),keys=tasks.map(t=>[t.a,t.b].sort((a,b)=>a-b).join('x'));
+   assert(tasks.length===10&&new Set(keys).size===10,'Duplicate multiplication');
+   assert(tasks.every(t=>rows.includes(t.a)&&t.b>=1&&t.b<=10),'Disallowed row');
+ }
+ assert(DUEL_LANDSCAPE.length>30&&new Set(DUEL_LANDSCAPE.map(item=>item.type)).size===3,'Scenery missing');
+ assert(DUEL_LANDSCAPE.every(item=>projectDuelPosition(item.x,item.y).distance>=DUEL_ROAD_WIDTH/2+38),'Scenery blocks road');
  activeRows=[3,7];
  profiles=[{id:'test',name:'Test',emoji:'🌟',facts:{},areaStars:Object.fromEntries(AREAS.map(a=>[a,0]))}];activeProfileId='test';teacherPreview=true;
  launchingRows=true;
@@ -29,28 +36,35 @@ return (()=>{try {
  document.dispatchEvent(new KeyboardEvent('keyup',{key:'w',bubbles:true}));const released=p.x;updateDuelPlayer(0,.03);assert(p.x===released,'Car kept driving after gas release');
  const initialHeading=p.heading;setDuelControl(0,'up','test',true);setDuelControl(0,'left','test',true);updateDuelPlayer(0,.02);assert(p.heading!==initialHeading,'Steering did not turn car');clearDuelControls();
  // Follow the real road using steering and gas, not scripted position changes.
- let frames=0,gateChecks=0;
+ let frames=0,gateChecks=0;const testedPenalties=new Set();
  while(duelState.running&&frames<30000){
    if(p.phase==='question'){
      const stopped={x:p.x,y:p.y};const task=duelState.tasks[p.step];
-     if(gateChecks===0){
+     if(gateChecks===0&&!testedPenalties.has(0)){
        const buttons=[...panel.querySelectorAll('.duel-keypad button')];
        const buttonFor=key=>buttons.find(button=>button.textContent===key);
        const touch=key=>buttonFor(key).dispatchEvent(new PointerEvent('pointerdown',{pointerId:201,pointerType:'touch',isPrimary:false,bubbles:true,cancelable:true}));
        setDuelControl(1,'up','held-finger',true);setDuelControl(1,'left','second-held-finger',true);
        touch('7');assert(p.answer==='7','Non-primary touch ignored while opponent holds controls');
        buttonFor('7').dispatchEvent(new PointerEvent('click',{pointerId:201,pointerType:'touch',isPrimary:false,detail:1,bubbles:true}));
-       assert(p.answer==='7','Pointer click counted twice');
-       touch('⌫');assert(p.answer==='','Touch delete failed');
-       touch('9');touch('9');touch('9');touch('Prüfen');
-       assert(p.phase==='question'&&p.answer==='','Touch checking failed');
-       assert(other.controls.up.has('held-finger')&&other.controls.left.has('second-held-finger'),'Typing released opponent controls');
-       const otherX=other.x;updateDuelPlayer(1,.02);assert(other.x!==otherX,'Opponent cannot drive while typing');
-       clearDuelControls();
+       assert(p.answer==='7','Pointer click counted twice');touch('⌫');assert(p.answer==='','Touch delete failed');
        buttonFor('4').click();assert(p.answer==='4','Keyboard or assistive activation failed');touch('⌫');
-       duelInput(0,'9');duelInput(0,'9');duelInput(0,'9');duelInput(0,'Prüfen');assert(p.step===0&&p.phase==='question','Wrong answer opened barrier');
-       const keypad=panel.querySelector('.duel-keypad').getBoundingClientRect();
-       assert(keypad.height>40&&keypad.bottom<=innerHeight,'Keypad clipped');
+       const keypad=panel.querySelector('.duel-keypad').getBoundingClientRect();assert(keypad.height>40&&keypad.bottom<=innerHeight,'Keypad clipped');
+       touch('9');touch('9');touch('9');touch('Prüfen');
+       assert(p.phase==='driving'&&p.answer===''&&p.step===0&&p.progress===0,'First error did not return to start');
+       assert(other.controls.up.has('held-finger')&&other.controls.left.has('second-held-finger'),'Penalty released opponent controls');
+       const otherX=other.x;updateDuelPlayer(1,.02);assert(other.x!==otherX,'Opponent cannot drive while typing');clearDuelControls();
+       testedPenalties.add(0);continue;
+     }
+     if(gateChecks===4&&!testedPenalties.has(4)){
+       duelInput(0,'9');duelInput(0,'9');duelInput(0,'9');duelInput(0,'Prüfen');
+       const previous=DUEL_COURSE.gates[3]+30;
+       assert(p.step===4&&p.progress===previous&&p.phase==='driving'&&p.speed===0,'Did not return to previous solved gate');
+       assert(duelState.tasks[p.step]===task,'Penalty changed the unresolved task');
+       const reset={x:p.x,y:p.y};for(let i=0;i<100;i++)updateDuelPlayer(0,.01);
+       assert(p.x===reset.x&&p.y===reset.y,'Penalty started automatic driving');
+       duelInput(0,'2');assert(p.answer==='','Could answer before returning to gate');
+       testedPenalties.add(4);continue;
      }
      for(const digit of String(task.a*task.b))duelInput(0,digit);duelInput(0,'Prüfen');
      assert(p.phase==='driving'&&p.speed===0,'Correct answer did not release controls');
@@ -65,6 +79,7 @@ return (()=>{try {
    setDuelControl(0,'up','test',true);setDuelControl(0,'left','test',turn<-.04);setDuelControl(0,'right','test',turn>.04);
    updateDuelPlayer(0,.01);frames++;
  }
+ assert(testedPenalties.size===2,'Penalties not exercised');
  assert(gateChecks===10&&!duelState.running,'Could not drive course: '+JSON.stringify({gateChecks,frames,progress:p.progress,x:p.x,y:p.y}));
  assert(p.progress>=DUEL_COURSE.length-20,'Won before driving to finish');
  assert(document.querySelector('#duelWinner').textContent.includes('Person 1'),'No winner');

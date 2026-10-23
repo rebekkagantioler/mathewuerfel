@@ -18,14 +18,14 @@ async function testWorker(manual,fail=false){
  const events={},deleted=[],assets=[];let skipped=0,claimed=0;
  const scope={registration:{active:{postMessage(message,ports){if(manual)ports[0].postMessage({manualUpdates:true})}}},location:{origin:'https://app.test'},addEventListener(name,fn){events[name]=fn},skipWaiting:async()=>{skipped++},clients:{claim:async()=>{claimed++}}};
  const cache={addAll:async requests=>{if(fail)throw Error('Asset missing');assets.push(...requests)},match:async req=>req.url.endsWith('app.js')?'cached app':null};
- const storage={open:async()=>cache,keys:async()=>['zahlen-abenteuer-v11','zahlen-abenteuer-v12','unrelated-cache'],delete:async key=>{deleted.push(key)}};
+ const storage={open:async()=>cache,keys:async()=>['zahlen-abenteuer-v12','zahlen-abenteuer-v13','unrelated-cache'],delete:async key=>{deleted.push(key)}};
  class FakeRequest{constructor(url,options){this.url=url;this.cache=options.cache}}
  new Function('self','caches','Request','MessageChannel','setTimeout','clearTimeout','fetch',workerSource)(scope,storage,FakeRequest,MessageChannel,(fn,ms)=>setTimeout(fn,Math.min(ms,20)),clearTimeout,async()=> 'network');
  let installation;events.install({waitUntil(promise){installation=promise}});
  if(fail){let rejected=false;try{await installation}catch{rejected=true}assert(rejected&&skipped===0,'Incomplete update activated');return}
  await installation;assert(skipped===(manual?0:1),'Legacy/manual activation policy');
  assert(assets.some(a=>a.url==='./stories.js')&&assets.some(a=>a.url==='./updates.js')&&assets.every(a=>a.cache==='reload'),'Atomic asset cache');
- let activation;events.activate({waitUntil(promise){activation=promise}});await activation;assert(deleted.join(',')==='zahlen-abenteuer-v11'&&claimed===1,'Cache deletion touched foreign data');
+ let activation;events.activate({waitUntil(promise){activation=promise}});await activation;assert(deleted.join(',')==='zahlen-abenteuer-v12'&&claimed===1,'Cache deletion touched foreign data');
  let response;events.fetch({request:{url:'https://app.test/app.js',method:'GET'},respondWith(promise){response=promise}});assert(await response==='cached app','Core cache missed');
  events.fetch({request:{url:'https://other.test/private',method:'GET'},respondWith(){throw Error('Cross-origin interception')}});
  let skip;events.message({data:{type:'SKIP_WAITING'},waitUntil(promise){skip=promise}});await skip;assert(skipped===(manual?1:2),'Explicit activation');

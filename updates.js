@@ -1,5 +1,5 @@
 // Apply new versions only from a deliberate click, preserving installed-app identity and profiles.
-const APP_VERSION = '2026.10.23.12';
+const APP_VERSION = '2026.10.23.13';
 let updateRegistration=null;
 let updateRequested=false;
 let updateReloading=false;

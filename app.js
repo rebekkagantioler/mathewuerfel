@@ -196,9 +196,9 @@ function openGamesCategory(category) {
 }
 
 function confirmLeaveGame(destination, stopAction = null) {
-  const profile=getProfile();const{level,area,progress,missing}=getLevelProgress(profile);
+  const profile=getProfile();const{area,level,progress,missing}=getLevelProgress(profile,getActiveArea());
   const round=screens.catch&&!screens.catch.classList.contains('hidden')?catchState.score:screens.pipe&&!screens.pipe.classList.contains('hidden')?pipeState.score:screens.placeValue&&!screens.placeValue.classList.contains('hidden')?placeValueState.score:screens.numberLine&&!screens.numberLine.classList.contains('hidden')?numberLineState.score:screens.race&&!screens.race.classList.contains('hidden')?raceState.score:screens.kingTower&&!screens.kingTower.classList.contains('hidden')?kingTowerState.score:screens.neighbor&&!screens.neighbor.classList.contains('hidden')?neighborState.score:screens.doubleChain&&!screens.doubleChain.classList.contains('hidden')?doubleChainState.score:screens.game&&!screens.game.classList.contains('hidden')?state.score:0;
-  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bei ${AREA_NAMES[area]} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/20*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von 20 Sternen bei ${AREA_NAMES[area]} im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
+  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bei ${AREA_NAMES[area]} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/STARS_PER_LEVEL*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von ${STARS_PER_LEVEL} Sternen bei ${AREA_NAMES[area]} im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
 }
 
 function closeLeaveModal(){elements.leaveModal.classList.add('hidden');pendingLeaveAction=null}
@@ -499,7 +499,7 @@ function finishFamilyGame(){elements.familyFinishText.textContent=familyState.mo
 
 function startRaceGame(){
   if(!getProfile())return showProfileSelection();
-  if(getLevel(getProfile())<5&&!teacherPreview)return;
+  if(getAreaLevel(getProfile(),'mal')<5&&!teacherPreview)return;
   clearInterval(raceState.timer);
   raceState={score:0,timeLeft:60,a:2,b:2,operation:'*',result:4,answer:'',locked:false,timer:null,running:true,correctByOp:{'*':0,'/':0}};
   elements.raceScore.textContent='0';elements.raceTimer.textContent='60';elements.raceProgress.style.width='100%';elements.raceFeedback.textContent='';elements.raceFeedback.className='feedback';
@@ -749,8 +749,8 @@ for(let digit=0;digit<=9;digit+=1){const tile=document.createElement('button');t
 function openShopWorld() {
   const profile = getProfile();
   if (!profile) return showProfileSelection();
-  const level = getLevel(profile);
-  elements.worldEmoji.textContent = profile.emoji; elements.worldLevel.textContent = level; elements.shopLevelLabel.textContent = `Dein Laden · Level ${level}`;
+  const level = getRewardLevel(profile);
+  elements.worldEmoji.textContent = profile.emoji; elements.worldLevel.textContent = level; elements.shopLevelLabel.textContent = `Dein Laden · höchstes Bereichslevel ${level}`;
   const size = level >= 10 ? 4 : level >= 6 ? 3 : level >= 3 ? 2 : 1;
   elements.shopBuilding.className = `shop-building size-${size}`;
   const nextArea = level < 3 ? 'Die Bäckerei öffnet auf Level 3.' : level < 6 ? 'Die Kasse öffnet auf Level 6.' : level < 10 ? 'Das Lager öffnet auf Level 10.' : 'Der ganze Laden ist geöffnet!';
@@ -765,7 +765,7 @@ function openShopWorld() {
 
 function startShopGame(station = shopState.station || 'fruit') {
   if (!getProfile()) return showProfileSelection();
-  const level = getLevel(getProfile());
+  const level = getRewardLevel(getProfile());
   shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: makeOperationRound(), station, difficulty: level >= 8 ? 3 : level >= 4 ? 2 : 1 };
   elements.shopScore.textContent = '0';
   showScreen('shop');
@@ -930,7 +930,7 @@ function finishShopGame() {
 }
 
 function startCatchGame(mode='mixed') {
-  if (getLevel(getProfile()) < 5 && !teacherPreview) return;
+  if (getAreaLevel(getProfile(),'mal') < 5 && !teacherPreview) return;
   clearCatchBubbles();cancelAnimationFrame(catchState.frame);
   catchState = { question: 0, score: 0, a: 2, b: 2, mode, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: true, mistake: false, bubbles: [] };
   elements.catchScore.textContent = '0'; elements.catchProgress.style.width = '0%';
@@ -981,7 +981,7 @@ function launchCatchAnswer() {
 function animateCatch(time) {
   if (!catchState.running || screens.catch.classList.contains('hidden')) return;
   const delta = Math.min(40, time - catchState.lastTime); catchState.lastTime = time;
-  catchState.y += delta * (0.105 + Math.min(getLevel(getProfile()), 15) * .003);
+  catchState.y += delta * (0.105 + Math.min(getAreaLevel(getProfile(),'mal'), 15) * .003);
   elements.fallingAnswer.style.top = `${catchState.y}px`;
   const catchLine = elements.catchArena.clientHeight - 95;
   if (catchState.y + 62 >= catchLine && catchState.y <= catchLine + 48 && Math.abs((catchState.x + 34) - (catchState.basketX + 38)) < 60) return catchBubble();
@@ -1066,7 +1066,7 @@ function animatePipeArena(time){
   pipeState.nextSpawnAt-=delta;
   if(pipeState.nextSpawnAt<=0){trySpawnPipeBubble();pipeState.nextSpawnAt=420+randomInt(0,380)}
   for(const bubble of [...pipeState.bubbles]){
-    const level=Math.min(getLevel(getProfile()),12);const travel=Math.max(44,bubble.node.parentElement.clientHeight-62);
+    const level=Math.min(getAreaLevel(getProfile(),'mal'),12);const travel=Math.max(44,bubble.node.parentElement.clientHeight-62);
     if(bubble.direction===0){if(time>=bubble.pauseUntil)bubble.direction=-1;else continue}
     bubble.y+=delta*(.052+level*.0035)*bubble.direction;
     if(bubble.direction>0&&bubble.y>=travel){bubble.y=travel;bubble.direction=0;bubble.pauseUntil=time+Math.max(360,950-level*45)}
@@ -1388,7 +1388,7 @@ function getTeacherProfile(){return profiles.find(profile=>profile.id===elements
 function renderTeacherDashboard(){
   const profile=getTeacherProfile();if(!profile)return;const facts=Object.entries(profile.facts||{});const attempts=facts.reduce((sum,[,s])=>sum+s.attempts,0);const correct=facts.reduce((sum,[,s])=>sum+s.correct,0);const accuracy=attempts?Math.round(correct/attempts*100):0;
   const totalStars=AREAS.reduce((sum,a)=>sum+(profile.areaStars?.[a]||0),0);
-  elements.teacherStats.innerHTML=`<div><strong>Level ${getLevel(profile)}</strong><small>${totalStars} Sterne gesamt</small></div><div><strong>${accuracy}%</strong><small>Einmaleins richtig</small></div><div><strong>${attempts}</strong><small>Einmaleins-Versuche</small></div>`;
+  elements.teacherStats.innerHTML=`<div><strong>${formatAreaLevels(profile)}</strong><small>${totalStars} Sterne gesamt</small></div><div><strong>${accuracy}%</strong><small>Einmaleins richtig</small></div><div><strong>${attempts}</strong><small>Einmaleins-Versuche</small></div>`;
   const weak=[...facts].filter(([,s])=>s.wrong>0).sort((a,b)=>(b[1].wrong/b[1].attempts)-(a[1].wrong/a[1].attempts)).slice(0,8);
   elements.weakFacts.innerHTML=weak.length?weak.map(([key,s])=>`<span>${key.replace('x',' × ')} <small>${s.wrong} Fehler</small></span>`).join(''):'<em>Noch keine schwierigen Aufgaben gespeichert.</em>';
   const labels={'+':'Plus','-':'Minus','*':'Mal','/':'Geteilt'};elements.operationStats.innerHTML=Object.entries(labels).map(([key,label])=>{const s=profile.operations?.[key];const value=s?.attempts?Math.round(s.correct/s.attempts*100):0;return`<div><span>${label}</span><i><b style="width:${value}%"></b></i><strong>${s?.attempts?`${value}%`:'–'}</strong></div>`}).join('');
@@ -1420,32 +1420,42 @@ function saveProfiles() { if(!teacherPreview){localStorage.setItem(STORAGE_KEY, 
 function startTeacherPreview(){teacherPreviewSnapshot=JSON.stringify(profiles);teacherPreview=true;selectProfile(elements.teacherProfileSelect.value);renderProfileHeader();showScreen('activities')}
 function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;renderProfileHeader();renderProfileSelection();saveProfiles();showScreen('activities')}
 function getProfile() { return profiles.find((profile) => profile.id === activeProfileId); }
-function getAreaLevel(profile, area) { return Math.floor((profile?.areaStars?.[area] || 0) / 20) + 1; }
-function getLevel(profile) { return Math.min(...AREAS.map(a => getAreaLevel(profile, a))); }
-function getLimitingArea(profile) { return AREAS.reduce((min, a) => getAreaLevel(profile, a) < getAreaLevel(profile, min) ? a : min); }
-function getLevelProgress(profile) {
-  const area = getLimitingArea(profile);
-  const stars = profile?.areaStars?.[area] || 0;
-  return { level: getLevel(profile), area, progress: stars % 20, missing: 20 - (stars % 20) };
+const STARS_PER_LEVEL = 20;
+function getTotalStars(profile) {
+  return AREAS.reduce((sum, area) => sum + (profile?.areaStars?.[area] || 0), 0);
 }
-function getSuccessProgress(profile) {
-  const level = getLevel(profile);
-  const totalStars = AREAS.reduce((sum, area) => sum + (profile?.areaStars?.[area] || 0), 0);
-  const target = level * 20 * AREAS.length;
-  const missing = AREAS.map(area => ({ area, stars: profile?.areaStars?.[area] || 0, needed: Math.max(0, level * 20 - (profile?.areaStars?.[area] || 0)) })).filter(item => item.needed > 0);
-  return { totalStars, progress: Math.min(100, totalStars / target * 100), missing };
+function getAreaLevel(profile, area) { return Math.floor((profile?.areaStars?.[area] || 0) / STARS_PER_LEVEL) + 1; }
+// Shared cosmetic rewards follow the highest individual area level.
+function getRewardLevel(profile) { return Math.max(...AREAS.map(area => getAreaLevel(profile, area))); }
+function getLevelProgress(profile, area = 'mal') {
+  const stars = profile?.areaStars?.[area] || 0;
+  const progress = stars % STARS_PER_LEVEL;
+  return { area, level: getAreaLevel(profile, area), progress, missing: STARS_PER_LEVEL - progress };
+}
+function formatAreaLevels(profile) {
+  return AREAS.map(area => `${AREA_NAMES[area]}: Level ${getAreaLevel(profile, area)}`).join(' · ');
+}
+function getActiveArea() {
+  const visible = name => screens[name] && !screens[name].classList.contains('hidden');
+  if (visible('concept')) return OP_TO_AREA[conceptState.operation];
+  if (visible('shop')) return OP_TO_AREA[shopState.task?.operation] || 'plus';
+  if (visible('division')) return 'geteilt';
+  if (visible('placeValue') || visible('numberLine')) return 'stellenwert';
+  if (visible('pipe')) return OP_TO_AREA[pipeState.op] || 'mal';
+  return 'mal';
 }
 function formatAreaStars(profile) {
   return AREAS.map(area => `★ ${AREA_NAMES[area]} ${profile?.areaStars?.[area] || 0}`).join(' · ');
 }
 
-let pendingLevelUp=null;
+let pendingLevelUps=[];
 function addAreaStars(profile,area,amount){
   if(!profile||teacherPreview||!amount)return;
-  const before=getLevel(profile);
+  const before=getAreaLevel(profile,area);
+  const rewardBefore=getRewardLevel(profile);
   profile.areaStars[area]=(profile.areaStars[area]||0)+amount;
-  const after=getLevel(profile);
-  if(after>before)queueLevelUpNotice(before,after);
+  const after=getAreaLevel(profile,area);
+  if(after>before)queueLevelUpNotice(area,after,getNewUnlocks(rewardBefore,getRewardLevel(profile)));
 }
 function pushAreaRecent(profile,area,correct){
   if(!profile)return;
@@ -1471,12 +1481,13 @@ function getNewUnlocks(fromLevel,toLevel){
   }
   return items;
 }
-function queueLevelUpNotice(before,after){pendingLevelUp={level:after,unlocks:getNewUnlocks(before,after)}}
+function queueLevelUpNotice(area,level,unlocks){pendingLevelUps.push({area,level,unlocks})}
 function maybeShowLevelUp(){
-  if(!pendingLevelUp||teacherPreview)return;
-  const{level,unlocks}=pendingLevelUp;pendingLevelUp=null;
-  elements.levelUpNumber.textContent=level;
-  elements.levelUpUnlocks.innerHTML=unlocks.length?unlocks.map(item=>`<div class="level-up-item"><span>${item.icon}</span><small>${item.text}</small></div>`).join(''):'<p class="level-up-none">Weiter so – die nächste Belohnung wartet bald!</p>';
+  if(!pendingLevelUps.length||teacherPreview)return;
+  const notices=pendingLevelUps;pendingLevelUps=[];
+  elements.levelUpNumber.textContent=notices.map(({area,level})=>`${AREA_NAMES[area]}: Level ${level}`).join(' · ');
+  const unlocks=notices.flatMap(notice=>notice.unlocks);
+  elements.levelUpUnlocks.innerHTML=unlocks.length?unlocks.map(item=>`<div class="level-up-item"><span>${item.icon}</span><small>${item.text}</small></div>`).join(''):'<p class="level-up-none">Weiter so – du bist in deinem Lernbereich ein Level weiter!</p>';
   elements.levelUpModal.classList.remove('hidden');
 }
 
@@ -1561,23 +1572,27 @@ function selectProfile(id) {
 
 function renderProfileHeader() {
   const profile = getProfile();
-  const level = getLevel(profile);
   elements.profileName.textContent = profile?.name || 'Profil anlegen';
   elements.profileEmoji.textContent = profile?.emoji || '🌟';
   elements.gameEmoji.textContent = profile?.emoji || '🌟';
   elements.activityProfileEmoji.textContent = profile?.emoji || '🌟';
   elements.activityProfileName.textContent = profile?.name || 'Profil';
   elements.shopEmoji.textContent = profile?.emoji || '🌟';
-  const catchUnlocked = level >= 5 || teacherPreview;
-  elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':'ab Level 5';elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
-  const pipeUnlocked=level>=5||teacherPreview;
-  elements.gamesPipeCard.disabled=!pipeUnlocked;elements.gamesPipeCard.classList.toggle('locked',!pipeUnlocked);elements.gamesPipeStatus.textContent=pipeUnlocked?'Jetzt spielen':'ab Level 5';elements.gamesPipeLock.textContent=pipeUnlocked?'→':'🔒';
-  const raceUnlocked=level>=5||teacherPreview;
-  elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Level 5';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
-  const success=getSuccessProgress(profile);const nextRewards=[...EMOJIS.map(item=>({level:item.level,text:`Figur ${item.icon}`})),...THEMES.map(item=>({level:item.level,text:`Farbwelt „${item.name}“`})),...TILE_STYLES.map(item=>({level:item.level,text:`Zahlenkarten „${item.name}“`})),...GAME_REWARDS.map(item=>({level:item.level,text:`Spiel „${item.name}“`}))].filter(item=>item.level>level).sort((a,b)=>a.level-b.level);const next=nextRewards[0];
-  const starsNeeded=level*20;
-  elements.levelAvatar.textContent=profile?.emoji||'🌟';elements.levelNow.textContent=`Level ${level}`;elements.levelRewardText.textContent=next?`Auf Level ${next.level}: ${next.text}`:'Alle bisherigen Belohnungen freigeschaltet';elements.levelProgressBar.style.width=`${success.progress}%`;elements.levelProgressText.textContent=`${success.totalStars} Sterne gesammelt · Für Level ${level+1}: in jedem Bereich ${starsNeeded} ★`;
-  elements.levelAreaProgress.innerHTML=AREAS.map(area=>{const stars=profile?.areaStars?.[area]||0;const done=stars>=starsNeeded;return `<span class="${done?'done':''}"><b>${AREA_NAMES[area]}</b><i>${stars}/${starsNeeded} ★</i></span>`}).join('');elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
+  const catchUnlocked = getAreaLevel(profile,'mal') >= 5 || teacherPreview;
+  elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':'ab Mal-Level 5';elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
+  const pipeUnlocked=getAreaLevel(profile,'mal')>=5||teacherPreview;
+  elements.gamesPipeCard.disabled=!pipeUnlocked;elements.gamesPipeCard.classList.toggle('locked',!pipeUnlocked);elements.gamesPipeStatus.textContent=pipeUnlocked?'Jetzt spielen':'ab Mal-Level 5';elements.gamesPipeLock.textContent=pipeUnlocked?'→':'🔒';
+  const raceUnlocked=getAreaLevel(profile,'mal')>=5||teacherPreview;
+  elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Mal-Level 5';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
+  elements.levelAvatar.textContent=profile?.emoji||'🌟';
+  elements.levelNow.textContent='Deine Level';
+  elements.levelRewardText.textContent='Jeder Lernbereich steigt für sich auf';
+  elements.levelProgressBar.parentElement.classList.add('hidden');
+  elements.levelProgressText.textContent=`Je ${STARS_PER_LEVEL} Sterne im Bereich = ein Level · Belohnungen nach deinem höchsten Bereichslevel`;
+  elements.levelAreaProgress.innerHTML=AREAS.map(area=>{
+    const {level,progress,missing}=getLevelProgress(profile,area);
+    return `<span><b>${AREA_NAMES[area]} · Level ${level}</b><i>${progress}/${STARS_PER_LEVEL} ★ · noch ${missing} ★</i><span class="area-level-track"><i style="width:${progress/STARS_PER_LEVEL*100}%"></i></span></span>`;
+  }).join('');elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
 }
 
 function openRewards() {
@@ -1588,17 +1603,17 @@ function openRewards() {
 function renderRewards() {
   const profile = getProfile();
   if (!profile) return;
-  const level = getLevel(profile);
-  const rewardProgress=getLevelProgress(profile);
-  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${formatAreaStars(profile)} · noch ${rewardProgress.missing} bei ${AREA_NAMES[rewardProgress.area]} bis zum nächsten Level</small>`;
+  const level = getRewardLevel(profile);
+
+  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Deine Bereichslevel</strong><small>${formatAreaLevels(profile)}</small><small>Figuren und Farben: höchster Bereich auf Level ${level}</small>`;
   renderRewardGroup(elements.themeGrid, THEMES, profile.theme || 'classic', (id) => { profile.theme = id; });
   renderRewardGroup(elements.tileGrid, TILE_STYLES, profile.tileStyle || 'classic', (id) => { profile.tileStyle = id; });
-  elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(game=>{const locked=level<game.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${game.icon}</span><strong>${game.name}</strong><small>${locked?`ab Level ${game.level}`:'freigeschaltet'}</small></div>`}).join('');
+  elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(game=>{const malGame=['Lösungen auffangen','Tempo-Rennen','Schnelle Fangwellen'].includes(game.name);const gameLevel=malGame?getAreaLevel(profile,'mal'):level;const locked=gameLevel<game.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${game.icon}</span><strong>${game.name}</strong><small>${locked?`ab ${malGame?'Mal-Level':'Bereichslevel'} ${game.level}`:'freigeschaltet'}</small></div>`}).join('');
 }
 
 function renderRewardGroup(container, rewards, selected, choose) {
   const profile = getProfile();
-  const level = getLevel(profile);
+  const level = getRewardLevel(profile);
   container.replaceChildren();
   rewards.forEach((reward) => {
     const locked = level < reward.level && !teacherPreview;
@@ -1655,7 +1670,7 @@ function renderProfileSelection() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'profile-select';
-    button.innerHTML = `<span class="avatar-circle">${profile.emoji}</span><strong>${escapeHtml(profile.name)}</strong><small>Level ${getLevel(profile)}</small>`;
+    button.innerHTML = `<span class="avatar-circle">${profile.emoji}</span><strong>${escapeHtml(profile.name)}</strong><small>${formatAreaLevels(profile)}</small>`;
     button.addEventListener('click', () => { selectProfile(profile.id); showScreen('activities'); });
     elements.profileSelectGrid.append(button);
   });
@@ -1678,9 +1693,8 @@ function renderEmojis() {
   elements.emojiPicker.classList.toggle('hidden', !profile);
   elements.emojiGrid.replaceChildren();
   if (!profile) return;
-  const level = getLevel(profile);
-  const emojiProgress = getLevelProgress(profile);
-  elements.profileLevelSummary.innerHTML = `<strong>${profile.emoji} Level ${level}</strong><small>${emojiProgress.progress} von 20 Sternen bei ${AREA_NAMES[emojiProgress.area]} bis zum nächsten Level</small>`;
+  const level = getRewardLevel(profile);
+  elements.profileLevelSummary.innerHTML = `<strong>${profile.emoji} Deine Bereichslevel</strong><small>${formatAreaLevels(profile)}</small>`;
   EMOJIS.forEach(({ icon, level: needed }) => {
     const button = document.createElement('button');
     button.type = 'button';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zahlen-abenteuer-v3';
+const CACHE_NAME = 'zahlen-abenteuer-v6';
 const CORE_ASSETS = [
   './',
   './index.html',

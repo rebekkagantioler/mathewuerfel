@@ -395,3 +395,8 @@ body.duel-active { height: 100dvh; min-height: 0; overflow: hidden; overscroll-b
 .delete-profile-button { display: block; margin: 18px auto 0; padding: 10px; border: 0; background: transparent; color: #b04458; text-decoration: underline; cursor: pointer; }
 .delete-profile-button:disabled { opacity: .45; cursor: default; }
 .delete-profile-confirm { border: 0; border-radius: 15px; padding: 12px 16px; background: #b84457; color: white; cursor: pointer; }
+
+.duel-result[data-winner="red"] { background: #fff1eef5; }
+.duel-result[data-winner="red"] h2 { color: #b72e31; }
+.duel-result[data-winner="blue"] { background: #eaf3fff5; }
+.duel-result[data-winner="blue"] h2 { color: #205f9f; }

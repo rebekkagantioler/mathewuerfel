@@ -145,7 +145,10 @@ function duelInput(index,key){
   renderDuelPlayer(index);drawDuel();
 }
 function finishDuel(index){
-  stopDuel();document.querySelector('#duelWinner').textContent=`${index===0?'🔴':'🔵'} Person ${index+1} gewinnt!`;
+  stopDuel();
+  const winner=document.querySelector('#duelWinner');
+  winner.textContent=`${index===0?'🔴 Rot':'🔵 Blau'} – Person ${index+1} gewinnt!`;
+  document.querySelector('#duelResult').dataset.winner=index===0?'red':'blue';
   document.querySelector('#duelResult').classList.remove('hidden');duelState.players.forEach((_,i)=>renderDuelPlayer(i));
 }
 function animateDuel(time){

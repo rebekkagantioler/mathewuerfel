@@ -54,7 +54,18 @@ function beginDuel(){
     panel.innerHTML=`<div class="duel-player-title"><strong>${index===0?'🔴':'🔵'} Person ${index+1}</strong><span class="duel-count">0 / 10</span></div><div class="duel-course"><canvas class="duel-canvas" role="img" aria-label="Kurviger Parcours mit zehn Schranken und Ziel"></canvas><div class="duel-question hidden"><div class="duel-equation"><span class="duel-task"></span><output class="duel-answer" aria-label="Antwort">?</output></div><div class="duel-keypad"></div></div></div><p class="duel-feedback" aria-live="polite"></p><div class="duel-driving"><button data-drive="left" aria-label="Nach links lenken">↶<small>Links</small></button><button data-drive="up" aria-label="Gas geben">↑<small>Gas</small></button><button data-drive="right" aria-label="Nach rechts lenken">↷<small>Rechts</small></button><button data-drive="down" aria-label="Rückwärts fahren">↓<small>Zurück</small></button></div><small class="duel-key-help">${index===0?'Tastatur: W Gas · A/D lenken · S zurück':'Tastatur: ↑ Gas · ←/→ lenken · ↓ zurück'}</small>`;
     const keypad=panel.querySelector('.duel-keypad');
     ['1','2','3','4','5','6','7','8','9','⌫','0','Prüfen'].forEach(key=>{
-      const button=document.createElement('button');button.type='button';button.textContent=key;button.setAttribute('aria-label',key==='⌫'?'Letzte Ziffer löschen':key==='Prüfen'?'Antwort prüfen':key);button.addEventListener('click',()=>duelInput(index,key));keypad.append(button);
+      const button=document.createElement('button');button.type='button';button.textContent=key;button.setAttribute('aria-label',key==='⌫'?'Letzte Ziffer löschen':key==='Prüfen'?'Antwort prüfen':key);
+      // Touch clicks may be withheld while another finger is holding the gas.
+      // Process every pointer directly, including non-primary fingers.
+      button.addEventListener('pointerdown',event=>{
+        event.preventDefault();
+        if(!button.disabled)duelInput(index,key);
+      });
+      // Keep keyboard and assistive-technology activation without double-counting pointer clicks.
+      button.addEventListener('click',event=>{
+        if(event.detail===0&&!event.pointerType&&!button.disabled)duelInput(index,key);
+      });
+      keypad.append(button);
     });
     panel.querySelectorAll('[data-drive]').forEach(button=>{
       button.type='button';const direction=button.dataset.drive;

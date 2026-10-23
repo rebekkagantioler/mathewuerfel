@@ -34,6 +34,20 @@ return (()=>{try {
    if(p.phase==='question'){
      const stopped={x:p.x,y:p.y};const task=duelState.tasks[p.step];
      if(gateChecks===0){
+       const buttons=[...panel.querySelectorAll('.duel-keypad button')];
+       const buttonFor=key=>buttons.find(button=>button.textContent===key);
+       const touch=key=>buttonFor(key).dispatchEvent(new PointerEvent('pointerdown',{pointerId:201,pointerType:'touch',isPrimary:false,bubbles:true,cancelable:true}));
+       setDuelControl(1,'up','held-finger',true);setDuelControl(1,'left','second-held-finger',true);
+       touch('7');assert(p.answer==='7','Non-primary touch ignored while opponent holds controls');
+       buttonFor('7').dispatchEvent(new PointerEvent('click',{pointerId:201,pointerType:'touch',isPrimary:false,detail:1,bubbles:true}));
+       assert(p.answer==='7','Pointer click counted twice');
+       touch('⌫');assert(p.answer==='','Touch delete failed');
+       touch('9');touch('9');touch('9');touch('Prüfen');
+       assert(p.phase==='question'&&p.answer==='','Touch checking failed');
+       assert(other.controls.up.has('held-finger')&&other.controls.left.has('second-held-finger'),'Typing released opponent controls');
+       const otherX=other.x;updateDuelPlayer(1,.02);assert(other.x!==otherX,'Opponent cannot drive while typing');
+       clearDuelControls();
+       buttonFor('4').click();assert(p.answer==='4','Keyboard or assistive activation failed');touch('⌫');
        duelInput(0,'9');duelInput(0,'9');duelInput(0,'9');duelInput(0,'Prüfen');assert(p.step===0&&p.phase==='question','Wrong answer opened barrier');
        const keypad=panel.querySelector('.duel-keypad').getBoundingClientRect();
        assert(keypad.height>40&&keypad.bottom<=innerHeight,'Keypad clipped');

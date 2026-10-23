@@ -1,0 +1,33 @@
+const assert=(value,message)=>{if(!value)throw Error(message)};
+teacherPreview=false;
+const a={id:'local-a',name:'Test A',emoji:'🌟',areaStars:{plus:20,minus:0,mal:0,geteilt:0,stellenwert:0}};
+const b={id:'local-b',name:'Test B',emoji:'🐱',areaStars:{plus:0,minus:0,mal:86,geteilt:0,stellenwert:0}};
+const c={id:'online-c',cloudId:'fake-cloud-id',name:'Test C',emoji:'🐶',areaStars:{mal:40}};
+profiles=[a,b,c];activeProfileId=a.id;
+for(const [stars,level,progress,missing] of [[0,1,0,40],[39,1,39,1],[40,2,0,40],[79,2,39,1],[80,3,0,40]]){
+  a.areaStars.mal=stars;const p=getLevelProgress(a,'mal');
+  assert(p.level===level&&p.progress===progress&&p.missing===missing&&p.target===40,'Mal boundary '+stars);
+}
+assert(getAreaLevel(a,'plus')===2&&getLevelProgress(a,'plus').target===20,'Other area threshold changed');
+renderProfileSelection();
+assert([...elements.profileSelectGrid.querySelectorAll('button')].every(button=>!button.textContent.includes('Level')),'Level exposed in picker');
+renderProfileHeader();
+assert(elements.levelAreaProgress.textContent.includes('/40 ★'),'Mal target missing');
+openProfileSettings();openDeleteProfile();
+const dialog=document.getElementById('deleteProfileDialog');assert(dialog.open,'Deletion dialog did not open');
+assert(document.getElementById('deleteProfileDescription').textContent.includes('endgültig'),'Local deletion explanation');
+dialog.querySelector('button[value="cancel"]').click();assert(profiles.length===3,'Cancel deleted profile');
+activeProfileId=c.id;cloudPins.set(c.cloudId,'123456');openDeleteProfile();
+assert(document.getElementById('deleteProfileDescription').textContent.includes('Online-Sicherung bleibt erhalten'),'Online copy explanation');
+const originalB=JSON.stringify(b);document.getElementById('confirmDeleteProfile').click();
+assert(profiles.length===2&&!profiles.some(p=>p.id===c.id)&&!cloudPins.has(c.cloudId),'Cloud device-copy deletion failed');
+assert(activeProfileId===null&&!localStorage.getItem(`${STORAGE_KEY}:active`),'Active ID not cleared');
+assert(JSON.stringify(b)===originalB,'Another learner was changed');
+assert(!JSON.parse(localStorage.getItem(STORAGE_KEY)).some(p=>p.id===c.id),'Deleted copy persisted');
+teacherPreview=true;assert(!deleteLocalProfile(a.id)&&profiles.length===2,'Preview deleted data');teacherPreview=false;
+assert(deleteLocalProfile(a.id)&&profiles.length===1,'Local deletion failed');
+assert(deleteLocalProfile(b.id)&&profiles.length===0,'Last profile deletion failed');
+assert(!deleteLocalProfile('missing'),'Unknown deletion accepted');
+assert(!screens.profiles.classList.contains('hidden')&&elements.profileSelectGrid.childElementCount===0,'Empty picker failed');
+assert(!document.body.classList.contains('duel-active'),'Game layout was left active');
+return 'Passed: private picker, 40-star boundaries, other area levels, cancel, delete, cloud-copy explanation, PIN cleanup, persistence, last profile and preview';

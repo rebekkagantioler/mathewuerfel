@@ -20,12 +20,12 @@ const TILE_STYLES = [
   { id: 'gold', name: 'Gold', icon: '🏆', level: 8 }, { id: 'space', name: 'Weltraum', icon: '🪐', level: 12 },
 ];
 const GAME_REWARDS=[
-  {name:'Einmaleins üben',icon:'✖️',level:1},{name:'Geteilt üben',icon:'➗',level:1},
-  {name:'Königsaufgaben-Turm',icon:'👑',level:1},{name:'Nachbaraufgaben-Domino',icon:'🁣',level:1},{name:'Verdopplungskette',icon:'🔗',level:1},
-  {name:'Rechenwege verbinden',icon:'🧩',level:1},{name:'Ladenwelt',icon:'🛒',level:1},
+  {name:'Schranken-Rennen',icon:'🏎️',level:1},{name:'Einmaleins üben',icon:'✖️',level:1},{name:'Geteilt üben',icon:'➗',level:1},
+  {name:'Nachbaraufgaben-Domino',icon:'🁣',level:1},{name:'Verdopplungskette',icon:'🔗',level:1},
+  {name:'Ladenwelt',icon:'🛒',level:1},
   {name:'Zahl bauen',icon:'🏗️',level:1},{name:'Tausch-Challenge',icon:'🔄',level:1},{name:'Minus-Werkstatt',icon:'✂️',level:1},
   {name:'Zahlenstrahl',icon:'📏',level:1},
-  {name:'Lösungen auffangen',icon:'🧺',level:5},{name:'Tempo-Rennen',icon:'⏱️',level:5},
+  {name:'Rechengeschichten',icon:'🗺️',level:1},{name:'Lösungen auffangen',icon:'🧺',level:2},{name:'Rohr-Rechnen',icon:'🚰',level:4},{name:'Tempo-Rennen',icon:'⏱️',level:6},
   {name:'Größerer Laden',icon:'🏪',level:7},{name:'Schnelle Fangwellen',icon:'⚡',level:10},{name:'Großes Geschäft',icon:'🏬',level:12},
 ];
 const AREAS=['plus','minus','mal','geteilt','stellenwert'];
@@ -33,6 +33,8 @@ const AREA_NAMES={plus:'Plus',minus:'Minus',mal:'Mal',geteilt:'Geteilt',stellenw
 const OP_TO_AREA={'+':'plus','-':'minus','*':'mal','/':'geteilt'};
 
 const screens = {
+  stories: document.querySelector('#storiesScreen'),
+  duel: document.querySelector('#duelScreen'),
   profiles: document.querySelector('#profileScreen'),
   activities: document.querySelector('#activityScreen'),
   start: document.querySelector('#startScreen'),
@@ -175,6 +177,9 @@ let teacherPreviewSnapshot=null;
 let pendingLeaveAction=null;
 
 function showScreen(name) {
+  document.body.classList.toggle('duel-active', name === 'duel');
+  if(name==='duel')window.scrollTo(0,0);
+  if(name !== 'duel' && typeof duelState !== 'undefined') stopDuel();
   Object.entries(screens).forEach(([key, screen]) => screen.classList.toggle('hidden', key !== name));
 }
 
@@ -196,9 +201,9 @@ function openGamesCategory(category) {
 }
 
 function confirmLeaveGame(destination, stopAction = null) {
-  const profile=getProfile();const{area,level,progress,missing}=getLevelProgress(profile,getActiveArea());
+  const profile=getProfile();const{area,level,progress,missing,target}=getLevelProgress(profile,getActiveArea());
   const round=screens.catch&&!screens.catch.classList.contains('hidden')?catchState.score:screens.pipe&&!screens.pipe.classList.contains('hidden')?pipeState.score:screens.placeValue&&!screens.placeValue.classList.contains('hidden')?placeValueState.score:screens.numberLine&&!screens.numberLine.classList.contains('hidden')?numberLineState.score:screens.race&&!screens.race.classList.contains('hidden')?raceState.score:screens.kingTower&&!screens.kingTower.classList.contains('hidden')?kingTowerState.score:screens.neighbor&&!screens.neighbor.classList.contains('hidden')?neighborState.score:screens.doubleChain&&!screens.doubleChain.classList.contains('hidden')?doubleChainState.score:screens.game&&!screens.game.classList.contains('hidden')?state.score:0;
-  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bei ${AREA_NAMES[area]} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/STARS_PER_LEVEL*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von ${STARS_PER_LEVEL} Sternen bei ${AREA_NAMES[area]} im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
+  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bei ${AREA_NAMES[area]} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/target*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von ${target} Sternen bei ${AREA_NAMES[area]} im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
 }
 
 function closeLeaveModal(){elements.leaveModal.classList.add('hidden');pendingLeaveAction=null}
@@ -213,13 +218,14 @@ function flashCatchError(message='⚡ Falsch gefangen!'){
   window.setTimeout(()=>{elements.catchFlash.classList.remove('show');elements.catchArena.classList.remove('wrong-catch')},1250);
 }
 
-function startConceptGame(operation){conceptState={operation,question:0,score:0,a:3,b:2,result:5,step:0,answer:'',remainderAnswer:'',activeAnswerField:'quotient',hasRemainder:false,remainder:0,locked:false,retry:0,faded:false};elements.conceptScore.textContent='0';showScreen('concept');nextConceptQuestion()}
+function startConceptGame(operation){
+  if(operation==='*'&&requestRows('concept',()=>startConceptGame(operation)))return;conceptState={operation,question:0,score:0,a:3,b:2,result:5,step:0,answer:'',remainderAnswer:'',activeAnswerField:'quotient',hasRemainder:false,remainder:0,locked:false,retry:0,faded:false};elements.conceptScore.textContent='0';showScreen('concept');nextConceptQuestion()}
 function nextConceptQuestion(){
   if(conceptState.question>=6)return finishConceptGame();
   const op=conceptState.operation;const prevA=conceptState.a,prevB=conceptState.b,prevRemainder=conceptState.remainder;
   let a,b,hasRemainder,remainder,tries=0;
   do{
-    a=randomInt(op==='-'?6:2,op==='-'?12:5);b=randomInt(2,5);if(op==='-'&&b>=a)b=a-1;
+    a=op==='*'?pickRow():randomInt(op==='-'?6:2,op==='-'?12:5);b=randomInt(2,5);if(op==='-'&&b>=a)b=a-1;
     hasRemainder=op==='/'&&Math.random()<0.4;remainder=hasRemainder?randomInt(1,a-1):0;
     tries+=1;
   }while(conceptState.question>0&&tries<30&&a===prevA&&b===prevB&&remainder===prevRemainder);
@@ -498,8 +504,9 @@ function chooseFamilyPath(index){const s=familyState;if(s.locked||s.selected.inc
 function finishFamilyGame(){elements.familyFinishText.textContent=familyState.mode==='exact'?`${familyState.score} von 6 Rechenfamilien ohne Rest verbunden.`:`${familyState.score} von 6 Rechenwege mit Rest richtig verbunden.`;showScreen('familyFinish');maybeShowLevelUp()}
 
 function startRaceGame(){
+  if(requestRows('race',startRaceGame))return;
   if(!getProfile())return showProfileSelection();
-  if(getAreaLevel(getProfile(),'mal')<5&&!teacherPreview)return;
+  if(getAreaLevel(getProfile(),'mal')<6&&!teacherPreview)return;
   clearInterval(raceState.timer);
   raceState={score:0,timeLeft:60,a:2,b:2,operation:'*',result:4,answer:'',locked:false,timer:null,running:true,correctByOp:{'*':0,'/':0}};
   elements.raceScore.textContent='0';elements.raceTimer.textContent='60';elements.raceProgress.style.width='100%';elements.raceFeedback.textContent='';elements.raceFeedback.className='feedback';
@@ -517,8 +524,8 @@ function nextRaceQuestion(){
   let operation,a,b,tries=0;
   do{
     operation=Math.random()<.5?'*':'/';
-    if(operation==='*'){a=randomInt(1,10);b=randomInt(1,10)}
-    else{const divisor=randomInt(1,10),quotient=randomInt(1,10);a=divisor*quotient;b=divisor}
+    if(operation==='*'){a=pickRow();b=randomInt(1,10)}
+    else{const divisor=pickRow(),quotient=randomInt(1,10);a=divisor*quotient;b=divisor}
     tries+=1;
   }while(prevOp!==undefined&&tries<30&&a===prevA&&b===prevB&&operation===prevOp);
   raceState.a=a;raceState.b=b;raceState.result=operation==='*'?a*b:a/b;
@@ -606,12 +613,13 @@ function checkKingTower(){
 }
 function finishKingTowerGame(){elements.kingTowerFinalScore.textContent=kingTowerState.score;elements.kingTowerFinishText.textContent=`${kingTowerState.score} von 8 Türmen richtig gebaut.`;showScreen('kingTowerFinish');maybeShowLevelUp()}
 
-function startNeighborGame(){neighborState={question:0,score:0,a:4,b:8,target:32,helperB:7,helperResult:28,op:'+',answer:'',opChosen:null,locked:false};elements.neighborScore.textContent='0';showScreen('neighbor');nextNeighborQuestion()}
+function startNeighborGame(){
+  if(requestRows('neighbor',startNeighborGame))return;neighborState={question:0,score:0,a:4,b:8,target:32,helperB:7,helperResult:28,op:'+',answer:'',opChosen:null,locked:false};elements.neighborScore.textContent='0';showScreen('neighbor');nextNeighborQuestion()}
 function nextNeighborQuestion(){
   if(neighborState.question>=8)return finishNeighborGame();
   const s=neighborState;s.locked=false;s.answer='';s.opChosen=null;
   const prevA=s.a,prevB=s.b;let a,b,tries=0;
-  do{a=randomInt(2,10);b=randomInt(2,10);tries+=1}while(s.question>0&&tries<30&&a===prevA&&b===prevB);
+  do{a=pickRow();b=randomInt(2,10);tries+=1}while(s.question>0&&tries<30&&a===prevA&&b===prevB);
   s.a=a;s.b=b;s.target=s.a*s.b;
   if(s.b>2){s.helperB=s.b-1;s.op='+'}else{s.helperB=s.b+1;s.op='-'}
   s.helperResult=s.a*s.helperB;
@@ -648,12 +656,13 @@ function checkNeighbor(){
 }
 function finishNeighborGame(){elements.neighborFinalScore.textContent=neighborState.score;elements.neighborFinishText.textContent=`${neighborState.score} von 8 Nachbaraufgaben richtig genutzt.`;showScreen('neighborFinish');maybeShowLevelUp()}
 
-function startDoubleChainGame(){doubleChainState={question:0,score:0,n:2,direction:'up',step:0,values:[0,0,0],answer:'',locked:false};elements.doubleChainScore.textContent='0';showScreen('doubleChain');nextDoubleChainQuestion()}
+function startDoubleChainGame(){
+  if(requestRows('doubleChain',startDoubleChainGame))return;doubleChainState={question:0,score:0,n:2,direction:'up',step:0,values:[0,0,0],answer:'',locked:false};elements.doubleChainScore.textContent='0';showScreen('doubleChain');nextDoubleChainQuestion()}
 function nextDoubleChainQuestion(){
   if(doubleChainState.question>=6)return finishDoubleChainGame();
   const s=doubleChainState;s.locked=false;s.answer='';s.step=0;
   const prevN=s.n,prevDirection=s.direction;let n,direction,tries=0;
-  do{n=randomInt(2,9);direction=Math.random()<.5?'up':'down';tries+=1}while(s.question>0&&tries<30&&n===prevN&&direction===prevDirection);
+  do{n=pickRow();direction=Math.random()<.5?'up':'down';tries+=1}while(s.question>0&&tries<30&&n===prevN&&direction===prevDirection);
   s.n=n;s.direction=direction;
   elements.doubleChainDirection.textContent=s.direction==='up'?'Verdopple weiter':'Halbiere weiter';
   elements.doubleChainProgress.style.width=`${s.question/6*100}%`;elements.doubleChainFeedback.textContent='';elements.doubleChainFeedback.className='feedback';
@@ -667,12 +676,12 @@ function renderDoubleChain(){
     const link=document.createElement('div');
     const known=index<=s.step;
     link.className=`double-chain-link${known?' known':''}${index===s.step+1?' next':''}`;
-    link.innerHTML=`<small>${mult} × ${s.n}</small><strong>${known?mult*s.n:'?'}</strong>`;
+    link.innerHTML=`<small>${s.n} × ${mult}</small><strong>${known?mult*s.n:'?'}</strong>`;
     elements.doubleChainLinks.append(link);
   });
   const currentMult=mults[s.step],nextMult=mults[s.step+1];
   const knownValue=currentMult*s.n;
-  elements.doubleChainInstruction.textContent=s.direction==='up'?`Du weißt ${currentMult} × ${s.n} = ${knownValue}. Verdopple das Ergebnis für ${nextMult} × ${s.n}.`:`Du weißt ${currentMult} × ${s.n} = ${knownValue}. Halbiere das Ergebnis für ${nextMult} × ${s.n}.`;
+  elements.doubleChainInstruction.textContent=s.direction==='up'?`Du weißt ${s.n} × ${currentMult} = ${knownValue}. Verdopple das Ergebnis für ${s.n} × ${nextMult}.`:`Du weißt ${s.n} × ${currentMult} = ${knownValue}. Halbiere das Ergebnis für ${s.n} × ${nextMult}.`;
   elements.doubleChainAnswerZone.textContent=s.answer||'?';elements.doubleChainAnswerZone.style.color=s.answer?'#6c4fe0':'#c1b5dd';
   elements.doubleChainCheck.disabled=!s.answer||s.locked;
 }
@@ -764,6 +773,7 @@ function openShopWorld() {
 }
 
 function startShopGame(station = shopState.station || 'fruit') {
+  if(requestRows('shop',()=>startShopGame(station)))return;
   if (!getProfile()) return showProfileSelection();
   const level = getRewardLevel(getProfile());
   shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: makeOperationRound(), station, difficulty: level >= 8 ? 3 : level >= 4 ? 2 : 1 };
@@ -844,7 +854,7 @@ function makeShopTask(operation, station = 'fruit') {
   let a; let b; let result;
   if (operation === '+') { a = randomInt(3, 20); b = randomInt(2, 15); result = a + b; }
   else if (operation === '-') { a = randomInt(10, 30); b = randomInt(2, a - 2); result = a - b; }
-  else if (operation === '*') { a = randomInt(2, 10); b = randomInt(2, 10); result = a * b; }
+  else if (operation === '*') { a = pickRow(); b = randomInt(2, 10); result = a * b; }
   else { b = randomInt(2, 10); result = randomInt(2, 10); a = b * result; }
   const stationScenes = { fruit: '🍎 🍐 🍓', bakery: '🥨 🥖 🥐', checkout: '🛒 🧾 🪙', stock: '📦 🥫 🪜' };
   const stationNames = { fruit: 'Am Obststand', bakery: 'In der Bäckerei', checkout: 'An der Kasse', stock: 'Im Lager' };
@@ -930,7 +940,8 @@ function finishShopGame() {
 }
 
 function startCatchGame(mode='mixed') {
-  if (getAreaLevel(getProfile(),'mal') < 5 && !teacherPreview) return;
+  if(requestRows('catch',()=>startCatchGame('mixed'), typeof mode==='number'?[mode]:null))return;
+  if (getAreaLevel(getProfile(),'mal') < 2 && !teacherPreview) return;
   clearCatchBubbles();cancelAnimationFrame(catchState.frame);
   catchState = { question: 0, score: 0, a: 2, b: 2, mode, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: true, mistake: false, bubbles: [] };
   elements.catchScore.textContent = '0'; elements.catchProgress.style.width = '0%';
@@ -1026,6 +1037,8 @@ function finishCatchGame() {
 }
 
 function startPipeGame(){
+  if(getAreaLevel(getProfile(),'mal')<4&&!teacherPreview)return;
+  if(requestRows('pipe',startPipeGame))return;
   clearPipeBubbles();cancelAnimationFrame(pipeState.frame);
   pipeState={question:0,score:0,a:2,b:2,op:'*',result:4,running:true,bubbles:[],pipesBusy:new Array(PIPE_COUNT).fill(false),lastTime:0,nextSpawnAt:0,frame:0};
   elements.pipeScore.textContent='0';elements.pipeProgress.style.width='0%';
@@ -1049,8 +1062,8 @@ function nextPipeQuestion(){
   let op,a,b,tries=0;
   do{
     op=Math.random()<0.5?'*':'/';
-    if(op==='*'){a=randomInt(2,10);b=randomInt(2,10)}
-    else{const divisor=randomInt(2,10),quotient=randomInt(2,10);a=divisor*quotient;b=divisor}
+    if(op==='*'){a=pickRow();b=randomInt(1,10)}
+    else{const divisor=pickRow(),quotient=randomInt(1,10);a=divisor*quotient;b=divisor}
     tries+=1;
   }while(pipeState.question>0&&tries<30&&a===prevA&&b===prevB&&op===prevOp);
   pipeState.op=op;pipeState.a=a;pipeState.b=b;pipeState.result=op==='*'?a*b:a/b;
@@ -1176,9 +1189,10 @@ function advanceDivisionConcept(){if(divisionState.mode!=='understand'||division
 function renderDivisionHelpGroups(){elements.divisionObjects.replaceChildren();const groups=divisionState.type==='share'?divisionState.divisor:divisionState.result;const perGroup=divisionState.type==='share'?divisionState.result:divisionState.divisor;for(let group=0;group<groups;group+=1){const box=document.createElement('span');box.className='division-help-group';const label=document.createElement('small');label.textContent=divisionState.type==='share'?`Kind ${group+1}`:`Päckchen ${group+1}`;box.append(label);const dice=document.createElement('div');dice.className='division-pool-dice';appendDiceGroup(dice,perGroup,'🍓');box.append(dice);elements.divisionObjects.append(box)}const explanation=document.createElement('p');explanation.className='division-group-caption';explanation.textContent=divisionState.type==='share'?`${divisionState.total} Erdbeeren werden auf ${divisionState.divisor} gleich große Kinder-Gruppen aufgeteilt.`:`Aus ${divisionState.total} Erdbeeren werden Päckchen mit jeweils ${divisionState.divisor} Erdbeeren gebildet.`;elements.divisionObjects.append(explanation)}
 
 function startGame(mode) {
+  if(requestRows('times',()=>startGame('mixed'), typeof mode==='number'?[mode]:null))return;
   if (!getProfile()) return showProfileSelection();
   state = { mode, question: 0, score: 0, streak: 0, a: 2, b: 1, answer: '', locked: false, retryCount: 0, total: FREE_QUESTIONS, roundFacts:{} };
-  elements.currentMode.textContent = mode === 'mixed' ? 'Alles gemischt' : `${mode}er-Reihe`;
+  elements.currentMode.textContent = activeRows.map(row=>`${row}er`).join(', ')+'-Reihen';
   elements.score.textContent = '0';
   elements.streakCount.textContent = '0';
   showScreen('game');
@@ -1306,7 +1320,7 @@ function shuffled(values) {
 function chooseAdaptiveFact() {
   const candidates = [];
   if (state.mode === 'mixed') {
-    for (let a = 1; a <= 10; a += 1) for (let b = 1; b <= 10; b += 1) candidates.push([a, b]);
+    for (const a of activeRows) for (let b = 1; b <= 10; b += 1) candidates.push([a, b]);
   } else {
     for (let b = 1; b <= 10; b += 1) candidates.push([state.mode, b]);
   }
@@ -1366,9 +1380,10 @@ function incrementActivity(activity) {
 
 function renderStudentAssignment() {
   const profile = getProfile(); const assignment = profile?.assignment;
-  elements.studentAssignment.classList.toggle('hidden', !assignment);
-  if (!assignment) return;
-  const names = { multiplication:'Einmaleins gemischt', division:'Geteilt rechnen', shop:'Einkaufsgeschichten', catch:'Lösungen auffangen', family:'Rechenwege verbinden', placeValue:'Stellenwert-Werkstatt bis 10.000', numberLine:'Zahlenstrahl-Sprünge', race:'Tempo-Rennen', kingTower:'Königsaufgaben-Turm', neighbor:'Nachbaraufgaben-Domino', doubleChain:'Verdopplungskette' };
+  const archived=assignment&&['kingTower','family'].includes(assignment.activity);
+  elements.studentAssignment.classList.toggle('hidden', !assignment||archived);
+  if (!assignment||archived) return;
+  const names = { multiplication:'Einmaleins gemischt', division:'Geteilt rechnen', shop:'Einkaufsgeschichten', stories:'Rechengeschichten selbst lösen', catch:'Lösungen auffangen', family:'Rechenwege verbinden', placeValue:'Stellenwert-Werkstatt bis 10.000', numberLine:'Zahlenstrahl-Sprünge', race:'Tempo-Rennen', kingTower:'Königsaufgaben-Turm', neighbor:'Nachbaraufgaben-Domino', doubleChain:'Verdopplungskette' };
   const current = profile.activityCounts?.[assignment.activity] || 0;
   const done = Math.min(assignment.target, Math.max(0, current - assignment.baseline));
   elements.assignmentTitle.textContent = assignment.note || names[assignment.activity];
@@ -1421,16 +1436,18 @@ function startTeacherPreview(){teacherPreviewSnapshot=JSON.stringify(profiles);t
 function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;renderProfileHeader();renderProfileSelection();saveProfiles();showScreen('activities')}
 function getProfile() { return profiles.find((profile) => profile.id === activeProfileId); }
 const STARS_PER_LEVEL = 20;
+function getStarsPerLevel(area) { return area === 'mal' ? 40 : STARS_PER_LEVEL; }
 function getTotalStars(profile) {
   return AREAS.reduce((sum, area) => sum + (profile?.areaStars?.[area] || 0), 0);
 }
-function getAreaLevel(profile, area) { return Math.floor((profile?.areaStars?.[area] || 0) / STARS_PER_LEVEL) + 1; }
+function getAreaLevel(profile, area) { return Math.floor((profile?.areaStars?.[area] || 0) / getStarsPerLevel(area)) + 1; }
 // Shared cosmetic rewards follow the highest individual area level.
 function getRewardLevel(profile) { return Math.max(...AREAS.map(area => getAreaLevel(profile, area))); }
 function getLevelProgress(profile, area = 'mal') {
   const stars = profile?.areaStars?.[area] || 0;
-  const progress = stars % STARS_PER_LEVEL;
-  return { area, level: getAreaLevel(profile, area), progress, missing: STARS_PER_LEVEL - progress };
+  const target = getStarsPerLevel(area);
+  const progress = stars % target;
+  return { area, level: getAreaLevel(profile, area), progress, target, missing: target - progress };
 }
 function formatAreaLevels(profile) {
   return AREAS.map(area => `${AREA_NAMES[area]}: Level ${getAreaLevel(profile, area)}`).join(' · ');
@@ -1578,20 +1595,20 @@ function renderProfileHeader() {
   elements.activityProfileEmoji.textContent = profile?.emoji || '🌟';
   elements.activityProfileName.textContent = profile?.name || 'Profil';
   elements.shopEmoji.textContent = profile?.emoji || '🌟';
-  const catchUnlocked = getAreaLevel(profile,'mal') >= 5 || teacherPreview;
-  elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':'ab Mal-Level 5';elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
-  const pipeUnlocked=getAreaLevel(profile,'mal')>=5||teacherPreview;
-  elements.gamesPipeCard.disabled=!pipeUnlocked;elements.gamesPipeCard.classList.toggle('locked',!pipeUnlocked);elements.gamesPipeStatus.textContent=pipeUnlocked?'Jetzt spielen':'ab Mal-Level 5';elements.gamesPipeLock.textContent=pipeUnlocked?'→':'🔒';
-  const raceUnlocked=getAreaLevel(profile,'mal')>=5||teacherPreview;
-  elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Mal-Level 5';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
+  const catchUnlocked = getAreaLevel(profile,'mal') >= 2 || teacherPreview;
+  elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':'ab Mal-Level 2';elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
+  const pipeUnlocked=getAreaLevel(profile,'mal')>=4||teacherPreview;
+  elements.gamesPipeCard.disabled=!pipeUnlocked;elements.gamesPipeCard.classList.toggle('locked',!pipeUnlocked);elements.gamesPipeStatus.textContent=pipeUnlocked?'Jetzt spielen':'ab Mal-Level 4';elements.gamesPipeLock.textContent=pipeUnlocked?'→':'🔒';
+  const raceUnlocked=getAreaLevel(profile,'mal')>=6||teacherPreview;
+  elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Mal-Level 6';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
   elements.levelAvatar.textContent=profile?.emoji||'🌟';
   elements.levelNow.textContent='Deine Level';
   elements.levelRewardText.textContent='Jeder Lernbereich steigt für sich auf';
   elements.levelProgressBar.parentElement.classList.add('hidden');
-  elements.levelProgressText.textContent=`Je ${STARS_PER_LEVEL} Sterne im Bereich = ein Level · Belohnungen nach deinem höchsten Bereichslevel`;
+  elements.levelProgressText.textContent=`Mal: je 40 Sterne ein Level · Andere Bereiche: je ${STARS_PER_LEVEL} Sterne · Belohnungen nach deinem höchsten Bereichslevel`;
   elements.levelAreaProgress.innerHTML=AREAS.map(area=>{
-    const {level,progress,missing}=getLevelProgress(profile,area);
-    return `<span><b>${AREA_NAMES[area]} · Level ${level}</b><i>${progress}/${STARS_PER_LEVEL} ★ · noch ${missing} ★</i><span class="area-level-track"><i style="width:${progress/STARS_PER_LEVEL*100}%"></i></span></span>`;
+    const {level,progress,missing,target}=getLevelProgress(profile,area);
+    return `<span><b>${AREA_NAMES[area]} · Level ${level}</b><i>${progress}/${target} ★ · noch ${missing} ★</i><span class="area-level-track"><i style="width:${progress/target*100}%"></i></span></span>`;
   }).join('');elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
 }
 
@@ -1608,7 +1625,7 @@ function renderRewards() {
   elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Deine Bereichslevel</strong><small>${formatAreaLevels(profile)}</small><small>Figuren und Farben: höchster Bereich auf Level ${level}</small>`;
   renderRewardGroup(elements.themeGrid, THEMES, profile.theme || 'classic', (id) => { profile.theme = id; });
   renderRewardGroup(elements.tileGrid, TILE_STYLES, profile.tileStyle || 'classic', (id) => { profile.tileStyle = id; });
-  elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(game=>{const malGame=['Lösungen auffangen','Tempo-Rennen','Schnelle Fangwellen'].includes(game.name);const gameLevel=malGame?getAreaLevel(profile,'mal'):level;const locked=gameLevel<game.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${game.icon}</span><strong>${game.name}</strong><small>${locked?`ab ${malGame?'Mal-Level':'Bereichslevel'} ${game.level}`:'freigeschaltet'}</small></div>`}).join('');
+  elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(game=>{const malGame=['Lösungen auffangen','Rohr-Rechnen','Tempo-Rennen','Schnelle Fangwellen'].includes(game.name);const gameLevel=malGame?getAreaLevel(profile,'mal'):level;const locked=gameLevel<game.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${game.icon}</span><strong>${game.name}</strong><small>${locked?`ab ${malGame?'Mal-Level':'Bereichslevel'} ${game.level}`:'freigeschaltet'}</small></div>`}).join('');
 }
 
 function renderRewardGroup(container, rewards, selected, choose) {
@@ -1643,6 +1660,7 @@ function openProfileSettings() {
   elements.profileForm.classList.add('hidden');
   elements.emojiPicker.classList.remove('hidden');
   renderEmojis();
+  document.getElementById('deleteProfileButton').disabled=teacherPreview;
   elements.profileModal.classList.remove('hidden');
 }
 
@@ -1670,11 +1688,38 @@ function renderProfileSelection() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'profile-select';
-    button.innerHTML = `<span class="avatar-circle">${profile.emoji}</span><strong>${escapeHtml(profile.name)}</strong><small>${formatAreaLevels(profile)}</small>`;
+    button.innerHTML = `<span class="avatar-circle">${profile.emoji}</span><strong>${escapeHtml(profile.name)}</strong>`;
     button.addEventListener('click', () => { selectProfile(profile.id); showScreen('activities'); });
     elements.profileSelectGrid.append(button);
   });
 }
+
+function openDeleteProfile(){
+  const profile=getProfile();if(!profile||teacherPreview)return;
+  const dialog=document.getElementById('deleteProfileDialog');
+  dialog.dataset.profileId=profile.id;
+  document.getElementById('deleteProfileName').textContent=profile.name;
+  document.getElementById('deleteProfileDescription').textContent=profile.cloudId
+    ? 'Dieses Profil wird von diesem Gerät entfernt. Die Online-Sicherung bleibt erhalten und lässt sich mit dem PIN wieder öffnen.'
+    : 'Dieses Profil und alle zugehörigen Lernstände werden auf diesem Gerät endgültig gelöscht.';
+  dialog.showModal();
+}
+function deleteLocalProfile(id){
+  if(teacherPreview)return false;
+  const profile=profiles.find(item=>item.id===id);if(!profile)return false;
+  stopActiveGame();stopDuel();
+  if(profile.cloudId)cloudPins.delete(profile.cloudId);
+  profiles=profiles.filter(item=>item.id!==id);
+  if(activeProfileId===id){activeProfileId=null;localStorage.removeItem(`${STORAGE_KEY}:active`)}
+  pendingLevelUps=[];
+  saveProfiles();renderProfileHeader();applyRewards();renderStudentAssignment();showProfileSelection();
+  return true;
+}
+document.getElementById('deleteProfileButton').addEventListener('click',openDeleteProfile);
+document.getElementById('confirmDeleteProfile').addEventListener('click',()=>{
+  const dialog=document.getElementById('deleteProfileDialog');
+  const id=dialog.dataset.profileId;dialog.close();deleteLocalProfile(id);
+});
 
 function renderStarterEmojis() {
   elements.starterEmojiGrid.replaceChildren();
@@ -1874,6 +1919,115 @@ elements.profileForm.addEventListener('submit', async (event) => {
   elements.newProfileName.value = '';
   elements.newProfilePin.value = '';
 });
+let activeRows = Array.from({length:10},(_,i)=>i+1);
+const rowsByGame = new Map();
+let launchingRows = false;
+let pendingRowsStart = null;
+let duelState = {running:false, players:[], tasks:[], timers:new Set(), generation:0};
+function pickRow(){return activeRows[randomInt(0,activeRows.length-1)]}
+function requestRows(key,start,initial=null){
+  if(launchingRows)return false;
+  const dialog=document.querySelector('#rowsDialog');
+  const selected=initial||rowsByGame.get(key)||activeRows;
+  document.querySelector('#rowsOptions').replaceChildren();
+  for(let row=1;row<=10;row++){
+    const label=document.createElement('label');
+    const input=document.createElement('input');input.type='checkbox';input.value=row;input.checked=selected.includes(row);
+    const text=document.createElement('span');text.textContent=`${row}er`;
+    label.append(input,text);document.querySelector('#rowsOptions').append(label);
+  }
+  document.querySelector('#rowsError').textContent='';
+  document.querySelector('#rowsDescription').textContent=key==='duel'?'Beide fahren mit denselben Aufgaben. Zehn Schranken bis zum Ziel. Tippt eure Antworten auf der eigenen Seite ein.':'Wähle eine oder mehrere Reihen. Nur diese Reihen kommen vor. Bei gemischten Spielen gilt die Auswahl auch für passende Geteilt-Aufgaben.';
+  pendingRowsStart=()=>{
+    const rows=[...dialog.querySelectorAll('input:checked')].map(input=>Number(input.value));
+    if(!rows.length){document.querySelector('#rowsError').textContent='Wähle mindestens eine Malreihe aus.';return}
+    activeRows=rows;rowsByGame.set(key,[...rows]);dialog.close();
+    launchingRows=true;try{start()}finally{launchingRows=false}
+  };
+  dialog.showModal();return true;
+}
+function setupRowsAndDuel(){
+  document.querySelector('#rowsStart').addEventListener('click',()=>pendingRowsStart?.());
+  document.querySelector('#rowsDialog').addEventListener('close',()=>{pendingRowsStart=null});
+  document.querySelector('#rowsAll').addEventListener('click',()=>document.querySelectorAll('#rowsOptions input').forEach(input=>input.checked=true));
+  document.querySelector('#gamesDuelCard').addEventListener('click',startDuel);
+  document.querySelector('#duelExit').addEventListener('click',()=>showScreen('games'));
+  document.querySelector('#duelRestart').addEventListener('click',()=>beginDuel());
+  document.querySelector('#duelAgain').addEventListener('click',()=>beginDuel());
+  document.querySelector('#duelChoose').addEventListener('click',startDuel);
+}
+function stopDuel(){
+  duelState.running=false;
+  duelState.timers.forEach(timer=>clearTimeout(timer));duelState.timers.clear();
+  duelState.generation++;
+}
+function startDuel(){if(requestRows('duel',beginDuel))return;beginDuel()}
+function beginDuel(){
+  stopDuel();
+  duelState.tasks=Array.from({length:10},()=>({a:pickRow(),b:randomInt(1,10)}));
+  duelState.players=[0,1].map(()=>({step:0,answer:'',moving:false,feedback:'Löse die Aufgabe, um die Schranke zu öffnen.'}));
+  duelState.running=true;
+  document.querySelector('#duelResult').classList.add('hidden');
+  const container=document.querySelector('#duelPlayers');container.replaceChildren();
+  duelState.players.forEach((player,index)=>{
+    const panel=document.createElement('section');panel.className=`duel-player player-${index}`;
+    panel.setAttribute('aria-label',`Fahrbahn ${index+1}`);
+    panel.innerHTML=`<div class="duel-player-title"><strong>${index===0?'🔴':'🔵'} Person ${index+1}</strong><span class="duel-count">0 / 10</span></div><div class="duel-road"><div class="duel-road-dashes"></div><span class="duel-finish">🏁</span><span class="duel-car" aria-label="Auto">${index===0?'🏎️':'🚙'}</span><span class="duel-barrier" aria-label="Schranke"></span></div><div class="duel-equation"><span class="duel-task"></span><output class="duel-answer" aria-label="Antwort">?</output></div><p class="duel-feedback" aria-live="polite"></p><div class="duel-keypad"></div>`;
+    const keypad=panel.querySelector('.duel-keypad');
+    ['1','2','3','4','5','6','7','8','9','⌫','0','Los!'].forEach(key=>{
+      const button=document.createElement('button');button.type='button';button.textContent=key;
+      button.setAttribute('aria-label',key==='⌫'?'Letzte Ziffer löschen':key==='Los!'?'Antwort prüfen':key);
+      button.addEventListener('click',()=>duelInput(index,key));keypad.append(button);
+    });
+    container.append(panel);renderDuelPlayer(index);
+  });
+  showScreen('duel');
+}
+function renderDuelPlayer(index){
+  const player=duelState.players[index];const panel=document.querySelectorAll('.duel-player')[index];
+  const task=duelState.tasks[Math.min(player.step,9)];
+  panel.querySelector('.duel-count').textContent=`${player.step} / 10`;
+  panel.querySelector('.duel-task').textContent=`${task.a} × ${task.b} =`;
+  panel.querySelector('.duel-answer').textContent=player.answer||'?';
+  panel.querySelector('.duel-feedback').textContent=player.feedback;
+  panel.querySelector('.duel-car').style.left=`${5+player.step*8}%`;
+  panel.querySelector('.duel-barrier').style.left=`${Math.min(91,18+player.step*8)}%`;
+  panel.classList.toggle('is-moving',player.moving);
+  panel.querySelectorAll('button').forEach(button=>button.disabled=!duelState.running||player.moving);
+}
+function duelInput(index,key){
+  const player=duelState.players[index];
+  if(!duelState.running||player.moving)return;
+  if(key==='⌫'){player.answer=player.answer.slice(0,-1);renderDuelPlayer(index);return}
+  if(key!=='Los!'){if(player.answer.length<3)player.answer+=key;renderDuelPlayer(index);return}
+  if(!player.answer)return;
+  const task=duelState.tasks[player.step];
+  if(Number(player.answer)!==task.a*task.b){player.answer='';player.feedback='Noch einmal! Die Schranke wartet.';renderDuelPlayer(index);return}
+  player.moving=true;player.feedback='Richtig! Freie Fahrt!';
+  renderDuelPlayer(index);
+  const generation=duelState.generation;
+  const timer=setTimeout(()=>{
+    duelState.timers.delete(timer);
+    if(!duelState.running||generation!==duelState.generation)return;
+    player.step++;player.answer='';
+    if(player.step===10){
+      duelState.running=false;
+      document.querySelector('#duelWinner').textContent=`${index===0?'🔴':'🔵'} Person ${index+1} gewinnt!`;
+      document.querySelector('#duelResult').classList.remove('hidden');
+      duelState.players.forEach((_,i)=>renderDuelPlayer(i));return;
+    }
+    renderDuelPlayer(index);
+    const driveTimer=setTimeout(()=>{
+      duelState.timers.delete(driveTimer);
+      if(!duelState.running||generation!==duelState.generation)return;
+      player.moving=false;player.feedback='Nächste Schranke – weiter geht’s!';renderDuelPlayer(index);
+    },350);
+    duelState.timers.add(driveTimer);
+  },250);
+  duelState.timers.add(timer);
+}
+
+setupRowsAndDuel();
 renderProfileHeader();
 renderProfileSelection();
 applyRewards();
@@ -1907,9 +2061,3 @@ document.addEventListener('keydown', (event) => {
     if(/^[0-9]$/.test(event.key))addDoubleChainDigit(event.key);if(event.key==='Backspace')removeDoubleChainDigit();if(event.key==='Enter')checkDoubleChain();
   }
 });
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
-}

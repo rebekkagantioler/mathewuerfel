@@ -1923,7 +1923,6 @@ let activeRows = Array.from({length:10},(_,i)=>i+1);
 const rowsByGame = new Map();
 let launchingRows = false;
 let pendingRowsStart = null;
-let duelState = {running:false, players:[], tasks:[], timers:new Set(), generation:0};
 function pickRow(){return activeRows[randomInt(0,activeRows.length-1)]}
 function requestRows(key,start,initial=null){
   if(launchingRows)return false;
@@ -1937,7 +1936,7 @@ function requestRows(key,start,initial=null){
     label.append(input,text);document.querySelector('#rowsOptions').append(label);
   }
   document.querySelector('#rowsError').textContent='';
-  document.querySelector('#rowsDescription').textContent=key==='duel'?'Beide fahren mit denselben Aufgaben. Zehn Schranken bis zum Ziel. Tippt eure Antworten auf der eigenen Seite ein.':'Wähle eine oder mehrere Reihen. Nur diese Reihen kommen vor. Bei gemischten Spielen gilt die Auswahl auch für passende Geteilt-Aufgaben.';
+  document.querySelector('#rowsDescription').textContent=key==='duel'?'Steuert selbst durch den Parcours: Gas halten und mit Links/Rechts lenken. Erst an einer Schranke erscheint die Malaufgabe. Beide fahren dieselbe Strecke mit denselben Aufgaben.':'Wähle eine oder mehrere Reihen. Nur diese Reihen kommen vor. Bei gemischten Spielen gilt die Auswahl auch für passende Geteilt-Aufgaben.';
   pendingRowsStart=()=>{
     const rows=[...dialog.querySelectorAll('input:checked')].map(input=>Number(input.value));
     if(!rows.length){document.querySelector('#rowsError').textContent='Wähle mindestens eine Malreihe aus.';return}
@@ -1955,76 +1954,7 @@ function setupRowsAndDuel(){
   document.querySelector('#duelRestart').addEventListener('click',()=>beginDuel());
   document.querySelector('#duelAgain').addEventListener('click',()=>beginDuel());
   document.querySelector('#duelChoose').addEventListener('click',startDuel);
-}
-function stopDuel(){
-  duelState.running=false;
-  duelState.timers.forEach(timer=>clearTimeout(timer));duelState.timers.clear();
-  duelState.generation++;
-}
-function startDuel(){if(requestRows('duel',beginDuel))return;beginDuel()}
-function beginDuel(){
-  stopDuel();
-  duelState.tasks=Array.from({length:10},()=>({a:pickRow(),b:randomInt(1,10)}));
-  duelState.players=[0,1].map(()=>({step:0,answer:'',moving:false,feedback:'Löse die Aufgabe, um die Schranke zu öffnen.'}));
-  duelState.running=true;
-  document.querySelector('#duelResult').classList.add('hidden');
-  const container=document.querySelector('#duelPlayers');container.replaceChildren();
-  duelState.players.forEach((player,index)=>{
-    const panel=document.createElement('section');panel.className=`duel-player player-${index}`;
-    panel.setAttribute('aria-label',`Fahrbahn ${index+1}`);
-    panel.innerHTML=`<div class="duel-player-title"><strong>${index===0?'🔴':'🔵'} Person ${index+1}</strong><span class="duel-count">0 / 10</span></div><div class="duel-road"><div class="duel-road-dashes"></div><span class="duel-finish">🏁</span><span class="duel-car" aria-label="Auto">${index===0?'🏎️':'🚙'}</span><span class="duel-barrier" aria-label="Schranke"></span></div><div class="duel-equation"><span class="duel-task"></span><output class="duel-answer" aria-label="Antwort">?</output></div><p class="duel-feedback" aria-live="polite"></p><div class="duel-keypad"></div>`;
-    const keypad=panel.querySelector('.duel-keypad');
-    ['1','2','3','4','5','6','7','8','9','⌫','0','Los!'].forEach(key=>{
-      const button=document.createElement('button');button.type='button';button.textContent=key;
-      button.setAttribute('aria-label',key==='⌫'?'Letzte Ziffer löschen':key==='Los!'?'Antwort prüfen':key);
-      button.addEventListener('click',()=>duelInput(index,key));keypad.append(button);
-    });
-    container.append(panel);renderDuelPlayer(index);
-  });
-  showScreen('duel');
-}
-function renderDuelPlayer(index){
-  const player=duelState.players[index];const panel=document.querySelectorAll('.duel-player')[index];
-  const task=duelState.tasks[Math.min(player.step,9)];
-  panel.querySelector('.duel-count').textContent=`${player.step} / 10`;
-  panel.querySelector('.duel-task').textContent=`${task.a} × ${task.b} =`;
-  panel.querySelector('.duel-answer').textContent=player.answer||'?';
-  panel.querySelector('.duel-feedback').textContent=player.feedback;
-  panel.querySelector('.duel-car').style.left=`${5+player.step*8}%`;
-  panel.querySelector('.duel-barrier').style.left=`${Math.min(91,18+player.step*8)}%`;
-  panel.classList.toggle('is-moving',player.moving);
-  panel.querySelectorAll('button').forEach(button=>button.disabled=!duelState.running||player.moving);
-}
-function duelInput(index,key){
-  const player=duelState.players[index];
-  if(!duelState.running||player.moving)return;
-  if(key==='⌫'){player.answer=player.answer.slice(0,-1);renderDuelPlayer(index);return}
-  if(key!=='Los!'){if(player.answer.length<3)player.answer+=key;renderDuelPlayer(index);return}
-  if(!player.answer)return;
-  const task=duelState.tasks[player.step];
-  if(Number(player.answer)!==task.a*task.b){player.answer='';player.feedback='Noch einmal! Die Schranke wartet.';renderDuelPlayer(index);return}
-  player.moving=true;player.feedback='Richtig! Freie Fahrt!';
-  renderDuelPlayer(index);
-  const generation=duelState.generation;
-  const timer=setTimeout(()=>{
-    duelState.timers.delete(timer);
-    if(!duelState.running||generation!==duelState.generation)return;
-    player.step++;player.answer='';
-    if(player.step===10){
-      duelState.running=false;
-      document.querySelector('#duelWinner').textContent=`${index===0?'🔴':'🔵'} Person ${index+1} gewinnt!`;
-      document.querySelector('#duelResult').classList.remove('hidden');
-      duelState.players.forEach((_,i)=>renderDuelPlayer(i));return;
-    }
-    renderDuelPlayer(index);
-    const driveTimer=setTimeout(()=>{
-      duelState.timers.delete(driveTimer);
-      if(!duelState.running||generation!==duelState.generation)return;
-      player.moving=false;player.feedback='Nächste Schranke – weiter geht’s!';renderDuelPlayer(index);
-    },350);
-    duelState.timers.add(driveTimer);
-  },250);
-  duelState.timers.add(timer);
+  setupDuelControls();
 }
 
 setupRowsAndDuel();

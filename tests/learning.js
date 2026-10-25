@@ -21,9 +21,10 @@ try{
  practiceRows.times.clear();showScreen('start');continuePractice('times');assert(!screens.start.classList.contains('hidden'),'Empty rows started game');
  startPlaceValueGame('build');assert(elements.placeValueHouses.children.length===4,'Missing empty houses');
  for(let from=0;from<3;from++){
-  startPlaceValueGame('trade');const s=placeValueState;s.counts=[0,0,0,0];s.counts[from]=1;renderPlaceValue();
+  startPlaceValueGame('minus');const s=placeValueState;s.counts=[0,0,0,0];s.counts[from]=1;renderPlaceValue();
   const before=placeValueNumber(s.counts);assert(exchangePlaceSelection(from,1,from+1),'Could not unbundle');
   assert(s.counts[from]===0&&s.counts[from+1]===10&&placeValueNumber(s.counts)===before,'Unbundle changed value');
+  s.mode='trade';renderPlaceValue();
   const points=()=>elements.placeValueHouses.children[from+1].querySelectorAll('.filled');
   for(let i=0;i<10;i++)points()[i].click();
   assert(s.selectedTokens.length===10,'Cannot select ten actual points');
@@ -32,7 +33,7 @@ try{
   assert(!exchangePlaceSelection(from,1,from+2),'Allowed nonadjacent exchange');
  }
  // Exercise the same pointer handlers used on an iPad, with real drop hit testing.
- startPlaceValueGame('trade');placeValueState.counts=[1,0,0,0];renderPlaceValue();
+ startPlaceValueGame('minus');placeValueState.counts=[1,0,0,0];renderPlaceValue();
  const destination=elements.placeValueHouses.children[1].querySelector('header');destination.scrollIntoView({block:'center'});
  const token=elements.placeValueHouses.children[0].querySelector('.filled');token.setPointerCapture=()=>{};
  const origin=token.getBoundingClientRect(),target=destination.getBoundingClientRect();
@@ -46,30 +47,72 @@ try{
  source.dispatchEvent(new PointerEvent('pointerup',{pointerId:78,pointerType:'touch',clientX:10,clientY:10,bubbles:true}));
  source.dispatchEvent(new MouseEvent('click',{detail:1,bubbles:true}));
  assert(placeValueState.counts[0]===1,'Touch tap added two build tokens');
+ for(let question=0;question<6;question++)for(let sample=0;sample<100;sample++){
+  const counts=makePlaceTradeCounts(question);assert(counts.some(n=>n>=10),'Generated already-correct exercise');
+  const value=placeValueNumber(counts);let trades=0;
+  for(let from=3;from>0;from--)while(counts[from]>=10){counts[from]-=10;counts[from-1]++;trades++}
+  assert(placeValueNumber(counts)===value&&counts.every(n=>n<10),'Generated impossible exercise');
+  assert(trades>=(question===0?1:2),'Generated exercise has no multiple trades');
+ }
  startPlaceValueGame('trade');
+ const canonical=[2,1,0,0];placeValueState.counts=[...canonical];renderPlaceValue();
+ assert(!exchangePlaceSelection(0,1,1)&&placeValueState.counts.every((v,i)=>v===canonical[i]),'Trade asks to undo correct 2100');
  for(let question=0;question<6;question++){
+
 
   placeValueState.question=question;nextPlaceValueQuestion();const s=placeValueState;
   assert(!elements.placeValueActions.querySelector('button'),'Answer buttons remain');
   assert(elements.placeValueHouses.children.length===4,'Trade hid smaller units');
-  if(s.exchangeFrom===null){const from=s.counts.findIndex(n=>n>=10);assert(from>0&&exchangePlaceSelection(from,10,from-1),'Bundling task unsolvable')}
-  else assert(exchangePlaceSelection(s.exchangeFrom,1,s.exchangeFrom+1),'Unbundling task unsolvable');
+  assert(s.counts.some(n=>n>=10),'Already normalized trade exercise');
+  assert(!s.counts.every((n,i)=>n===s.goalCounts[i]),'No trade needed');
+  let moves=0;
+  for(let from=3;from>=1;from--)while(s.counts[from]>=10){assert(exchangePlaceSelection(from,10,from-1),'Bundling task unsolvable');moves++}
+  assert(moves>=(question===0?1:2),'Later task needs only one exchange');
   assert(s.counts.every((n,i)=>n===s.goalCounts[i]),'Goal representation differs');
   const before=s.score;checkPlaceValue();assert(s.score===before+1,'Correct exchange not accepted');
  }
  startPlaceValueGame('minus');assert(elements.placeValueHouses.children.length===4,'Minus hid units');
- startNumberLineGame();let labeling=0;
+ startNumberLineGame();let tickSpacing=null;
  for(let question=0;question<8;question++){
   numberLineState.question=question;nextNumberLineQuestion();const s=numberLineState;
-  assert(elements.numberLineVisual.querySelectorAll('.number-line-label').length===9,'Unlabeled line');
-  assert(s.start-4*s.step>=0,'Negative labels');
-  if(s.labeling){
-   labeling++;assert(elements.numberLineVisual.querySelectorAll('button[data-tick]').length===3,'Missing label exercise');
-   for(const i of s.labelIndices){s.activeLabel=i;for(const digit of String(s.start+i*s.step))numberLineLabelInput(digit)}
-  }else{s.jumps=s.jump/s.step;positionNumberLineHandle();assert(document.querySelector('#numberLineJumpBadge').textContent.includes(formatNumber(s.result)),'No number at marked position')}
+  assert(s.step===10&&s.start>=0&&s.result>=0&&s.result<=10000,'Unstable or invalid ruler');
+  const ticks=elements.numberLineVisual.querySelectorAll('.ruler-tick');assert(ticks.length===1001,'Ruler extent changed');
+  const width=parseFloat(ticks[1].style.left)-parseFloat(ticks[0].style.left);
+  if(tickSpacing===null)tickSpacing=width;assert(width===tickSpacing,'Tick spacing changed');
+  assert(Number(ticks[10].dataset.value)-Number(ticks[0].dataset.value)===100,'100 is not ten steps');
+  s.position=s.result;positionNumberLineHandle();
+  assert(document.querySelector('#numberLineJumpBadge').textContent.includes(formatNumber(s.result)),'No number at marked position');
   const before=s.score;checkNumberLine();assert(s.score===before+1,'Correct line answer rejected');
  }
- assert(labeling>=2,'No labeling tasks');
+ startNumberLineGame();numberLineState.start=500;numberLineState.position=500;numberLineState.result=600;numberLineState.jump=100;renderNumberLine();
+ const lineViewport=document.querySelector('#numberLineViewport'),lineHandle=document.querySelector('#numberLineHandle');
+ lineViewport.scrollIntoView({block:'center'});lineHandle.setPointerCapture=()=>{};
+ const bounds=lineHandle.getBoundingClientRect(),originX=bounds.left+bounds.width/2;
+ lineHandle.dispatchEvent(new PointerEvent('pointerdown',{pointerId:90,clientX:originX,clientY:bounds.top+10,bubbles:true,cancelable:true}));
+ lineHandle.dispatchEvent(new PointerEvent('pointermove',{pointerId:90,clientX:originX+48,clientY:bounds.top+10,bubbles:true}));
+ lineHandle.dispatchEvent(new PointerEvent('pointerup',{pointerId:90,bubbles:true}));
+ assert(numberLineState.position===510,'Drag changed scale after scrolling');
+ for(let i=0;i<9;i++)lineHandle.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
+ assert(numberLineState.position===600,'100 is not ten fixed steps');checkNumberLine();assert(numberLineState.locked,'Fixed-ruler answer rejected');
+ startNumberLineGame('free');
+ assert([...elements.numberLineVisual.querySelectorAll('.free-ruler-label')].every(label=>label.textContent===''),'Free ruler is not empty');
+ assert(Object.keys(numberLineState.labels).length===0,'Free ruler has preset values');
+ for(const [index,value] of [[1,'−20'],[3,'0'],[6,'30']]){
+  elements.numberLineVisual.querySelector(`[data-tick="${index}"]`).click();
+  for(const digit of value)numberLineLabelInput(digit);
+ }
+ checkNumberLine();assert(elements.numberLineFeedback.classList.contains('correct'),'Valid user scale rejected');
+ assert(Object.keys(numberLineState.labels).length===3,'Check filled unchosen ticks');
+ const freeScore=numberLineState.score;checkNumberLine();assert(numberLineState.score===freeScore,'Free check awarded twice');
+ assert(validateFreeNumberLine({0:'0',2:'20',5:'50'}).ok,'Sparse labels rejected');
+ assert(validateFreeNumberLine({0:'1,5',2:'2,5',6:'4,5'}).ok,'Decimals rejected');
+ assert(validateFreeNumberLine({0:'-100',3:'-70',5:'-50'}).ok,'Negative labels rejected');
+ assert(!validateFreeNumberLine({0:'0',2:'20',5:'40'}).ok,'Wrong spacing accepted');
+ assert(!validateFreeNumberLine({0:'30',1:'20',2:'10'}).ok,'Decreasing scale accepted');
+ assert(!validateFreeNumberLine({0:'1',1:'1',2:'1'}).ok,'Repeated labels accepted');
+ assert(!validateFreeNumberLine({0:'0',1:'10'}).ok,'Two labels treated as proof of scale');
+ assert(!validateFreeNumberLine({0:'0',1:'10',2:'−'}).ok,'Incomplete input accepted');
+ assert(!validateFreeNumberLine({0:'100000000000',1:'100000000010',2:'100000000021'}).ok,'Wrong large-number spacing accepted');
  showScreen('stories');storyState.locked=false;storyUI.storyWork.disabled=false;storyUI.storyWork.value='';storyUI.storyWork.setSelectionRange(0,0);
  assert(storyUI.storyWork.readOnly&&storyUI.storyWork.inputMode==='none','iPad system keyboard still requested');
  for(const key of ['1','2','+','3','=','1','5','Neue Zeile','8',':','2','=','4'])storyKeyInput(key);
@@ -79,5 +122,5 @@ try{
  const old=storyUI.storyWork.value;storyState.locked=true;storyKeyInput('9');assert(storyUI.storyWork.value===old,'Edited solved story');
  storyState.locked=false;storyKeyInput('Löschen');assert(!storyUI.storyWork.value,'Clear failed');
  showScreen('games');
- return 'Passed: direct multi-row selection, order, mixed, division filters; all houses; manual ten-to-one and one-to-ten including H/T; labeled lines and labeling exercises; math keyboard, editing and input lock';
+ return 'Passed: direct multi-row selection, order, mixed, division filters; all houses; manual ten-to-one and one-to-ten including H/T; fixed ruler and fully free labeling; math keyboard, editing and input lock';
 }finally{window.setTimeout=timeout;teacherPreview=false}

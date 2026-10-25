@@ -218,6 +218,7 @@ let teacherPreviewSnapshot=null;
 let pendingLeaveAction=null;
 
 function showScreen(name) {
+  if(name!=='numberLine'){numberLineState.dragCancel?.();window.clearTimeout(numberLineState.nextTimer)}
   document.body.classList.toggle('duel-active', name === 'duel');
   if(name==='duel')window.scrollTo(0,0);
   if(name !== 'duel' && typeof duelState !== 'undefined') stopDuel();
@@ -311,78 +312,170 @@ function checkConceptAnswer(){const s=conceptState;if(!s.answer||s.locked)return
 function finishConceptGame(){elements.conceptFinalScore.textContent=conceptState.score;elements.conceptFinishText.textContent=`${conceptState.score} von 6 Aufgaben hast du ohne Hilfe gelöst.`;showScreen('conceptFinish');maybeShowLevelUp()}
 
 function formatNumber(value){return new Intl.NumberFormat('de-DE').format(value)}
-const NUMBER_LINE_RANGE=4;
-function startNumberLineGame(){numberLineState={question:0,score:0,locked:false};elements.numberLineScore.textContent='0';showScreen('numberLine');nextNumberLineQuestion()}
+const NUMBER_LINE_MAX=10000;
+const NUMBER_LINE_STEP=10;
+const NUMBER_LINE_TICK_WIDTH=48;
+const NUMBER_LINE_PADDING=28;
+function startNumberLineGame(mode='guided'){
+  numberLineState.dragCancel?.();window.clearTimeout(numberLineState.nextTimer);
+  numberLineState={mode:mode==='free'?'free':'guided',question:0,score:0,locked:false,freeAwarded:false};
+  elements.numberLineScore.textContent='0';showScreen('numberLine');nextNumberLineQuestion();
+}
 function nextNumberLineQuestion(){
-  const previous=numberLineState;if(previous.question>=8)return finishNumberLineGame();
-  const step=[1,10,100,1000][previous.question%4];
-  const offset=step<1000?randomInt(0,step-1):0;
-  const start=step*randomInt(4,Math.floor((10000-offset)/step)-4)+offset;
-  const jump=step*randomInt(1,3)*(Math.random()<.5?-1:1);
-  const labeling=previous.question%3===2;
-  numberLineState={question:previous.question,score:previous.score,start,jump,result:start+jump,step,jumps:0,retry:0,locked:false,labeling,labelAnswers:{},labelIndices:[-2,0,2],activeLabel:-2};
-  const s=numberLineState;
-  elements.numberLineTask.textContent=labeling?'Welche Zahlen gehören an die freien Striche?':`${formatNumber(start)} ${jump<0?'−':'＋'} ${formatNumber(Math.abs(jump))} = ?`;
-  elements.numberLineHint.textContent=labeling?'Lies die vorgegebenen Zahlen. Wähle einen freien Strich und beschrifte ihn. Achte auf die Abstände.':'Lies die Beschriftung: Wie viel ist ein Abstand wert? Zieh die Markierung auf die Ergebniszahl.';
-  elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';elements.numberLineProgress.style.width=`${s.question/8*100}%`;renderNumberLine();
+  const previous=numberLineState;previous.dragCancel?.();window.clearTimeout(previous.nextTimer);
+  if(previous.mode==='free'){
+    numberLineState={...previous,labels:{},activeLabel:null,locked:false,retry:0};
+    elements.numberLineTask.textContent='Dein eigener Zahlenstrahl';
+    elements.numberLineHint.textContent='Beschrifte mindestens drei beliebige Striche. Du bestimmst die Anfangszahl und die Schrittweite. Gleiche Abstände müssen gleich große Zahlenschritte bedeuten.';
+    document.querySelector('#numberLineEyebrow').textContent='Frei beschriften';
+    elements.numberLineProgress.style.width='0%';
+  }else{
+    if(previous.question>=8)return finishNumberLineGame();
+    const size=[20,100,50,200,10,300,1000,500][previous.question];
+    const jump=size*(Math.random()<.5?-1:1);
+    const start=randomInt(jump<0?size/10:0,jump>0?(NUMBER_LINE_MAX-size)/10:NUMBER_LINE_MAX/10)*10;
+    numberLineState={mode:'guided',question:previous.question,score:previous.score,start,jump,result:start+jump,position:start,step:NUMBER_LINE_STEP,retry:0,locked:false};
+    elements.numberLineTask.textContent=`${formatNumber(start)} ${jump<0?'−':'+'} ${formatNumber(size)} = ?`;
+    elements.numberLineHint.textContent='Der Maßstab bleibt immer gleich: Ein kleiner Abstand bedeutet 10, zehn Abstände bedeuten 100. Verschiebe den Ausschnitt und markiere dein Ergebnis.';
+    document.querySelector('#numberLineEyebrow').textContent='Ein fester Zahlenstrahl von 0 bis 10.000';
+    elements.numberLineProgress.style.width=`${previous.question/8*100}%`;
+  }
+  elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';
+  document.querySelectorAll('[data-number-line-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.numberLineMode===numberLineState.mode)));
+  renderNumberLine();
 }
+function numberLinePixel(value){return NUMBER_LINE_PADDING+value/NUMBER_LINE_STEP*NUMBER_LINE_TICK_WIDTH}
 function renderNumberLine(){
-  const s=numberLineState,range=NUMBER_LINE_RANGE;elements.numberLineVisual.replaceChildren();
-  const rail=document.createElement('div');rail.className='draw-line-rail labeled-number-line';
-  for(let i=-range;i<=range;i++){
-    const tick=document.createElement('div');tick.className='draw-line-tick';tick.style.left=`${(i+range)/(range*2)*100}%`;
-    const missing=s.labeling&&s.labelIndices.includes(i),label=document.createElement(missing?'button':'span');
-    label.className=`number-line-label${(i+range)%2?' lower-label':''}`;
-    if(missing){label.type='button';label.dataset.tick=i;label.textContent=s.labelAnswers[i]||'?';label.setAttribute('aria-label',`Strich ${i+range+1} beschriften`);label.classList.toggle('active-label',s.activeLabel===i);label.addEventListener('click',()=>{if(s.locked)return;s.activeLabel=i;renderNumberLine()})}
-    else label.textContent=formatNumber(s.start+i*s.step);
-    tick.append(label);rail.append(tick);
+  elements.numberLineVisual.replaceChildren();
+  elements.numberLineVisual.classList.toggle('free-number-line',numberLineState.mode==='free');
+  if(numberLineState.mode==='free'){renderFreeNumberLine();return}
+  const s=numberLineState;
+  const viewport=document.createElement('div');viewport.className='ruler-viewport';viewport.id='numberLineViewport';viewport.tabIndex=0;viewport.setAttribute('aria-label','Zahlenstrahl von 0 bis 10.000, horizontal verschiebbar');
+  const ruler=document.createElement('div');ruler.className='fixed-ruler';ruler.style.width=`${numberLinePixel(NUMBER_LINE_MAX)+NUMBER_LINE_PADDING}px`;
+  const rail=document.createElement('div');rail.className='fixed-ruler-rail';ruler.append(rail);
+  for(let value=0;value<=NUMBER_LINE_MAX;value+=NUMBER_LINE_STEP){
+    const tick=document.createElement('button');tick.type='button';tick.className=`ruler-tick${value%100===0?' major-tick':''}`;tick.dataset.value=value;tick.style.left=`${numberLinePixel(value)}px`;tick.setAttribute('aria-label',`${formatNumber(value)} markieren`);
+    // The marker and arrow keys provide a single keyboard control; don't add 1,001 tab stops.
+    tick.tabIndex=-1;
+    const label=document.createElement('span');label.className='number-line-label';label.textContent=formatNumber(value);tick.append(label);
+    tick.addEventListener('click',()=>{if(s.locked)return;s.position=value;positionNumberLineHandle()});ruler.append(tick);
   }
-  elements.numberLineVisual.append(rail);
-  if(s.labeling){
-    const keys=document.createElement('div');keys.className='math-keypad number-line-keypad';
-    for(const key of ['1','2','3','4','5','6','7','8','9','0','⌫']){const button=document.createElement('button');button.type='button';button.textContent=key;button.addEventListener('click',()=>numberLineLabelInput(key));keys.append(button)}
-    elements.numberLineVisual.append(keys);return;
+  const start=document.createElement('div');start.className='fixed-ruler-start';start.style.left=`${numberLinePixel(s.start)}px`;start.textContent=`Start · ${formatNumber(s.start)}`;ruler.append(start);
+  const arrow=document.createElement('div');arrow.id='numberLineArrow';arrow.className='fixed-ruler-arrow';ruler.append(arrow);
+  const handle=document.createElement('button');handle.type='button';handle.id='numberLineHandle';handle.className='fixed-ruler-handle';handle.setAttribute('aria-label','Ergebnis markieren, mit Pfeiltasten um 10 verschieben');handle.textContent='●';ruler.append(handle);
+  handle.addEventListener('keydown',event=>{
+    if(!s.locked&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();s.position=Math.max(0,Math.min(NUMBER_LINE_MAX,s.position+(event.key==='ArrowRight'?10:-10)));positionNumberLineHandle();scrollNumberLineTo(s.position)}
+  });
+  viewport.append(ruler);elements.numberLineVisual.append(viewport);
+  const navigation=document.createElement('div');navigation.className='ruler-navigation';
+  for(const [label,action] of [['← Ausschnitt',()=>viewport.scrollLeft-=viewport.clientWidth*.75],['Zur Markierung',()=>scrollNumberLineTo(s.position)],['Ausschnitt →',()=>viewport.scrollLeft+=viewport.clientWidth*.75]]){
+    const button=document.createElement('button');button.type='button';button.className='secondary-button';button.textContent=label;button.addEventListener('click',action);navigation.append(button);
   }
-  const startMarker=document.createElement('div');startMarker.className='draw-line-start';startMarker.style.left='50%';startMarker.innerHTML=`<span>Start</span><b>${formatNumber(s.start)}</b>`;rail.append(startMarker);
-  const arrow=document.createElement('div');arrow.id='numberLineArrow';arrow.className='draw-line-arrow';rail.append(arrow);
-  const badge=document.createElement('div');badge.id='numberLineJumpBadge';badge.className='draw-line-jump-badge';rail.append(badge);
-  const handle=document.createElement('button');handle.type='button';handle.id='numberLineHandle';handle.className='draw-line-handle';handle.textContent='📍';handle.setAttribute('aria-label','Ergebnis markieren, mit Pfeiltasten verschieben');rail.append(handle);
-  handle.addEventListener('keydown',event=>{if(!s.locked&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();s.jumps=Math.max(-range,Math.min(range,s.jumps+(event.key==='ArrowRight'?1:-1)));positionNumberLineHandle()}});
-  positionNumberLineHandle();enableNumberLineDrag(handle,rail);
+  elements.numberLineVisual.append(navigation);
+  const overview=document.createElement('label');overview.className='ruler-overview';overview.innerHTML='<span>0</span><span class="ruler-overview-title">Ausschnitt verschieben</span><span>10.000</span>';
+  const slider=document.createElement('input');slider.type='range';slider.min=0;slider.max=NUMBER_LINE_MAX;slider.step=10;slider.value=s.start;slider.setAttribute('aria-label','Sichtbaren Ausschnitt des Zahlenstrahls verschieben');slider.addEventListener('input',()=>scrollNumberLineTo(Number(slider.value)));overview.append(slider);elements.numberLineVisual.append(overview);
+  viewport.addEventListener('scroll',()=>{slider.value=Math.round(Math.max(0,Math.min(NUMBER_LINE_MAX,(viewport.scrollLeft+viewport.clientWidth/2-NUMBER_LINE_PADDING)/NUMBER_LINE_TICK_WIDTH*NUMBER_LINE_STEP)))},{passive:true});
+  const badge=document.createElement('p');badge.id='numberLineJumpBadge';badge.className='ruler-position';badge.setAttribute('aria-live','polite');elements.numberLineVisual.append(badge);
+  positionNumberLineHandle();enableNumberLineDrag(handle,viewport);scrollNumberLineTo(s.start);
 }
-function numberLineLabelInput(key){
-  const s=numberLineState;if(s.locked||!s.labeling)return;
-  const value=s.labelAnswers[s.activeLabel]||'';
-  s.labelAnswers[s.activeLabel]=key==='⌫'?value.slice(0,-1):/^\d$/.test(key)&&value.length<5?value+key:value;
-  const button=elements.numberLineVisual.querySelector(`[data-tick="${s.activeLabel}"]`);if(button)button.textContent=s.labelAnswers[s.activeLabel]||'?';
+function scrollNumberLineTo(value){
+  const viewport=document.querySelector('#numberLineViewport');if(viewport)viewport.scrollLeft=Math.max(0,numberLinePixel(value)-viewport.clientWidth/2);
 }
 function positionNumberLineHandle(){
-  const s=numberLineState,range=NUMBER_LINE_RANGE;
-  const handle=document.querySelector('#numberLineHandle'),arrow=document.querySelector('#numberLineArrow'),badge=document.querySelector('#numberLineJumpBadge');if(!handle)return;
-  const percent=(s.jumps+range)/(range*2)*100;
-  handle.style.left=`${percent}%`;arrow.style.left=`${Math.min(50,percent)}%`;arrow.style.width=`${Math.abs(percent-50)}%`;
-  badge.style.left=`${percent}%`;badge.textContent=s.jumps===0?'am Start':`Markiert: ${formatNumber(s.start+s.jumps*s.step)}`;
+  const s=numberLineState,handle=document.querySelector('#numberLineHandle');if(!handle)return;
+  handle.style.left=`${numberLinePixel(s.position)}px`;
+  const arrow=document.querySelector('#numberLineArrow');arrow.style.left=`${numberLinePixel(Math.min(s.start,s.position))}px`;arrow.style.width=`${Math.abs(s.position-s.start)/NUMBER_LINE_STEP*NUMBER_LINE_TICK_WIDTH}px`;
+  document.querySelector('#numberLineJumpBadge').textContent=`Markiert: ${formatNumber(s.position)} · Veränderung: ${s.position-s.start<0?'−':'+'}${formatNumber(Math.abs(s.position-s.start))}`;
 }
-function enableNumberLineDrag(handle,rail){
-  let dragging=false;
-  function move(event){if(!dragging||numberLineState.locked)return;const bounds=rail.getBoundingClientRect();const fraction=Math.max(0,Math.min(1,(event.clientX-bounds.left)/bounds.width));numberLineState.jumps=Math.round(fraction*NUMBER_LINE_RANGE*2-NUMBER_LINE_RANGE);positionNumberLineHandle()}
-  function start(event){if(numberLineState.locked)return;event.preventDefault();dragging=true;handle.setPointerCapture(event.pointerId);move(event)}
-  handle.addEventListener('pointerdown',start);handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',()=>dragging=false);handle.addEventListener('pointercancel',()=>dragging=false);
-  rail.addEventListener('pointerdown',event=>{if(!event.target.closest('button'))start(event)});
+function enableNumberLineDrag(handle,viewport){
+  const s=numberLineState;let pointer=null,clientX=0,frame=0,lastTime=0;
+  const stop=()=>{pointer=null;cancelAnimationFrame(frame);window.removeEventListener('blur',stop)};s.dragCancel=stop;
+  function moveMarker(){
+    const bounds=viewport.getBoundingClientRect();const px=viewport.scrollLeft+clientX-bounds.left-NUMBER_LINE_PADDING;
+    s.position=Math.max(0,Math.min(NUMBER_LINE_MAX,Math.round(px/NUMBER_LINE_TICK_WIDTH)*NUMBER_LINE_STEP));positionNumberLineHandle();
+  }
+  function autoScroll(time){
+    if(pointer===null||s.locked||screens.numberLine.classList.contains('hidden')){stop();return}
+    const dt=lastTime?Math.min(.04,(time-lastTime)/1000):0;lastTime=time;
+    const bounds=viewport.getBoundingClientRect();
+    const edge=clientX<bounds.left+38?-1:clientX>bounds.right-38?1:0;
+    if(edge){viewport.scrollLeft+=edge*300*dt;moveMarker()}
+    frame=requestAnimationFrame(autoScroll);
+  }
+  handle.addEventListener('pointerdown',event=>{
+    if(s.locked||pointer!==null)return;event.preventDefault();pointer=event.pointerId;clientX=event.clientX;lastTime=0;handle.setPointerCapture(pointer);window.addEventListener('blur',stop);moveMarker();frame=requestAnimationFrame(autoScroll);
+  });
+  handle.addEventListener('pointermove',event=>{if(pointer!==event.pointerId)return;clientX=event.clientX;moveMarker()});
+  handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);handle.addEventListener('lostpointercapture',stop);
+}
+function renderFreeNumberLine(){
+  const s=numberLineState,rail=document.createElement('div');rail.className='free-ruler';rail.setAttribute('aria-label','Leerer Zahlenstrahl mit elf gleich weit entfernten Strichen');
+  for(let index=0;index<=10;index++){
+    const tick=document.createElement('button');tick.type='button';tick.className='free-ruler-tick';tick.dataset.tick=index;tick.style.left=`${index*10}%`;tick.setAttribute('aria-label',`Strich ${index+1} beschriften`);tick.classList.toggle('active-label',s.activeLabel===index);
+    const label=document.createElement('span');label.className='free-ruler-label';label.textContent=s.labels[index]||'';tick.append(label);
+    tick.addEventListener('click',()=>{s.activeLabel=index;updateFreeNumberLineEditor()});rail.append(tick);
+  }
+  const viewport=document.createElement('div');viewport.className='free-ruler-viewport';viewport.append(rail);elements.numberLineVisual.append(viewport);
+  const editor=document.createElement('div');editor.className='ruler-label-editor';editor.innerHTML='<label for="numberLineLabelValue" id="numberLineLabelCaption">Tippe auf einen Strich.</label><input id="numberLineLabelValue" readonly inputmode="none" aria-label="Beschriftung des ausgewählten Strichs"><button id="numberLineLabelClear" class="text-button" type="button">Beschriftung entfernen</button>';
+  editor.querySelector('button').addEventListener('click',()=>numberLineLabelInput('Löschen'));elements.numberLineVisual.append(editor);
+  const keys=document.createElement('div');keys.className='math-keypad number-line-keypad';
+  for(const key of ['1','2','3','4','5','6','7','8','9','−','0',',','⌫']){const button=document.createElement('button');button.type='button';button.textContent=key;button.addEventListener('pointerdown',event=>event.preventDefault());button.addEventListener('click',()=>numberLineLabelInput(key));keys.append(button)}
+  elements.numberLineVisual.append(keys);
+  editor.querySelector('input').addEventListener('keydown',event=>{
+    if(/^[0-9,.-]$/.test(event.key)||event.key==='Backspace'){event.preventDefault();numberLineLabelInput(event.key==='Backspace'?'⌫':event.key)}
+  });
+  const reset=document.createElement('button');reset.type='button';reset.className='text-button';reset.textContent='Zahlenstrahl leeren';reset.addEventListener('click',()=>{s.labels={};s.activeLabel=null;s.freeAwarded=false;elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';renderNumberLine()});elements.numberLineVisual.append(reset);
+  updateFreeNumberLineEditor();
+}
+function updateFreeNumberLineEditor(){
+  const s=numberLineState,selected=s.activeLabel!==null;
+  elements.numberLineVisual.querySelectorAll('.free-ruler-tick').forEach(tick=>{tick.classList.toggle('active-label',Number(tick.dataset.tick)===s.activeLabel);tick.querySelector('span').textContent=s.labels[tick.dataset.tick]||''});
+  document.querySelector('#numberLineLabelCaption').textContent=selected?`Beschriftung für Strich ${s.activeLabel+1}`:'Tippe auf einen Strich.';
+  document.querySelector('#numberLineLabelValue').value=selected?s.labels[s.activeLabel]||'':'';
+  document.querySelector('#numberLineLabelClear').disabled=!selected;
+  elements.numberLineVisual.querySelectorAll('.math-keypad button').forEach(button=>button.disabled=!selected);
+}
+function numberLineLabelInput(key){
+  const s=numberLineState;if(s.mode!=='free'||s.activeLabel===null)return;
+  const field=document.querySelector('#numberLineLabelValue');
+  let start=field.selectionStart??field.value.length,end=field.selectionEnd??start,insert=key;
+  if(key==='⌫'){if(start===end)start=Math.max(0,start-1);insert=''}
+  if(key==='Löschen'){start=0;end=field.value.length;insert=''}
+  if(insert&&!/^[\d,.-−]$/.test(insert))return;
+  if(field.value.length-(end-start)+insert.length>12)return;
+  field.setRangeText(insert,start,end,'end');s.labels[s.activeLabel]=field.value;
+  const caret=field.selectionStart;updateFreeNumberLineEditor();field.setSelectionRange(caret,caret);
+  elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';
+}
+function validateFreeNumberLine(labels){
+  const entries=Object.entries(labels).filter(([,value])=>String(value).trim()!=='').map(([index,value])=>({index:Number(index),text:String(value).replace(/−/g,'-')})).sort((a,b)=>a.index-b.index);
+  if(entries.length<3)return {ok:false,message:'Beschrifte mindestens drei verschiedene Striche. Dann können wir auch die Abstände prüfen.'};
+  if(entries.some(entry=>!/^[-+]?\d+(?:[.,]\d+)?$/.test(entry.text)))return {ok:false,message:'Eine Beschriftung ist noch keine vollständige Zahl. Prüfe Minuszeichen und Kommas.'};
+  entries.forEach(entry=>entry.value=Number(entry.text.replace(',','.')));
+  const first=entries[0],second=entries[1],step=(second.value-first.value)/(second.index-first.index);
+  if(!Number.isFinite(step)||step<=0)return {ok:false,message:'Die Zahlen müssen von links nach rechts größer werden.'};
+  if(entries.some(entry=>Math.abs(entry.value-(first.value+(entry.index-first.index)*step))>Number.EPSILON*32*Math.max(1,Math.abs(entry.value),Math.abs(first.value))))return {ok:false,message:'Die Abstände passen noch nicht: Bei gleich weiten Strichen muss die Zahl immer um gleich viel wachsen. Leere Striche zählen dabei mit.'};
+  return {ok:true,step};
+}
+function awardNumberLineStar(){
+  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'stellenwert',1);incrementActivity('numberLine');saveProfiles();renderProfileHeader()}
 }
 function checkNumberLine(){
-  const s=numberLineState;if(s.locked)return;
-  const correct=s.labeling?s.labelIndices.every(index=>s.labelAnswers[index]!==undefined&&s.labelAnswers[index]!==''&&Number(s.labelAnswers[index])===s.start+index*s.step):s.start+s.jumps*s.step===s.result;
-  if(!correct){
-    s.retry++;elements.numberLineFeedback.textContent=s.labeling?'Noch nicht ganz. Vergleiche zwei benachbarte Zahlen: Um wie viel wächst die Zahl bei jedem Strich?':`Du hast ${formatNumber(s.start+s.jumps*s.step)} markiert. Vergleiche die Zahl mit deiner Rechnung und lies die Striche noch einmal.`;
-    elements.numberLineFeedback.className='feedback wrong';return;
+  const s=numberLineState;
+  if(s.mode==='free'){
+    const verdict=validateFreeNumberLine(s.labels);
+    elements.numberLineFeedback.textContent=verdict.ok?`Das passt! Ein Abstand bedeutet ${new Intl.NumberFormat('de-DE',{maximumSignificantDigits:12}).format(verdict.step)}. Deine Beschriftung ist stimmig.`:verdict.message;
+    elements.numberLineFeedback.className=`feedback ${verdict.ok?'correct':'wrong'}`;
+    if(verdict.ok&&!s.freeAwarded){s.freeAwarded=true;s.score++;elements.numberLineScore.textContent=s.score;awardNumberLineStar();maybeShowLevelUp()}
+    return;
   }
-  s.locked=true;s.question++;if(s.retry===0)s.score++;elements.numberLineScore.textContent=s.score;
-  elements.numberLineFeedback.textContent=s.labeling?'Alle Striche richtig beschriftet! ✨':`Richtig: ${formatNumber(s.start)} ${s.jump<0?'−':'+'} ${formatNumber(Math.abs(s.jump))} = ${formatNumber(s.result)}! ✨`;elements.numberLineFeedback.className='feedback correct';
-  const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'stellenwert',1);incrementActivity('numberLine');saveProfiles();renderProfileHeader()}
-  window.setTimeout(nextNumberLineQuestion,1100);
+  if(s.locked)return;
+  if(s.position!==s.result){s.retry++;elements.numberLineFeedback.textContent=`Du hast ${formatNumber(s.position)} markiert. Rechne noch einmal und beachte: 10 sind ein kleiner Abstand, 100 sind zehn Abstände.`;elements.numberLineFeedback.className='feedback wrong';return}
+  s.locked=true;s.dragCancel?.();s.question++;if(s.retry===0)s.score++;elements.numberLineScore.textContent=s.score;
+  elements.numberLineFeedback.textContent=`Richtig: ${formatNumber(s.start)} ${s.jump<0?'−':'+'} ${formatNumber(Math.abs(s.jump))} = ${formatNumber(s.result)}!`;elements.numberLineFeedback.className='feedback correct';awardNumberLineStar();
+  s.nextTimer=window.setTimeout(()=>{if(numberLineState===s&&!screens.numberLine.classList.contains('hidden'))nextNumberLineQuestion()},1100);
 }
-function finishNumberLineGame(){elements.numberLineFinalScore.textContent=numberLineState.score;elements.numberLineFinishText.textContent=`${numberLineState.score} von 8 Aufgaben zum Lesen, Beschriften und Rechnen am Zahlenstrahl beim ersten Versuch geschafft.`;showScreen('numberLineFinish');maybeShowLevelUp()}
+function finishNumberLineGame(){elements.numberLineFinalScore.textContent=numberLineState.score;elements.numberLineFinishText.textContent=`${numberLineState.score} von 8 Aufgaben auf dem festen Zahlenstrahl beim ersten Versuch geschafft.`;showScreen('numberLineFinish');maybeShowLevelUp()}
 
 const PLACE_VALUES=[1000,100,10,1],PLACE_NAMES=['Tausender','Hunderter','Zehner','Einer'],PLACE_SHORT=['T','H','Z','E'];
 function openPlaceValueWorkshop(){showScreen('placeValueStart')}
@@ -397,15 +490,10 @@ function nextPlaceValueQuestion(){
     s.houseRange=[first,3];
     elements.placeValueInstruction.textContent='Zieh die passenden Punkte in die richtigen Häuser.';elements.placeValueTask.textContent=`Baue ${formatNumber(s.target)}`;
   }else if(s.mode==='trade'){
-    s.tradeIndex=randomInt(1,3);s.counts=[0,0,0,0];s.counts[s.tradeIndex]=randomInt(10,18);if(s.tradeIndex<3)s.counts[s.tradeIndex+1]=randomInt(0,5);s.target=placeValueNumber(s.counts);s.initial=[...s.counts];
+    s.counts=makePlaceTradeCounts(s.question);s.target=placeValueNumber(s.counts);s.initial=[...s.counts];
     s.goalCounts=[Math.floor(s.target/1000),Math.floor(s.target/100)%10,Math.floor(s.target/10)%10,s.target%10];
-    if(s.question%2===1){
-      const from=randomInt(0,2);s.counts=[0,0,0,0];s.counts[from]=randomInt(1,3);s.counts[from+1]=randomInt(0,4);
-      s.target=placeValueNumber(s.counts);s.initial=[...s.counts];s.goalCounts=[...s.counts];s.goalCounts[from]--;s.goalCounts[from+1]+=10;
-      s.exchangeFrom=from;
-    }else s.exchangeFrom=null;
-    elements.placeValueInstruction.textContent=s.exchangeFrom===null?'Wähle zehn gleiche Punkte und zieh sie gemeinsam ins größere Nachbarhaus.':'Zieh einen Punkt ins kleinere Nachbarhaus. Dort wird er in zehn Punkte aufgeteilt.';
-    elements.placeValueTask.textContent=s.exchangeFrom===null?`Bündle ${formatNumber(s.target)}.`:`Teile genau einen ${PLACE_NAMES[s.exchangeFrom]}-Punkt in ${PLACE_NAMES[s.exchangeFrom+1]} auf.`;
+    elements.placeValueInstruction.textContent='Bündle immer zehn gleiche Punkte zu einem größeren. Am Ende sollen in jedem Haus höchstens neun Punkte liegen.';
+    elements.placeValueTask.textContent=`Bündle ${formatNumber(s.target)}.`;
   }else{
     const startZ=randomInt(2,9),startE=randomInt(0,9);s.startValue=startZ*10+startE;s.subtrahend=randomInt(1,s.startValue-1);s.target=s.startValue-s.subtrahend;
     s.counts=[0,0,startZ,startE];s.initial=[...s.counts];
@@ -414,6 +502,18 @@ function nextPlaceValueQuestion(){
   }
   s.houseRange=[0,3];s.selectedTokens=[];s.selectedPlace=null;
   elements.placeValueProgress.style.width=`${s.question/6*100}%`;elements.placeValueFeedback.textContent='';elements.placeValueFeedback.className='feedback';renderPlaceValue();
+}
+// Every exercise starts unbundled. Later tasks need several exchanges, including carries.
+function makePlaceTradeCounts(question){
+  const patterns=[
+    ()=>{const from=randomInt(1,3),counts=[0,0,0,0];counts[from]=randomInt(11,19);return counts},
+    ()=>[randomInt(0,2),randomInt(10,15),randomInt(10,15),randomInt(0,9)],
+    ()=>[randomInt(0,2),randomInt(0,5),9,randomInt(11,19)],
+    ()=>[randomInt(0,2),randomInt(10,14),randomInt(10,14),randomInt(10,14)],
+    ()=>[randomInt(0,2),9,9,randomInt(11,19)],
+    ()=>[randomInt(0,2),randomInt(10,16),randomInt(10,16),randomInt(10,16)],
+  ];
+  return patterns[question%patterns.length]();
 }
 function placeValueNumber(counts){return counts.reduce((sum,count,index)=>sum+count*PLACE_VALUES[index],0)}
 const PLACE_HOUSE_COLORS=['#7258d8','#df755f','#df9c37','#4ca57f'];
@@ -486,7 +586,7 @@ function renderPlaceValue(){
       field.querySelectorAll('.place-slot.filled').forEach((token,ordinal)=>{
         token.classList.toggle('selected-token',s.selectedPlace===index&&s.selectedTokens.includes(ordinal));
         token.setAttribute('aria-pressed',String(s.selectedPlace===index&&s.selectedTokens.includes(ordinal)));
-        token.setAttribute('aria-label',`${PLACE_NAMES[index]}-Punkt ${ordinal+1}: auswählen oder zum Tauschen ziehen`);
+        token.setAttribute('aria-label',`${PLACE_NAMES[index]}-Punkt ${ordinal+1}: ${s.mode==='trade'?'zum Bündeln auswählen':'wegnehmen oder zum Aufteilen ziehen'}`);
         enablePlaceExchangeDrag(token,index,ordinal);
       });
       const destination=document.createElement('button');destination.type='button';destination.className='place-house-destination';destination.textContent=`${PLACE_NAMES[index]}-Haus`;
@@ -500,9 +600,9 @@ function renderPlaceValue(){
   elements.placeValueActions.replaceChildren();
   if(s.mode!=='build'){
     const hint=document.createElement('p');hint.className='place-selection-hint';hint.setAttribute('role','status');
-    hint.textContent=s.selectedTokens.length?`${s.selectedTokens.length} ${PLACE_NAMES[s.selectedPlace]} ausgewählt · Ziehe sie in ein Nachbarhaus oder tippe dessen Überschrift an.`:s.mode==='minus'?'Punkt antippen: wegnehmen. Punkt ins kleinere Nachbarhaus ziehen: aufteilen.':'Wähle selbst einen Punkt zum Aufteilen oder zehn gleiche Punkte zum Bündeln.';
+    hint.textContent=s.selectedTokens.length?`${s.selectedTokens.length} ${PLACE_NAMES[s.selectedPlace]} ausgewählt · Ziehe sie in ein Nachbarhaus oder tippe dessen Überschrift an.`:s.mode==='minus'?'Punkt antippen: wegnehmen. Punkt ins kleinere Nachbarhaus ziehen: aufteilen.':'Wähle zehn gleiche Punkte und ziehe sie ins größere Nachbarhaus.';
     elements.placeValueActions.append(hint);
-    const help=document.createElement('details');help.className='place-exchange-help';help.innerHTML='<summary>So tauschst du</summary><p>Tippe die Punkte an, die du tauschen möchtest. Ziehe die Auswahl ins Nachbarhaus oder tippe auf dessen Hausüberschrift. Ein großer Punkt wird zu zehn kleineren; zehn gleiche Punkte werden zu einem größeren. Der Gesamtwert bleibt gleich.</p>';elements.placeValueActions.append(help);
+    const help=document.createElement('details');help.className='place-exchange-help';help.innerHTML=s.mode==='trade'?'<summary>So bündelst du</summary><p>Tippe zehn gleiche Punkte an. Ziehe die Auswahl ins größere Nachbarhaus oder tippe auf dessen Hausüberschrift. Schau danach alle Häuser noch einmal an: Vielleicht sind dort jetzt wieder zehn Punkte. Der Gesamtwert bleibt gleich.</p>':'<summary>So teilst du auf</summary><p>Ziehe einen großen Punkt ins kleinere Nachbarhaus. Er wird dort zu zehn kleineren Punkten. Tippe die Punkte an, die du wegnehmen möchtest.</p>';elements.placeValueActions.append(help);
   }
   const current=placeValueNumber(s.counts);
   elements.placeValueReading.innerHTML=`Deine Darstellung: <strong>${formatNumber(current)}</strong><small>${s.counts.map((count,index)=>`${count} ${PLACE_SHORT[index]}`).join(' · ')}</small>`;
@@ -565,9 +665,9 @@ function selectPlaceToken(index,ordinal){
 }
 function exchangePlaceSelection(from,amount,to){
   const s=placeValueState;if(s.locked||!amount||s.counts[from]<amount)return false;
-  if(to===from+1&&amount===1){s.counts[from]--;s.counts[to]+=10}
+  if(to===from+1&&amount===1&&s.mode!=='trade'){s.counts[from]--;s.counts[to]+=10}
   else if(to===from-1&&amount===10){s.counts[from]-=10;s.counts[to]++}
-  else{elements.placeValueFeedback.textContent='Zum Aufteilen gehört ein Punkt ins nächstkleinere Haus. Zum Bündeln gehören genau zehn gleiche Punkte ins nächstgrößere Haus.';elements.placeValueFeedback.className='feedback wrong';return false}
+  else{elements.placeValueFeedback.textContent=s.mode==='trade'?'Wähle genau zehn gleiche Punkte und bringe sie ins größere Nachbarhaus. Bereits gebündelte Punkte bleiben dort.':'Zum Aufteilen gehört ein Punkt ins nächstkleinere Haus. Zum Bündeln gehören genau zehn gleiche Punkte ins nächstgrößere Haus.';elements.placeValueFeedback.className='feedback wrong';return false}
   s.selectedTokens=[];s.selectedPlace=null;
   elements.placeValueFeedback.textContent=to>from?`1 ${PLACE_SHORT[from]} = 10 ${PLACE_SHORT[to]} · Der Wert bleibt gleich.`:`10 ${PLACE_SHORT[from]} = 1 ${PLACE_SHORT[to]} · Der Wert bleibt gleich.`;
   elements.placeValueFeedback.className='feedback correct';renderPlaceValue();return true;
@@ -603,7 +703,7 @@ function checkPlaceValue(){
   const rightValue=placeValueNumber(s.counts)===s.target;const normalized=s.counts.every(count=>count<10);
   const correctRepresentation=s.mode==='trade'?s.counts.every((count,index)=>count===s.goalCounts[index]):s.mode==='minus'?normalized:true;
   if(!rightValue||!correctRepresentation){
-    elements.placeValueFeedback.textContent=!rightValue?(s.mode==='minus'?'Noch nicht. Vergleiche, wie viel du schon weggenommen hast, mit der Aufgabe.':'Der Wert stimmt noch nicht. Achte darauf, in welchem Haus ein Punkt liegt.'):s.mode==='trade'&&s.exchangeFrom!==null?'Der Wert stimmt. Teile aber genau einen Punkt aus dem genannten Haus in zehn kleinere Punkte auf.':'Der Wert stimmt, aber du kannst noch zehn gleiche Punkte gegen einen größeren tauschen.';
+    elements.placeValueFeedback.textContent=!rightValue?(s.mode==='minus'?'Noch nicht. Vergleiche, wie viel du schon weggenommen hast, mit der Aufgabe.':'Der Wert stimmt noch nicht. Achte darauf, in welchem Haus ein Punkt liegt.'):'Der Wert stimmt, aber du kannst noch zehn gleiche Punkte gegen einen größeren tauschen.';
     elements.placeValueFeedback.className='feedback wrong';return;
   }
   s.locked=true;s.score+=1;s.question+=1;elements.placeValueScore.textContent=s.score;
@@ -1978,7 +2078,8 @@ elements.gamesPipeCard.addEventListener('click',startPipeGame);
 elements.gamesRaceCard.addEventListener('click',startRaceGame);
 elements.gamesShopCard.addEventListener('click', openShopWorld);
 elements.gamesPlaceValueCard.addEventListener('click', openPlaceValueWorkshop);
-elements.gamesNumberLineCard.addEventListener('click', startNumberLineGame);
+elements.gamesNumberLineCard.addEventListener('click',()=>startNumberLineGame());
+document.querySelectorAll('[data-number-line-mode]').forEach(button=>button.addEventListener('click',()=>startNumberLineGame(button.dataset.numberLineMode)));
 elements.numberLineHome.addEventListener('click',()=>confirmLeaveGame('games'));elements.numberLineCheck.addEventListener('click',checkNumberLine);elements.numberLineAgain.addEventListener('click',startNumberLineGame);elements.numberLineChoose.addEventListener('click',()=>showScreen('games'));
 elements.placeValueBack.addEventListener('click',()=>showScreen('games'));elements.placeValueHome.addEventListener('click',()=>confirmLeaveGame('placeValueStart'));document.querySelectorAll('[data-place-mode]').forEach(button=>button.addEventListener('click',()=>startPlaceValueGame(button.dataset.placeMode)));elements.placeValueReset.addEventListener('click',resetPlaceValue);elements.placeValueCheck.addEventListener('click',checkPlaceValue);elements.placeValueAgain.addEventListener('click',()=>startPlaceValueGame(placeValueState.mode));elements.placeValueChoose.addEventListener('click',openPlaceValueWorkshop);
 elements.familyBack.addEventListener('click',()=>showScreen('games'));elements.familyExactMode.addEventListener('click',()=>startFamilyGame('exact'));elements.familyRemainderMode.addEventListener('click',()=>startFamilyGame('remainder'));elements.familyHome.addEventListener('click',()=>confirmLeaveGame('familyStart'));elements.familyAgain.addEventListener('click',()=>startFamilyGame(familyState.mode));elements.familyChoose.addEventListener('click',()=>showScreen('familyStart'));

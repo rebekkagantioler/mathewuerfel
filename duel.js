@@ -1,8 +1,10 @@
 // Both drivers use the same course; position and heading always come from their controls.
 const DUEL_ROAD_WIDTH = 94;
 const DUEL_SPEED = 150;
-function makeDuelCourse(){
-  const corners=[{x:130,y:1180},{x:750,y:1180},{x:750,y:940},{x:170,y:940},{x:170,y:700},{x:750,y:700},{x:750,y:460},{x:170,y:460},{x:170,y:220},{x:710,y:220},{x:710,y:90}];
+function makeDuelCourse(layout=0){
+  let corners=[{x:130,y:1180},{x:750,y:1180},{x:750,y:940},{x:170,y:940},{x:170,y:700},{x:750,y:700},{x:750,y:460},{x:170,y:460},{x:170,y:220},{x:710,y:220},{x:710,y:90}];
+  if(layout===1)corners=[{x:130,y:1180},{x:650,y:1180},{x:750,y:950},{x:260,y:900},{x:130,y:700},{x:650,y:650},{x:750,y:450},{x:260,y:400},{x:170,y:220},{x:710,y:220},{x:710,y:90}];
+  if(layout===2)corners=[{x:130,y:1180},{x:710,y:1180},{x:710,y:980},{x:320,y:980},{x:170,y:760},{x:600,y:700},{x:750,y:500},{x:170,y:460},{x:170,y:220},{x:710,y:220},{x:710,y:90}];
   const points=[corners[0]];
   for(let i=1;i<corners.length-1;i++){
     const prev=corners[i-1],here=corners[i],next=corners[i+1];
@@ -18,7 +20,9 @@ function makeDuelCourse(){
   const segments=points.slice(1).map((b,i)=>{const a=points[i],distance=Math.hypot(b.x-a.x,b.y-a.y);const segment={a,b,distance,start:length};length+=distance;return segment});
   return {points,segments,length,gates:Array.from({length:10},(_,i)=>(i+1)*length/11)};
 }
-const DUEL_COURSE=makeDuelCourse();
+let selectedDuelRoute='meadow';
+let DUEL_COURSE=makeDuelCourse();
+let duelRoute=null;
 let duelState={running:false,players:[],tasks:[],frame:0,lastTime:0};
 function duelCoursePoint(distance){
   const segment=DUEL_COURSE.segments.find(s=>s.start+s.distance>=distance)||DUEL_COURSE.segments.at(-1);
@@ -62,7 +66,7 @@ function makeDuelLandscape(){
   }
   return objects;
 }
-const DUEL_LANDSCAPE=makeDuelLandscape();
+let DUEL_LANDSCAPE=makeDuelLandscape();
 function stopDuel(){
   duelState.running=false;cancelAnimationFrame(duelState.frame);clearDuelControls();
 }
@@ -72,6 +76,9 @@ function clearDuelControls(){
 function startDuel(){if(requestRows('duel',beginDuel))return;beginDuel()}
 function beginDuel(){
   stopDuel();
+  duelRoute=RACE_ROUTES.find(route=>route.id===selectedDuelRoute&&(teacherPreview||route.level<=getRewardLevel(getProfile())))||RACE_ROUTES[0];
+  DUEL_COURSE=makeDuelCourse(duelRoute.layout);DUEL_LANDSCAPE=makeDuelLandscape();
+  document.querySelector('#duelScreen .duel-header strong').textContent=`${duelRoute.icon} ${duelRoute.name}`;
   duelState.tasks=makeDuelTasks(activeRows);
   const orders=makeDuelTaskOrders(duelState.tasks);
   duelState.players=[0,1].map(index=>({tasks:orders[index],step:0,answer:'',phase:'driving',x:130,y:1180,heading:0,speed:0,progress:0,controls:{up:new Set(),down:new Set(),left:new Set(),right:new Set()},feedback:'Gas halten und selbst durch die Kurven lenken.'}));
@@ -140,15 +147,20 @@ function updateDuelPlayer(index,dt){
   player.speed=gas>0?Math.min(DUEL_SPEED,player.speed+240*dt):gas<0?Math.max(-85,player.speed-240*dt):0;
   if(!player.speed)return;
   const heading=player.heading+steer*2.6*dt*Math.sign(player.speed);
-  const x=player.x+Math.cos(heading)*player.speed*dt,y=player.y+Math.sin(heading)*player.speed*dt;
+  const traction=projectDuelPosition(player.x,player.y).distance>DUEL_ROAD_WIDTH/2?.55:1;
+  const x=player.x+Math.cos(heading)*player.speed*dt*traction,y=player.y+Math.sin(heading)*player.speed*dt*traction;
   const projected=projectDuelPosition(x,y);
-  if(projected.distance>DUEL_ROAD_WIDTH/2-13){
+  // The countryside is drivable, with slower traction and a bounded map.
+  if(x<40||x>850||y<30||y>1270){player.speed=0;player.heading=heading;return}
+  const nextGate=DUEL_COURSE.gates[player.step];
+  const gate=nextGate===undefined?null:duelCoursePoint(nextGate);
+  const atGate=gate&&Math.hypot(x-gate.x,y-gate.y)<DUEL_ROAD_WIDTH/2;
+  if(nextGate!==undefined&&projected.progress>=nextGate-26&&!atGate){
     player.speed=0;player.heading=heading;
-    if(player.feedback!=='Am Rand! Lenke zurück auf die Straße.'){player.feedback='Am Rand! Lenke zurück auf die Straße.';renderDuelPlayer(index)}
+    if(player.feedback!==`Zuerst Schranke ${player.step+1} lösen!`){player.feedback=`Zuerst Schranke ${player.step+1} lösen!`;renderDuelPlayer(index)}
     return;
   }
-  const nextGate=DUEL_COURSE.gates[player.step];
-  if(nextGate!==undefined&&projected.progress>=nextGate-26){
+  if(atGate&&projected.progress>=nextGate-26){
     // Keep the car on its approach side, even if a fast frame reaches beyond the arm.
     const approach=duelCoursePoint(nextGate-28);player.x=approach.x;player.y=approach.y;player.heading=approach.angle;
     player.progress=nextGate-28;player.speed=0;player.phase='question';player.answer='';
@@ -156,7 +168,8 @@ function updateDuelPlayer(index,dt){
     player.feedback='Schranke erreicht! Löse jetzt deine Malaufgabe.';renderDuelPlayer(index);return;
   }
   player.x=x;player.y=y;player.heading=heading;player.progress=projected.progress;
-  if(player.step===10&&projected.progress>=DUEL_COURSE.length-20)finishDuel(index);
+  const finish=duelCoursePoint(DUEL_COURSE.length);
+  if(player.step===10&&projected.progress>=DUEL_COURSE.length-20&&Math.hypot(x-finish.x,y-finish.y)<25)finishDuel(index);
 }
 function duelInput(index,key){
   const player=duelState.players[index];if(!duelState.running||!player||player.phase!=='question')return;
@@ -205,7 +218,7 @@ function drawDuelCourse(player,index){
   const ratio=Math.min(window.devicePixelRatio||1,2);
   if(canvas.width!==Math.round(width*ratio)||canvas.height!==Math.round(height*ratio)){canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio)}
   const ctx=canvas.getContext('2d');ctx.setTransform(ratio,0,0,ratio,0,0);
-  ctx.fillStyle='#9fca80';ctx.fillRect(0,0,width,height);
+  ctx.fillStyle=duelRoute.ground;ctx.fillRect(0,0,width,height);
   const zoom=Math.max(.5,Math.min(1.15,width/380));
   ctx.save();ctx.translate(width/2,height/2);ctx.scale(zoom,zoom);ctx.translate(-player.x-Math.cos(player.heading)*65,-player.y-Math.sin(player.heading)*65);
   const cameraX=player.x+Math.cos(player.heading)*65,cameraY=player.y+Math.sin(player.heading)*65;
@@ -213,7 +226,11 @@ function drawDuelCourse(player,index){
   for(const item of DUEL_LANDSCAPE){
     if(Math.abs(item.x-cameraX)>width/zoom/2+50||Math.abs(item.y-cameraY)>height/zoom/2+50)continue;
     ctx.save();ctx.translate(item.x,item.y);
-    if(item.type==='tree'){
+    if(duelRoute.id!=='meadow'&&duelRoute.id!=='forest'){
+      ctx.font=`${item.size*1.7}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      const landmarks={coast:['🌴','🐚','🌊'],desert:['🌵','🪨','🏜️'],snow:['🌲','❄️','⛄'],volcano:['🌋','🪨','🔥'],moon:['🪨','⭐','🛸']};
+      ctx.fillText(landmarks[duelRoute.id][item.variant],0,0);
+    }else if(item.type==='tree'){
       ctx.fillStyle='#44784a35';ctx.beginPath();ctx.ellipse(9,12,item.size+4,item.size*.7,0,0,Math.PI*2);ctx.fill();
       ctx.fillStyle='#8b6040';ctx.fillRect(-4,0,8,item.size+7);
       ctx.fillStyle=['#377d4c','#438b47','#598b41'][item.variant];ctx.beginPath();ctx.arc(0,-4,item.size,0,Math.PI*2);ctx.fill();
@@ -233,7 +250,7 @@ function drawDuelCourse(player,index){
     ctx.restore();
   }
   ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();DUEL_COURSE.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-  ctx.strokeStyle='#f7edce';ctx.lineWidth=DUEL_ROAD_WIDTH+10;ctx.stroke();ctx.strokeStyle='#59636f';ctx.lineWidth=DUEL_ROAD_WIDTH;ctx.stroke();
+  ctx.strokeStyle='#f7edce';ctx.lineWidth=DUEL_ROAD_WIDTH+10;ctx.stroke();ctx.strokeStyle=duelRoute.road;ctx.lineWidth=DUEL_ROAD_WIDTH;ctx.stroke();
   ctx.strokeStyle='#f5f0cf';ctx.lineWidth=3;ctx.setLineDash([17,19]);ctx.stroke();ctx.setLineDash([]);
   DUEL_COURSE.gates.forEach((distance,i)=>{
     const gate=duelCoursePoint(distance);ctx.save();ctx.translate(gate.x,gate.y);ctx.rotate(gate.angle);

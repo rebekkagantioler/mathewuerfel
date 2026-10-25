@@ -18,7 +18,7 @@ async function testWorker(manual,fail=false){
  const events={},deleted=[],assets=[];let skipped=0,claimed=0;
  const scope={registration:{active:{postMessage(message,ports){if(manual)ports[0].postMessage({manualUpdates:true})}}},location:{origin:'https://app.test'},addEventListener(name,fn){events[name]=fn},skipWaiting:async()=>{skipped++},clients:{claim:async()=>{claimed++}}};
  const cache={addAll:async requests=>{if(fail)throw Error('Asset missing');assets.push(...requests)},match:async req=>req.url.endsWith('app.js')?'cached app':null};
- const storage={open:async()=>cache,keys:async()=>['zahlen-abenteuer-v13','zahlen-abenteuer-v14','unrelated-cache'],delete:async key=>{deleted.push(key)}};
+ const storage={open:async()=>cache,keys:async()=>['zahlen-abenteuer-v13',workerSource.match(/const CACHE_NAME = '([^']+)'/)[1],'unrelated-cache'],delete:async key=>{deleted.push(key)}};
  class FakeRequest{constructor(url,options){this.url=url;this.cache=options.cache}}
  new Function('self','caches','Request','MessageChannel','setTimeout','clearTimeout','fetch',workerSource)(scope,storage,FakeRequest,MessageChannel,(fn,ms)=>setTimeout(fn,Math.min(ms,20)),clearTimeout,async()=> 'network');
  let installation;events.install({waitUntil(promise){installation=promise}});

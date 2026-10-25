@@ -6,7 +6,7 @@ Im Projektordner unter macOS ausführen:
 swift tests/browser.swift
 ```
 
-Der Runner lädt die App in WebKit mit einem vorübergehenden Datenspeicher. Er prüft Geschichten und Rennen auf fünf Bildschirmgrößen. Für jeden Geschichtenlauf werden alle 48 Vorlagen mit jeweils 30 Zahlenvarianten geprüft; dazu kommen alternative Rechenwege, fehlerhafte Eingaben, Wiederholungswahl, Lernstände und Freischaltungen.
+Der Runner lädt die App in WebKit mit einem vorübergehenden Datenspeicher. Er prüft Geschichten und Rennen auf fünf Bildschirmgrößen. Die Lernbedienung wird zusätzlich auf Handy- und iPad-Größen geprüft: direkte Reihenauswahl, Bündeln und Entbündeln durch Auswahl und Ziehen, beschriftete Zahlenstrahlen und Rechentastatur. Für jeden Geschichtenlauf werden alle 48 Vorlagen mit jeweils 30 Zahlenvarianten geprüft; dazu kommen alternative Rechenwege, fehlerhafte Eingaben, Wiederholungswahl, Lernstände und Freischaltungen.
 
 Die Update-Tests verwenden simulierte Service-Worker- und Netzwerkantworten. Sie prüfen Update-Erkennung, Offline- und Fehlerfälle, den Wechsel älterer Installationen, vollständige Asset-Caches und das gezielte Aktivieren. Sie ersetzen keinen Installationstest auf einem echten Gerät.
 

@@ -29,7 +29,7 @@ return (()=>{try {
  teacherPreview=false;
  for(const level of [1,2,3,4,5,6]){
    prof.areaStars.mal=(level-1)*40;renderProfileHeader();
-   assert(elements.gamesCatchCard.disabled===(level<2),'Catch unlock');assert(elements.gamesPipeCard.disabled===(level<4),'Pipe unlock');assert(elements.gamesRaceCard.disabled===(level<6),'Race unlock');
+   assert(elements.gamesCatchCard.disabled===(level<gameRewardLevel('catch')),'Catch unlock');assert(elements.gamesPipeCard.disabled===(level<gameRewardLevel('pipe')),'Pipe unlock');assert(elements.gamesRaceCard.disabled===(level<gameRewardLevel('race')),'Race unlock');
  }
  storyState.task=makeStoryTask(STORY_TEMPLATES[0]);storyState.profileId=prof.id;storyState.failed=false;storyState.helped=false;storyState.locked=false;
  const before=prof.storyPractice.types[storyState.task.id]?.wrong||0;

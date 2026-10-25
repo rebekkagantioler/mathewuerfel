@@ -39,6 +39,16 @@ return (()=>{try {
  assert(p.x>start.x+80,'Gas did not move car');assert(other.x===start.x&&other.y===start.y,'Controls moved opponent');
  document.dispatchEvent(new KeyboardEvent('keyup',{key:'w',bubbles:true}));const released=p.x;updateDuelPlayer(0,.03);assert(p.x===released,'Car kept driving after gas release');
  const initialHeading=p.heading;setDuelControl(0,'up','test',true);setDuelControl(0,'left','test',true);updateDuelPlayer(0,.02);assert(p.heading!==initialHeading,'Steering did not turn car');clearDuelControls();
+ // Drive off the first straight and back; later road segments must not bypass a gate.
+ const saved={x:p.x,y:p.y,heading:p.heading,progress:p.progress};
+ p.x=250;p.y=1180;p.heading=-Math.PI/2;
+ setDuelControl(0,'up','offroad',true);
+ for(let i=0;i<100;i++)updateDuelPlayer(0,.01);
+ assert(p.y<1120&&p.step===0&&p.phase==='driving','Cannot drive off road');
+ p.x=duelCoursePoint(DUEL_COURSE.gates[4]).x;p.y=duelCoursePoint(DUEL_COURSE.gates[4]).y;
+ const bypass={x:p.x,y:p.y};updateDuelPlayer(0,.01);
+ assert(p.step===0&&p.phase==='driving'&&p.x===bypass.x&&p.y===bypass.y,'Skipped unresolved gates');
+ clearDuelControls();Object.assign(p,saved);p.speed=0;
  // Follow the real road using steering and gas, not scripted position changes.
  let frames=0,gateChecks=0;const testedPenalties=new Set();
  while(duelState.running&&frames<30000){

@@ -11,23 +11,64 @@ const EMOJIS = [
   { icon: '🏰', level: 18 }, { icon: '🌈', level: 20 }, { icon: '🔮', level: 25 },
 ];
 const THEMES = [
-  { id: 'classic', name: 'Zahlen-Abenteuer', icon: '✨', level: 1 }, { id: 'mint', name: 'Minzwiese', icon: '🌿', level: 3 },
-  { id: 'sunset', name: 'Sonnenuntergang', icon: '🌅', level: 6 }, { id: 'night', name: 'Sternennacht', icon: '🌙', level: 10 },
-  { id: 'candy', name: 'Zuckerwatte', icon: '🍬', level: 15 },
+  { id:'classic', name:'Zahlen-Abenteuer', icon:'✨', level:1 },
+  { id:'mint', name:'Minzwiese', icon:'🌿' },
+  { id:'sunset', name:'Sonnenuntergang', icon:'🌅' },
+  { id:'ocean', name:'Meeresbrise', icon:'🐚' },
+  { id:'forest', name:'Zauberwald', icon:'🌲' },
+  { id:'peach', name:'Pfirsichgarten', icon:'🍑' },
+  { id:'night', name:'Sternennacht', icon:'🌙' },
+  { id:'ice', name:'Eispalast', icon:'❄️' },
+  { id:'candy', name:'Zuckerwatte', icon:'🍬' },
+  { id:'aurora', name:'Polarlicht', icon:'🌌' },
 ];
 const TILE_STYLES = [
-  { id: 'classic', name: 'Klassisch', icon: '🔢', level: 1 }, { id: 'rainbow', name: 'Regenbogen', icon: '🌈', level: 4 },
-  { id: 'gold', name: 'Gold', icon: '🏆', level: 8 }, { id: 'space', name: 'Weltraum', icon: '🪐', level: 12 },
+  { id:'classic', name:'Klassisch', icon:'🔢', level:1 },
+  { id:'rainbow', name:'Regenbogen', icon:'🌈' },
+  { id:'wood', name:'Holzschatz', icon:'🪵' },
+  { id:'ocean', name:'Meeresperlen', icon:'🫧' },
+  { id:'flower', name:'Blüten', icon:'🌸' },
+  { id:'gold', name:'Gold', icon:'🏆' },
+  { id:'space', name:'Weltraum', icon:'🪐' },
+  { id:'crystal', name:'Kristall', icon:'💠' },
+  { id:'lava', name:'Lava', icon:'🌋' },
 ];
 const GAME_REWARDS=[
-  {name:'Schranken-Rennen',icon:'🏎️',level:1},{name:'Einmaleins üben',icon:'✖️',level:1},{name:'Geteilt üben',icon:'➗',level:1},
-  {name:'Nachbaraufgaben-Domino',icon:'🁣',level:1},{name:'Verdopplungskette',icon:'🔗',level:1},
-  {name:'Ladenwelt',icon:'🛒',level:1},
-  {name:'Zahl bauen',icon:'🏗️',level:1},{name:'Tausch-Challenge',icon:'🔄',level:1},{name:'Minus-Werkstatt',icon:'✂️',level:1},
-  {name:'Zahlenstrahl',icon:'📏',level:1},
-  {name:'Rechengeschichten',icon:'🗺️',level:1},{name:'Lösungen auffangen',icon:'🧺',level:2},{name:'Rohr-Rechnen',icon:'🚰',level:4},{name:'Tempo-Rennen',icon:'⏱️',level:6},
-  {name:'Größerer Laden',icon:'🏪',level:7},{name:'Schnelle Fangwellen',icon:'⚡',level:10},{name:'Großes Geschäft',icon:'🏬',level:12},
+  ...[{name:'Schranken-Rennen',icon:'🏎️'},{name:'Einmaleins üben',icon:'✖️'},{name:'Geteilt üben',icon:'➗'},
+  {name:'Nachbaraufgaben-Domino',icon:'🁣'},{name:'Verdopplungskette',icon:'🔗'},{name:'Ladenwelt',icon:'🛒'},
+  {name:'Zahl bauen',icon:'🏗️'},{name:'Tausch-Challenge',icon:'🔄'},{name:'Minus-Werkstatt',icon:'✂️'},
+  {name:'Zahlenstrahl',icon:'📏'},{name:'Rechengeschichten',icon:'🗺️'}].map(item=>({...item,level:1})),
+  {id:'catch',name:'Lösungen auffangen',icon:'🧺'},
+  {id:'pipe',name:'Rohr-Rechnen',icon:'🚰'},
+  {id:'race',name:'Tempo-Rennen',icon:'⏱️'},
+  {id:'bakery',name:'Bäckerei im Laden',icon:'🥨'},
+  {id:'checkout',name:'Kasse im Laden',icon:'🧾'},
+  {id:'stock',name:'Lager im Laden',icon:'📦'},
 ];
+const RACE_ROUTES=[
+  {id:'meadow',name:'Wiesenrunde',icon:'🌳',level:1,layout:0,ground:'#9fca80',road:'#59636f'},
+  {id:'coast',name:'Küstenkurven',icon:'🏖️',layout:1,ground:'#efdb9c',road:'#637e91'},
+  {id:'forest',name:'Waldschleife',icon:'🌲',layout:2,ground:'#709e70',road:'#566657'},
+  {id:'desert',name:'Wüstenrallye',icon:'🏜️',layout:1,ground:'#e9bd80',road:'#966d57'},
+  {id:'snow',name:'Schneepass',icon:'🏔️',layout:2,ground:'#e0edf5',road:'#8495ad'},
+  {id:'volcano',name:'Vulkanroute',icon:'🌋',layout:0,ground:'#69505b',road:'#a17463'},
+  {id:'moon',name:'Mondparcours',icon:'🌕',layout:2,ground:'#9b96b3',road:'#55516f'},
+];
+// One shared reward at each new highest area level. The order is also the roadmap.
+const REWARD_ORDER=[
+  'emoji:🦊','theme:mint','tile:rainbow','emoji:🐼','route:coast','emoji:🦁',
+  'game:bakery','theme:sunset','emoji:🦋','tile:wood','game:catch','emoji:🦄',
+  'route:forest','theme:ocean','emoji:🐲','tile:ocean','game:checkout','emoji:🧚',
+  'route:desert','theme:forest','emoji:🐙','tile:flower','game:pipe','emoji:🚀',
+  'theme:peach','route:snow','emoji:🍭','tile:gold','game:stock','emoji:💎',
+  'theme:night','route:volcano','emoji:👑','tile:space','game:race','emoji:🏰',
+  'theme:ice','tile:crystal','emoji:🌈','route:moon','theme:candy','tile:lava',
+  'emoji:🔮','theme:aurora',
+];
+const REWARD_GROUPS={emoji:EMOJIS,theme:THEMES,tile:TILE_STYLES,game:GAME_REWARDS,route:RACE_ROUTES};
+REWARD_ORDER.forEach((key,index)=>{const [kind,id]=key.split(':');const item=REWARD_GROUPS[kind].find(item=>(kind==='emoji'?item.icon:item.id)===id);item.level=index+2});
+function gameRewardLevel(id){return GAME_REWARDS.find(item=>item.id===id).level}
+function hasGameReward(id){return teacherPreview||getRewardLevel(getProfile())>=gameRewardLevel(id)}
 const AREAS=['plus','minus','mal','geteilt','stellenwert'];
 const AREA_NAMES={plus:'Plus',minus:'Minus',mal:'Mal',geteilt:'Geteilt',stellenwert:'Stellenwert'};
 const OP_TO_AREA={'+':'plus','-':'minus','*':'mal','/':'geteilt'};
@@ -270,63 +311,78 @@ function checkConceptAnswer(){const s=conceptState;if(!s.answer||s.locked)return
 function finishConceptGame(){elements.conceptFinalScore.textContent=conceptState.score;elements.conceptFinishText.textContent=`${conceptState.score} von 6 Aufgaben hast du ohne Hilfe gelöst.`;showScreen('conceptFinish');maybeShowLevelUp()}
 
 function formatNumber(value){return new Intl.NumberFormat('de-DE').format(value)}
-const NUMBER_LINE_RANGE=6;
-function startNumberLineGame(){numberLineState={question:0,score:0,start:0,jump:0,result:0,step:10,jumps:0,retry:0,locked:false};elements.numberLineScore.textContent='0';showScreen('numberLine');nextNumberLineQuestion()}
-function nextNumberLineQuestion(){if(numberLineState.question>=8)return finishNumberLineGame();const prevStart=numberLineState.start,prevJump=numberLineState.jump;const levels=[10,100,1000];const step=levels[randomInt(0,Math.min(2,Math.floor(numberLineState.question/2)+1))];const direction=Math.random()<.5?-1:1;const jump=step*randomInt(1,4)*direction;let start=step*randomInt(5,Math.floor(9000/step));if(start+jump<0||start+jump>10000)start=step*randomInt(10,Math.floor(7000/step));if(numberLineState.question>0&&start===prevStart&&jump===prevJump)start+=step;numberLineState={question:numberLineState.question,score:numberLineState.score,start,jump,result:start+jump,step,jumps:0,retry:0,locked:false};elements.numberLineTask.textContent=`${formatNumber(start)} ${jump<0?'−':'＋'} ${formatNumber(Math.abs(jump))} = ?`;elements.numberLineHint.textContent=`Ein Strich bedeutet ${formatNumber(step)}. Zieh den Pfeil vom Start so weit ${jump<0?'nach links':'nach rechts'}, wie du springen musst.`;elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';elements.numberLineProgress.style.width=`${numberLineState.question/8*100}%`;renderNumberLine()}
+const NUMBER_LINE_RANGE=4;
+function startNumberLineGame(){numberLineState={question:0,score:0,locked:false};elements.numberLineScore.textContent='0';showScreen('numberLine');nextNumberLineQuestion()}
+function nextNumberLineQuestion(){
+  const previous=numberLineState;if(previous.question>=8)return finishNumberLineGame();
+  const step=[1,10,100,1000][previous.question%4];
+  const offset=step<1000?randomInt(0,step-1):0;
+  const start=step*randomInt(4,Math.floor((10000-offset)/step)-4)+offset;
+  const jump=step*randomInt(1,3)*(Math.random()<.5?-1:1);
+  const labeling=previous.question%3===2;
+  numberLineState={question:previous.question,score:previous.score,start,jump,result:start+jump,step,jumps:0,retry:0,locked:false,labeling,labelAnswers:{},labelIndices:[-2,0,2],activeLabel:-2};
+  const s=numberLineState;
+  elements.numberLineTask.textContent=labeling?'Welche Zahlen gehören an die freien Striche?':`${formatNumber(start)} ${jump<0?'−':'＋'} ${formatNumber(Math.abs(jump))} = ?`;
+  elements.numberLineHint.textContent=labeling?'Lies die vorgegebenen Zahlen. Wähle einen freien Strich und beschrifte ihn. Achte auf die Abstände.':'Lies die Beschriftung: Wie viel ist ein Abstand wert? Zieh die Markierung auf die Ergebniszahl.';
+  elements.numberLineFeedback.textContent='';elements.numberLineFeedback.className='feedback';elements.numberLineProgress.style.width=`${s.question/8*100}%`;renderNumberLine();
+}
 function renderNumberLine(){
-  const s=numberLineState,range=NUMBER_LINE_RANGE;
-  elements.numberLineVisual.replaceChildren();
-  const rail=document.createElement('div');rail.className='draw-line-rail';
-  const track=document.createElement('div');track.className='draw-line-track';rail.append(track);
-  for(let i=-range;i<=range;i+=1){const tick=document.createElement('i');tick.className='draw-line-tick';tick.style.left=`${(i+range)/(range*2)*100}%`;rail.append(tick)}
-  const startMarker=document.createElement('div');startMarker.className='draw-line-start';startMarker.style.left=`${range/(range*2)*100}%`;startMarker.innerHTML=`<span>Start</span><b>${formatNumber(s.start)}</b>`;rail.append(startMarker);
+  const s=numberLineState,range=NUMBER_LINE_RANGE;elements.numberLineVisual.replaceChildren();
+  const rail=document.createElement('div');rail.className='draw-line-rail labeled-number-line';
+  for(let i=-range;i<=range;i++){
+    const tick=document.createElement('div');tick.className='draw-line-tick';tick.style.left=`${(i+range)/(range*2)*100}%`;
+    const missing=s.labeling&&s.labelIndices.includes(i),label=document.createElement(missing?'button':'span');
+    label.className=`number-line-label${(i+range)%2?' lower-label':''}`;
+    if(missing){label.type='button';label.dataset.tick=i;label.textContent=s.labelAnswers[i]||'?';label.setAttribute('aria-label',`Strich ${i+range+1} beschriften`);label.classList.toggle('active-label',s.activeLabel===i);label.addEventListener('click',()=>{if(s.locked)return;s.activeLabel=i;renderNumberLine()})}
+    else label.textContent=formatNumber(s.start+i*s.step);
+    tick.append(label);rail.append(tick);
+  }
+  elements.numberLineVisual.append(rail);
+  if(s.labeling){
+    const keys=document.createElement('div');keys.className='math-keypad number-line-keypad';
+    for(const key of ['1','2','3','4','5','6','7','8','9','0','⌫']){const button=document.createElement('button');button.type='button';button.textContent=key;button.addEventListener('click',()=>numberLineLabelInput(key));keys.append(button)}
+    elements.numberLineVisual.append(keys);return;
+  }
+  const startMarker=document.createElement('div');startMarker.className='draw-line-start';startMarker.style.left='50%';startMarker.innerHTML=`<span>Start</span><b>${formatNumber(s.start)}</b>`;rail.append(startMarker);
   const arrow=document.createElement('div');arrow.id='numberLineArrow';arrow.className='draw-line-arrow';rail.append(arrow);
   const badge=document.createElement('div');badge.id='numberLineJumpBadge';badge.className='draw-line-jump-badge';rail.append(badge);
-  const handle=document.createElement('button');handle.type='button';handle.id='numberLineHandle';handle.className='draw-line-handle';handle.textContent='📍';rail.append(handle);
-  elements.numberLineVisual.append(rail);
-  positionNumberLineHandle();
-  enableNumberLineDrag(handle,rail);
+  const handle=document.createElement('button');handle.type='button';handle.id='numberLineHandle';handle.className='draw-line-handle';handle.textContent='📍';handle.setAttribute('aria-label','Ergebnis markieren, mit Pfeiltasten verschieben');rail.append(handle);
+  handle.addEventListener('keydown',event=>{if(!s.locked&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();s.jumps=Math.max(-range,Math.min(range,s.jumps+(event.key==='ArrowRight'?1:-1)));positionNumberLineHandle()}});
+  positionNumberLineHandle();enableNumberLineDrag(handle,rail);
+}
+function numberLineLabelInput(key){
+  const s=numberLineState;if(s.locked||!s.labeling)return;
+  const value=s.labelAnswers[s.activeLabel]||'';
+  s.labelAnswers[s.activeLabel]=key==='⌫'?value.slice(0,-1):/^\d$/.test(key)&&value.length<5?value+key:value;
+  const button=elements.numberLineVisual.querySelector(`[data-tick="${s.activeLabel}"]`);if(button)button.textContent=s.labelAnswers[s.activeLabel]||'?';
 }
 function positionNumberLineHandle(){
   const s=numberLineState,range=NUMBER_LINE_RANGE;
-  const handle=document.querySelector('#numberLineHandle'),arrow=document.querySelector('#numberLineArrow'),badge=document.querySelector('#numberLineJumpBadge');
-  if(!handle)return;
-  const percent=(s.jumps+range)/(range*2)*100,startPercent=range/(range*2)*100;
-  handle.style.left=`${Math.max(0,Math.min(100,percent))}%`;
-  const left=Math.min(startPercent,percent),width=Math.abs(percent-startPercent);
-  arrow.style.left=`${left}%`;arrow.style.width=`${width}%`;
-  badge.style.left=`${Math.max(0,Math.min(100,percent))}%`;
-  badge.textContent=s.jumps===0?'am Start':`${Math.abs(s.jumps)} Sprünge ${s.jumps<0?'nach links':'nach rechts'}`;
+  const handle=document.querySelector('#numberLineHandle'),arrow=document.querySelector('#numberLineArrow'),badge=document.querySelector('#numberLineJumpBadge');if(!handle)return;
+  const percent=(s.jumps+range)/(range*2)*100;
+  handle.style.left=`${percent}%`;arrow.style.left=`${Math.min(50,percent)}%`;arrow.style.width=`${Math.abs(percent-50)}%`;
+  badge.style.left=`${percent}%`;badge.textContent=s.jumps===0?'am Start':`Markiert: ${formatNumber(s.start+s.jumps*s.step)}`;
 }
 function enableNumberLineDrag(handle,rail){
-  const range=NUMBER_LINE_RANGE;let dragging=false;
-  function valueFromEvent(event){const bounds=rail.getBoundingClientRect();const percent=Math.max(0,Math.min(1,(event.clientX-bounds.left)/bounds.width));return Math.round(percent*(range*2)-range)}
-  function move(event){if(!dragging||numberLineState.locked)return;numberLineState.jumps=Math.max(-range,Math.min(range,valueFromEvent(event)));positionNumberLineHandle()}
-  function start(event){if(numberLineState.locked)return;dragging=true;handle.setPointerCapture(event.pointerId);move(event)}
-  function end(){dragging=false}
-  handle.addEventListener('pointerdown',start);
-  handle.addEventListener('pointermove',move);
-  handle.addEventListener('pointerup',end);
-  handle.addEventListener('pointercancel',end);
-  rail.addEventListener('pointerdown',event=>{if(event.target!==handle)start(event)});
+  let dragging=false;
+  function move(event){if(!dragging||numberLineState.locked)return;const bounds=rail.getBoundingClientRect();const fraction=Math.max(0,Math.min(1,(event.clientX-bounds.left)/bounds.width));numberLineState.jumps=Math.round(fraction*NUMBER_LINE_RANGE*2-NUMBER_LINE_RANGE);positionNumberLineHandle()}
+  function start(event){if(numberLineState.locked)return;event.preventDefault();dragging=true;handle.setPointerCapture(event.pointerId);move(event)}
+  handle.addEventListener('pointerdown',start);handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',()=>dragging=false);handle.addEventListener('pointercancel',()=>dragging=false);
+  rail.addEventListener('pointerdown',event=>{if(!event.target.closest('button'))start(event)});
 }
 function checkNumberLine(){
   const s=numberLineState;if(s.locked)return;
-  const guessed=s.start+s.jumps*s.step;
-  if(guessed!==s.result){
-    s.retry+=1;const neededJumps=s.jump/s.step;
-    elements.numberLineFeedback.textContent=s.retry>=2?`Tipp: Du musst genau ${Math.abs(neededJumps)} Striche ${neededJumps<0?'nach links':'nach rechts'} springen.`:`Noch nicht ganz. Du bist bei ${Math.abs(s.jumps)} Sprüngen ${s.jumps<0?'nach links':'nach rechts'} – vergleiche das mit der Aufgabe.`;
-    elements.numberLineFeedback.className='feedback wrong';
-    return;
+  const correct=s.labeling?s.labelIndices.every(index=>s.labelAnswers[index]!==undefined&&s.labelAnswers[index]!==''&&Number(s.labelAnswers[index])===s.start+index*s.step):s.start+s.jumps*s.step===s.result;
+  if(!correct){
+    s.retry++;elements.numberLineFeedback.textContent=s.labeling?'Noch nicht ganz. Vergleiche zwei benachbarte Zahlen: Um wie viel wächst die Zahl bei jedem Strich?':`Du hast ${formatNumber(s.start+s.jumps*s.step)} markiert. Vergleiche die Zahl mit deiner Rechnung und lies die Striche noch einmal.`;
+    elements.numberLineFeedback.className='feedback wrong';return;
   }
-  s.locked=true;s.question+=1;if(s.retry===0)s.score+=1;
-  elements.numberLineScore.textContent=s.score;
-  elements.numberLineFeedback.textContent=`Genau dort landest du: ${formatNumber(s.result)}! ✨`;elements.numberLineFeedback.className='feedback correct';
-  const badge=document.querySelector('#numberLineJumpBadge');if(badge)badge.textContent=formatNumber(s.result);
+  s.locked=true;s.question++;if(s.retry===0)s.score++;elements.numberLineScore.textContent=s.score;
+  elements.numberLineFeedback.textContent=s.labeling?'Alle Striche richtig beschriftet! ✨':`Richtig: ${formatNumber(s.start)} ${s.jump<0?'−':'+'} ${formatNumber(Math.abs(s.jump))} = ${formatNumber(s.result)}! ✨`;elements.numberLineFeedback.className='feedback correct';
   const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'stellenwert',1);incrementActivity('numberLine');saveProfiles();renderProfileHeader()}
-  window.setTimeout(nextNumberLineQuestion,900);
+  window.setTimeout(nextNumberLineQuestion,1100);
 }
-function finishNumberLineGame(){elements.numberLineFinalScore.textContent=numberLineState.score;elements.numberLineFinishText.textContent=`${numberLineState.score} von 8 großen Zahlensprüngen richtig eingezeichnet.`;showScreen('numberLineFinish');maybeShowLevelUp()}
+function finishNumberLineGame(){elements.numberLineFinalScore.textContent=numberLineState.score;elements.numberLineFinishText.textContent=`${numberLineState.score} von 8 Aufgaben zum Lesen, Beschriften und Rechnen am Zahlenstrahl beim ersten Versuch geschafft.`;showScreen('numberLineFinish');maybeShowLevelUp()}
 
 const PLACE_VALUES=[1000,100,10,1],PLACE_NAMES=['Tausender','Hunderter','Zehner','Einer'],PLACE_SHORT=['T','H','Z','E'];
 function openPlaceValueWorkshop(){showScreen('placeValueStart')}
@@ -342,14 +398,21 @@ function nextPlaceValueQuestion(){
     elements.placeValueInstruction.textContent='Zieh die passenden Punkte in die richtigen Häuser.';elements.placeValueTask.textContent=`Baue ${formatNumber(s.target)}`;
   }else if(s.mode==='trade'){
     s.tradeIndex=randomInt(1,3);s.counts=[0,0,0,0];s.counts[s.tradeIndex]=randomInt(10,18);if(s.tradeIndex<3)s.counts[s.tradeIndex+1]=randomInt(0,5);s.target=placeValueNumber(s.counts);s.initial=[...s.counts];
-    s.houseRange=[Math.max(0,s.tradeIndex-1),Math.min(3,s.tradeIndex+1)];
-    elements.placeValueInstruction.textContent='Tausche, bis in keinem Haus zehn Punkte liegen.';elements.placeValueTask.textContent=`Stelle ${formatNumber(s.target)} geschickt dar`;
+    s.goalCounts=[Math.floor(s.target/1000),Math.floor(s.target/100)%10,Math.floor(s.target/10)%10,s.target%10];
+    if(s.question%2===1){
+      const from=randomInt(0,2);s.counts=[0,0,0,0];s.counts[from]=randomInt(1,3);s.counts[from+1]=randomInt(0,4);
+      s.target=placeValueNumber(s.counts);s.initial=[...s.counts];s.goalCounts=[...s.counts];s.goalCounts[from]--;s.goalCounts[from+1]+=10;
+      s.exchangeFrom=from;
+    }else s.exchangeFrom=null;
+    elements.placeValueInstruction.textContent=s.exchangeFrom===null?'Wähle zehn gleiche Punkte und zieh sie gemeinsam ins größere Nachbarhaus.':'Zieh einen Punkt ins kleinere Nachbarhaus. Dort wird er in zehn Punkte aufgeteilt.';
+    elements.placeValueTask.textContent=s.exchangeFrom===null?`Bündle ${formatNumber(s.target)}.`:`Teile genau einen ${PLACE_NAMES[s.exchangeFrom]}-Punkt in ${PLACE_NAMES[s.exchangeFrom+1]} auf.`;
   }else{
     const startZ=randomInt(2,9),startE=randomInt(0,9);s.startValue=startZ*10+startE;s.subtrahend=randomInt(1,s.startValue-1);s.target=s.startValue-s.subtrahend;
     s.counts=[0,0,startZ,startE];s.initial=[...s.counts];
     s.houseRange=[2,3];
     elements.placeValueInstruction.textContent='Nimm genau so viele Punkte weg. Reicht ein Haus nicht, entbündle zuerst einen Zehner.';elements.placeValueTask.textContent=`${formatNumber(s.startValue)} − ${formatNumber(s.subtrahend)} = ?`;
   }
+  s.houseRange=[0,3];s.selectedTokens=[];s.selectedPlace=null;
   elements.placeValueProgress.style.width=`${s.question/6*100}%`;elements.placeValueFeedback.textContent='';elements.placeValueFeedback.className='feedback';renderPlaceValue();
 }
 function placeValueNumber(counts){return counts.reduce((sum,count,index)=>sum+count*PLACE_VALUES[index],0)}
@@ -420,20 +483,27 @@ function renderPlaceValue(){
         tenEl.append(makePlaceFive(index,topCount),makePlaceFive(index,bottomCount));
         field.append(tenEl);
       }
-      if(s.mode==='minus'){
-        house.addEventListener('click',event=>{
-          if(!event.target.closest('.place-slot.filled'))return;
-          removePlaceCount(index);
-        });
-      }
+      field.querySelectorAll('.place-slot.filled').forEach((token,ordinal)=>{
+        token.classList.toggle('selected-token',s.selectedPlace===index&&s.selectedTokens.includes(ordinal));
+        token.setAttribute('aria-pressed',String(s.selectedPlace===index&&s.selectedTokens.includes(ordinal)));
+        token.setAttribute('aria-label',`${PLACE_NAMES[index]}-Punkt ${ordinal+1}: auswählen oder zum Tauschen ziehen`);
+        enablePlaceExchangeDrag(token,index,ordinal);
+      });
+      const destination=document.createElement('button');destination.type='button';destination.className='place-house-destination';destination.textContent=`${PLACE_NAMES[index]}-Haus`;
+      destination.addEventListener('click',()=>{if(s.selectedPlace!==null)exchangePlaceSelection(s.selectedPlace,s.selectedTokens.length,index);else{elements.placeValueFeedback.textContent='Wähle zuerst die Punkte aus, die du tauschen möchtest.';elements.placeValueFeedback.className='feedback'}});
+      roof.append(destination);
     }
     house.append(roof,field);
     if(s.mode==='build')enableHouseDrop(house,index);
     elements.placeValueHouses.append(house);
   }
   elements.placeValueActions.replaceChildren();
-  if(s.mode==='trade'){for(let from=s.houseRange[1];from>s.houseRange[0];from-=1){const button=document.createElement('button');button.type='button';button.className='trade-button';button.disabled=s.counts[from]<10;button.textContent=`10 ${PLACE_SHORT[from]} → 1 ${PLACE_SHORT[from-1]}`;button.addEventListener('click',()=>tradePlace(from));elements.placeValueActions.append(button)}}
-  else if(s.mode==='minus'){for(let from=s.houseRange[0];from<s.houseRange[1];from+=1){const button=document.createElement('button');button.type='button';button.className='trade-button untrade-button';button.disabled=s.counts[from]<1;button.textContent=`1 ${PLACE_SHORT[from]} → 10 ${PLACE_SHORT[from+1]}`;button.addEventListener('click',()=>untradePlace(from));elements.placeValueActions.append(button)}}
+  if(s.mode!=='build'){
+    const hint=document.createElement('p');hint.className='place-selection-hint';hint.setAttribute('role','status');
+    hint.textContent=s.selectedTokens.length?`${s.selectedTokens.length} ${PLACE_NAMES[s.selectedPlace]} ausgewählt · Ziehe sie in ein Nachbarhaus oder tippe dessen Überschrift an.`:s.mode==='minus'?'Punkt antippen: wegnehmen. Punkt ins kleinere Nachbarhaus ziehen: aufteilen.':'Wähle selbst einen Punkt zum Aufteilen oder zehn gleiche Punkte zum Bündeln.';
+    elements.placeValueActions.append(hint);
+    const help=document.createElement('details');help.className='place-exchange-help';help.innerHTML='<summary>So tauschst du</summary><p>Tippe die Punkte an, die du tauschen möchtest. Ziehe die Auswahl ins Nachbarhaus oder tippe auf dessen Hausüberschrift. Ein großer Punkt wird zu zehn kleineren; zehn gleiche Punkte werden zu einem größeren. Der Gesamtwert bleibt gleich.</p>';elements.placeValueActions.append(help);
+  }
   const current=placeValueNumber(s.counts);
   elements.placeValueReading.innerHTML=`Deine Darstellung: <strong>${formatNumber(current)}</strong><small>${s.counts.map((count,index)=>`${count} ${PLACE_SHORT[index]}`).join(' · ')}</small>`;
   renderPlaceValueTray();
@@ -451,7 +521,7 @@ function renderPlaceValueTray(){
     for(let i=0;i<6;i+=1){
       const token=document.createElement('button');token.type='button';token.className='place-tray-token';
       token.append(makePlaceToken(index));
-      token.addEventListener('click',()=>addPlaceSlot(index));
+      token.addEventListener('click',event=>{if(event.detail===0)addPlaceSlot(index)});
       enablePlaceTokenDrag(token,index);
       strip.append(token);
     }
@@ -470,23 +540,70 @@ function enableHouseDrop(house,index){
 }
 function flashPlaceMismatch(house,index){elements.placeValueFeedback.textContent=`Das gehört nicht hierher – das ist ein ${PLACE_NAMES[index]}-Punkt.`;elements.placeValueFeedback.className='feedback wrong';house.classList.add('shake');window.setTimeout(()=>house.classList.remove('shake'),400)}
 function enablePlaceTokenDrag(token,index){
-  token.draggable=true;
-  token.addEventListener('dragstart',event=>event.dataTransfer.setData('text/plain',String(index)));
-  let ghost=null;
-  token.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')return;token.setPointerCapture(event.pointerId);ghost=document.createElement('div');ghost.className='place-token-ghost';ghost.append(makePlaceToken(index));document.body.append(ghost);move(event)});
-  token.addEventListener('pointermove',event=>move(event));
-  token.addEventListener('pointerup',event=>{if(!ghost)return;const target=document.elementFromPoint(event.clientX,event.clientY);const house=target?.closest('.place-house');if(house){const houseIndex=Number(house.dataset.placeIndex);if(houseIndex===index)addPlaceSlot(index,dropPositionInHouse(house,event.clientX,event.clientY));else flashPlaceMismatch(house,houseIndex)}ghost.remove();ghost=null});
-  function move(event){if(!ghost)return;ghost.style.left=`${event.clientX}px`;ghost.style.top=`${event.clientY}px`}
+  let origin=null,ghost=null,moved=false;
+  function clear(){ghost?.remove();ghost=null;origin=null}
+  token.addEventListener('pointerdown',event=>{if(placeValueState.locked)return;event.preventDefault();origin={x:event.clientX,y:event.clientY};moved=false;token.setPointerCapture(event.pointerId)});
+  token.addEventListener('pointermove',event=>{
+    if(!origin)return;if(Math.hypot(event.clientX-origin.x,event.clientY-origin.y)>8)moved=true;if(!moved)return;
+    if(!ghost){ghost=document.createElement('div');ghost.className='place-token-ghost';ghost.append(makePlaceToken(index));document.body.append(ghost)}
+    ghost.style.left=`${event.clientX}px`;ghost.style.top=`${event.clientY}px`;
+  });
+  token.addEventListener('pointerup',event=>{
+    if(!origin)return;const dragged=moved,house=document.elementFromPoint(event.clientX,event.clientY)?.closest('.place-house');clear();
+    if(!dragged){addPlaceSlot(index);return}
+    if(house){const target=Number(house.dataset.placeIndex);if(target===index)addPlaceSlot(index,dropPositionInHouse(house,event.clientX,event.clientY));else flashPlaceMismatch(house,target)}
+  });
+  token.addEventListener('pointercancel',clear);token.addEventListener('lostpointercapture',clear);
 }
 
-function tradePlace(from){const s=placeValueState;if(s.locked||s.counts[from]<10)return;s.counts[from]-=10;s.counts[from-1]+=1;elements.placeValueFeedback.textContent=`Genau: 10 ${PLACE_NAMES[from]} haben denselben Wert wie 1 ${PLACE_NAMES[from-1].slice(0,-2)}.`;elements.placeValueFeedback.className='feedback correct';renderPlaceValue()}
-function untradePlace(from){const s=placeValueState;if(s.locked||s.counts[from]<1)return;s.counts[from]-=1;s.counts[from+1]+=10;elements.placeValueFeedback.textContent=`Genau: 1 ${PLACE_NAMES[from].slice(0,-2)} ist so viel wert wie 10 ${PLACE_NAMES[from+1]}.`;elements.placeValueFeedback.className='feedback correct';renderPlaceValue()}
+function selectPlaceToken(index,ordinal){
+  const s=placeValueState;if(s.locked)return;
+  if(s.mode==='minus'){removePlaceCount(index);return}
+  if(s.selectedPlace!==index){s.selectedPlace=index;s.selectedTokens=[]}
+  const at=s.selectedTokens.indexOf(ordinal);if(at<0)s.selectedTokens.push(ordinal);else s.selectedTokens.splice(at,1);
+  renderPlaceValue();
+}
+function exchangePlaceSelection(from,amount,to){
+  const s=placeValueState;if(s.locked||!amount||s.counts[from]<amount)return false;
+  if(to===from+1&&amount===1){s.counts[from]--;s.counts[to]+=10}
+  else if(to===from-1&&amount===10){s.counts[from]-=10;s.counts[to]++}
+  else{elements.placeValueFeedback.textContent='Zum Aufteilen gehört ein Punkt ins nächstkleinere Haus. Zum Bündeln gehören genau zehn gleiche Punkte ins nächstgrößere Haus.';elements.placeValueFeedback.className='feedback wrong';return false}
+  s.selectedTokens=[];s.selectedPlace=null;
+  elements.placeValueFeedback.textContent=to>from?`1 ${PLACE_SHORT[from]} = 10 ${PLACE_SHORT[to]} · Der Wert bleibt gleich.`:`10 ${PLACE_SHORT[from]} = 1 ${PLACE_SHORT[to]} · Der Wert bleibt gleich.`;
+  elements.placeValueFeedback.className='feedback correct';renderPlaceValue();return true;
+}
+function enablePlaceExchangeDrag(token,index,ordinal){
+  let origin=null,ghost=null,moved=false;
+  const clear=()=>{ghost?.remove();ghost=null;origin=null};
+  token.addEventListener('pointerdown',event=>{
+    if(placeValueState.locked)return;event.preventDefault();origin={x:event.clientX,y:event.clientY};moved=false;token.setPointerCapture(event.pointerId);
+  });
+  token.addEventListener('pointermove',event=>{
+    if(!origin)return;
+    if(Math.hypot(event.clientX-origin.x,event.clientY-origin.y)>8)moved=true;
+    if(!moved)return;
+    if(!ghost){ghost=document.createElement('div');ghost.className='place-token-ghost';ghost.append(makePlaceToken(index));const amount=placeValueState.selectedPlace===index&&placeValueState.selectedTokens.includes(ordinal)?placeValueState.selectedTokens.length:1;if(amount>1){const badge=document.createElement('b');badge.textContent=amount;ghost.append(badge)}document.body.append(ghost)}
+    ghost.style.left=`${event.clientX}px`;ghost.style.top=`${event.clientY}px`;
+  });
+  token.addEventListener('pointerup',event=>{
+    if(!origin)return;
+    const dragged=moved,target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.place-house');
+    clear();
+    if(dragged){if(target){const s=placeValueState,amount=s.selectedPlace===index&&s.selectedTokens.includes(ordinal)?s.selectedTokens.length:1;exchangePlaceSelection(index,amount,Number(target.dataset.placeIndex))}}
+    else selectPlaceToken(index,ordinal);
+  });
+  token.addEventListener('pointercancel',clear);token.addEventListener('lostpointercapture',clear);
+  token.addEventListener('click',event=>{if(event.detail===0)selectPlaceToken(index,ordinal)});
+  token.addEventListener('keydown',event=>{if(event.key==='ArrowRight'&&index<3){event.preventDefault();exchangePlaceSelection(index,1,index+1)}});
+}
+function tradePlace(from){return exchangePlaceSelection(from,10,from-1)}
+function untradePlace(from){return exchangePlaceSelection(from,1,from+1)}
 function checkPlaceValue(){
   const s=placeValueState;if(s.locked)return;
   const rightValue=placeValueNumber(s.counts)===s.target;const normalized=s.counts.every(count=>count<10);
-  const needsNormalized=s.mode!=='build';
-  if(!rightValue||(needsNormalized&&!normalized)){
-    elements.placeValueFeedback.textContent=!rightValue?(s.mode==='minus'?'Noch nicht. Vergleiche, wie viel du schon weggenommen hast, mit der Aufgabe.':'Der Wert stimmt noch nicht. Achte darauf, in welchem Haus ein Punkt liegt.'):'Der Wert stimmt, aber du kannst noch zehn gleiche Punkte gegen einen größeren tauschen.';
+  const correctRepresentation=s.mode==='trade'?s.counts.every((count,index)=>count===s.goalCounts[index]):s.mode==='minus'?normalized:true;
+  if(!rightValue||!correctRepresentation){
+    elements.placeValueFeedback.textContent=!rightValue?(s.mode==='minus'?'Noch nicht. Vergleiche, wie viel du schon weggenommen hast, mit der Aufgabe.':'Der Wert stimmt noch nicht. Achte darauf, in welchem Haus ein Punkt liegt.'):s.mode==='trade'&&s.exchangeFrom!==null?'Der Wert stimmt. Teile aber genau einen Punkt aus dem genannten Haus in zehn kleinere Punkte auf.':'Der Wert stimmt, aber du kannst noch zehn gleiche Punkte gegen einen größeren tauschen.';
     elements.placeValueFeedback.className='feedback wrong';return;
   }
   s.locked=true;s.score+=1;s.question+=1;elements.placeValueScore.textContent=s.score;
@@ -495,7 +612,7 @@ function checkPlaceValue(){
   const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'stellenwert',1);incrementActivity('placeValue');saveProfiles();renderProfileHeader()}
   window.setTimeout(nextPlaceValueQuestion,850);
 }
-function resetPlaceValue(){const s=placeValueState;s.counts=[...s.initial];if(s.mode==='build')s.positions=[[],[],[],[]];elements.placeValueFeedback.textContent='Noch einmal von vorne.';elements.placeValueFeedback.className='feedback';renderPlaceValue()}
+function resetPlaceValue(){const s=placeValueState;s.counts=[...s.initial];s.selectedPlace=null;s.selectedTokens=[];if(s.mode==='build')s.positions=[[],[],[],[]];elements.placeValueFeedback.textContent='Noch einmal von vorne.';elements.placeValueFeedback.className='feedback';renderPlaceValue()}
 function finishPlaceValueGame(){elements.placeValueFinalScore.textContent=placeValueState.score;elements.placeValueFinishText.textContent=`${placeValueState.score} von 6 Stellenwert-Aufgaben geschafft.`;showScreen('placeValueFinish');maybeShowLevelUp()}
 function startFamilyGame(mode='exact'){familyState={mode,question:0,score:0,selected:[],choices:[],locked:false};elements.familyPairs.textContent='0/6';elements.familyKind.textContent=mode==='exact'?'Mal ↔ Geteilt ohne Rest':'Geteilt mit Rest';showScreen('family');nextFamilyQuestion()}
 function nextFamilyQuestion(){const s=familyState;if(s.question>=6)return finishFamilyGame();s.selected=[];s.locked=false;elements.familyPairs.textContent=`${s.score}/6`;elements.familyFeedback.textContent='';elements.familyFeedback.className='feedback';if(s.mode==='exact'){const a=randomInt(2,10),b=randomInt(2,10),result=a*b;s.source=`${Array(a).fill(b).join(' + ')} = ${result}`;elements.familyPrompt.textContent='Wähle Mal-Aufgabe und Geteilt-Aufgabe, die diesen Weg beschreiben.';s.choices=shuffled([{text:`${a} × ${b} = ${result}`,correct:true,label:'Mal-Aufgabe'},{text:`${result} ÷ ${a} = ${b}`,correct:true,label:'Geteilt-Aufgabe'},{text:`${a} × ${Math.max(1,b-1)} = ${a*Math.max(1,b-1)}`,correct:false,label:'Mal-Aufgabe'},{text:`${result} ÷ ${b} = ${a+1}`,correct:false,label:'Geteilt-Aufgabe'}])}else{const divisor=randomInt(2,9),quotient=randomInt(2,9),remainder=randomInt(1,divisor-1),total=divisor*quotient+remainder;s.source=`${total} Murmeln werden auf ${divisor} Kinder verteilt. Es bleiben ${remainder} Murmel(n) übrig.`;elements.familyPrompt.textContent='Wähle die Geteilt-Aufgabe und den Malweg mit Rest.';s.choices=shuffled([{text:`${total} ÷ ${divisor} = ${quotient} Rest ${remainder}`,correct:true,label:'Geteilt-Aufgabe'},{text:`${quotient} × ${divisor} + ${remainder} = ${total}`,correct:true,label:'Malweg mit Rest'},{text:`${total} ÷ ${divisor} = ${quotient+1}`,correct:false,label:'Geteilt-Aufgabe'},{text:`${quotient} × ${divisor} = ${total}`,correct:false,label:'Malweg'}])}renderFamilyChoices()}
@@ -506,7 +623,7 @@ function finishFamilyGame(){elements.familyFinishText.textContent=familyState.mo
 function startRaceGame(){
   if(requestRows('race',startRaceGame))return;
   if(!getProfile())return showProfileSelection();
-  if(getAreaLevel(getProfile(),'mal')<6&&!teacherPreview)return;
+  if(!hasGameReward('race'))return;
   clearInterval(raceState.timer);
   raceState={score:0,timeLeft:60,a:2,b:2,operation:'*',result:4,answer:'',locked:false,timer:null,running:true,correctByOp:{'*':0,'/':0}};
   elements.raceScore.textContent='0';elements.raceTimer.textContent='60';elements.raceProgress.style.width='100%';elements.raceFeedback.textContent='';elements.raceFeedback.className='feedback';
@@ -709,17 +826,30 @@ function checkDoubleChain(){
 }
 function finishDoubleChainGame(){elements.doubleChainFinalScore.textContent=doubleChainState.score;elements.doubleChainFinishText.textContent=`${doubleChainState.score} von 6 Ketten geschafft.`;showScreen('doubleChainFinish');maybeShowLevelUp()}
 
-for (let row = 1; row <= 10; row += 1) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'mode-button';
-  button.innerHTML = `${row}<small>er-Reihe</small>`;
-  button.setAttribute('aria-label', `${row}er-Reihe üben`);
-  button.addEventListener('click', () => startGame(row, false));
-  elements.modeGrid.append(button);
+const practiceRows={times:new Set(),division:new Set()};
+function renderPracticeRows(kind){
+  const grid=kind==='times'?elements.modeGrid:elements.divisionModeGrid;
+  grid.replaceChildren();
+  for(let row=1;row<=10;row++){
+    const button=document.createElement('button');button.type='button';button.className='mode-button';
+    button.innerHTML=kind==='times'?`${row}<small>er-Reihe</small>`:`÷ ${row}<small>durch ${row}</small>`;
+    button.classList.toggle('selected',practiceRows[kind].has(row));button.setAttribute('aria-pressed',String(practiceRows[kind].has(row)));
+    button.addEventListener('click',()=>{const rows=practiceRows[kind];rows.has(row)?rows.delete(row):rows.add(row);renderPracticeRows(kind)});
+    grid.append(button);
+  }
+  document.querySelector(`#${kind==='times'?'times':'division'}SelectionStatus`).textContent=practiceRows[kind].size?`${[...practiceRows[kind]].sort((a,b)=>a-b).join(', ')} · ${practiceRows[kind].size} Reihen ausgewählt`:'Wähle mindestens eine Reihe oder Gemischt.';
+  (kind==='times'?elements.mixedMode:elements.divisionMixed).setAttribute('aria-pressed',String(practiceRows[kind].size===10));
 }
+function selectMixedPractice(kind){practiceRows[kind]=new Set(Array.from({length:10},(_,i)=>i+1));renderPracticeRows(kind)}
+function continuePractice(kind){
+  if(!practiceRows[kind].size){renderPracticeRows(kind);return}
+  const rows=[...practiceRows[kind]].sort((a,b)=>a-b);
+  rowsByGame.set(kind,rows);
+  if(kind==='times'){activeRows=[...rows];startGame('mixed')}
+  else startDivisionGame('selected');
+}
+renderPracticeRows('times');renderPracticeRows('division');
 
-for(let divisor=1;divisor<=10;divisor+=1){const button=document.createElement('button');button.type='button';button.className='mode-button';button.innerHTML=`÷ ${divisor}<small>durch ${divisor}</small>`;button.addEventListener('click',()=>startDivisionGame(divisor));elements.divisionModeGrid.append(button)}
 for(let row=1;row<=10;row+=1){const button=document.createElement('button');button.type='button';button.className='mode-button';button.innerHTML=`${row}<small>er-Reihe</small>`;button.setAttribute('aria-label',`${row}er-Reihe auffangen`);button.addEventListener('click',()=>startCatchGame(row));elements.catchModeGrid.append(button)}
 
 for (let digit = 0; digit <= 9; digit += 1) {
@@ -760,11 +890,13 @@ function openShopWorld() {
   if (!profile) return showProfileSelection();
   const level = getRewardLevel(profile);
   elements.worldEmoji.textContent = profile.emoji; elements.worldLevel.textContent = level; elements.shopLevelLabel.textContent = `Dein Laden · höchstes Bereichslevel ${level}`;
-  const size = level >= 10 ? 4 : level >= 6 ? 3 : level >= 3 ? 2 : 1;
+  const size = level >= gameRewardLevel('stock') ? 4 : level >= gameRewardLevel('checkout') ? 3 : level >= gameRewardLevel('bakery') ? 2 : 1;
   elements.shopBuilding.className = `shop-building size-${size}`;
-  const nextArea = level < 3 ? 'Die Bäckerei öffnet auf Level 3.' : level < 6 ? 'Die Kasse öffnet auf Level 6.' : level < 10 ? 'Das Lager öffnet auf Level 10.' : 'Der ganze Laden ist geöffnet!';
+  const nextStation=GAME_REWARDS.find(item=>['bakery','checkout','stock'].includes(item.id)&&item.level>level);
+  const nextArea=nextStation?`${nextStation.name} öffnet auf Level ${nextStation.level}.`:'Der ganze Laden ist geöffnet!';
   elements.shopInstruction.textContent = `Wo möchtest du heute helfen? ${nextArea}`;
   document.querySelectorAll('.store-station').forEach((station) => {
+    station.dataset.level=station.dataset.station==='fruit'?1:gameRewardLevel(station.dataset.station);
     const unlocked = level >= Number(station.dataset.level) || teacherPreview;
     station.disabled = !unlocked; station.classList.toggle('locked', !unlocked);
     station.querySelector('small').textContent = unlocked ? 'offen' : `ab Level ${station.dataset.level}`;
@@ -776,6 +908,7 @@ function startShopGame(station = shopState.station || 'fruit') {
   if(requestRows('shop',()=>startShopGame(station)))return;
   if (!getProfile()) return showProfileSelection();
   const level = getRewardLevel(getProfile());
+  if(station!=='fruit'&&!hasGameReward(station))return;
   shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: makeOperationRound(), station, difficulty: level >= 8 ? 3 : level >= 4 ? 2 : 1 };
   elements.shopScore.textContent = '0';
   showScreen('shop');
@@ -855,7 +988,7 @@ function makeShopTask(operation, station = 'fruit') {
   if (operation === '+') { a = randomInt(3, 20); b = randomInt(2, 15); result = a + b; }
   else if (operation === '-') { a = randomInt(10, 30); b = randomInt(2, a - 2); result = a - b; }
   else if (operation === '*') { a = pickRow(); b = randomInt(2, 10); result = a * b; }
-  else { b = randomInt(2, 10); result = randomInt(2, 10); a = b * result; }
+  else { b = pickRow(); result = randomInt(2, 10); a = b * result; }
   const stationScenes = { fruit: '🍎 🍐 🍓', bakery: '🥨 🥖 🥐', checkout: '🛒 🧾 🪙', stock: '📦 🥫 🪜' };
   const stationNames = { fruit: 'Am Obststand', bakery: 'In der Bäckerei', checkout: 'An der Kasse', stock: 'Im Lager' };
   const story = STATION_STORIES[station][operation](a, b);
@@ -941,7 +1074,7 @@ function finishShopGame() {
 
 function startCatchGame(mode='mixed') {
   if(requestRows('catch',()=>startCatchGame('mixed'), typeof mode==='number'?[mode]:null))return;
-  if (getAreaLevel(getProfile(),'mal') < 2 && !teacherPreview) return;
+  if (!hasGameReward('catch')) return;
   clearCatchBubbles();cancelAnimationFrame(catchState.frame);
   catchState = { question: 0, score: 0, a: 2, b: 2, mode, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: true, mistake: false, bubbles: [] };
   elements.catchScore.textContent = '0'; elements.catchProgress.style.width = '0%';
@@ -1037,7 +1170,7 @@ function finishCatchGame() {
 }
 
 function startPipeGame(){
-  if(getAreaLevel(getProfile(),'mal')<4&&!teacherPreview)return;
+  if(!hasGameReward('pipe'))return;
   if(requestRows('pipe',startPipeGame))return;
   clearPipeBubbles();cancelAnimationFrame(pipeState.frame);
   pipeState={question:0,score:0,a:2,b:2,op:'*',result:4,running:true,bubbles:[],pipesBusy:new Array(PIPE_COUNT).fill(false),lastTime:0,nextSpawnAt:0,frame:0};
@@ -1149,17 +1282,17 @@ function finishPipeGame(){
   maybeShowLevelUp();
 }
 
-function startDivisionGame(mode='understand'){ divisionState={question:0,score:0,total:12,divisor:3,result:4,type:'share',answer:'',retry:0,locked:false,mode,conceptStep:0}; elements.divisionScore.textContent='0'; showScreen('division'); nextDivisionQuestion(); }
+function startDivisionGame(mode='understand'){ const rows=mode==='selected'?[...(rowsByGame.get('division')||practiceRows.division)]:typeof mode==='number'?[mode]:Array.from({length:10},(_,i)=>i+1);divisionState={rows,question:0,score:0,total:12,divisor:3,result:4,type:'share',answer:'',retry:0,locked:false,mode,conceptStep:0}; elements.divisionScore.textContent='0'; showScreen('division'); nextDivisionQuestion(); }
 function nextDivisionQuestion(){
   if(divisionState.question>=10)return finishDivisionGame();
   const prevDivisor=divisionState.divisor,prevResult=divisionState.result;let divisor,result,tries=0;
   do{
-    divisor=divisionState.mode==='understand'?randomInt(2,6):divisionState.mode==='mixed'?randomInt(1,10):divisionState.mode;result=divisionState.mode==='understand'?randomInt(2,6):randomInt(1,10);
+    divisor=divisionState.mode==='understand'?randomInt(2,6):['mixed','selected'].includes(divisionState.mode)?divisionState.rows[randomInt(0,divisionState.rows.length-1)]:divisionState.mode;result=divisionState.mode==='understand'?randomInt(2,6):randomInt(1,10);
     tries+=1;
   }while(divisionState.question>0&&tries<30&&divisor===prevDivisor&&result===prevResult);
   divisionState.divisor=divisor;divisionState.result=result;divisionState.total=divisionState.divisor*divisionState.result;divisionState.type=divisionState.mode==='understand'?(divisionState.question%2===0?'share':'groups'):'fact';divisionState.answer='';divisionState.retry=0;divisionState.locked=false;divisionState.conceptStep=0;
   elements.divisionA.textContent=divisionState.total;elements.divisionB.textContent=divisionState.divisor;elements.divisionKind.textContent=divisionState.type==='share'?'Gerecht verteilen':'Gruppen bilden';
-  elements.divisionKind.textContent=divisionState.type==='share'?'Gerecht verteilen':divisionState.type==='groups'?'Gruppen bilden':divisionState.mode==='mixed'?'Alles gemischt':`Geteilt durch ${divisionState.divisor}`;
+  elements.divisionKind.textContent=divisionState.type==='share'?'Gerecht verteilen':divisionState.type==='groups'?'Gruppen bilden':['mixed','selected'].includes(divisionState.mode)?`Geteilt durch ${divisionState.rows.join(', ')}`:`Geteilt durch ${divisionState.divisor}`;
   elements.divisionStory.textContent=divisionState.type==='share'?`${divisionState.total} Erdbeeren werden gerecht auf ${divisionState.divisor} Kinder verteilt. Wie viele bekommt jedes Kind?`:divisionState.type==='groups'?`Du hast ${divisionState.total} Erdbeeren. Jedes Kind bekommt ${divisionState.divisor}. Für wie viele Kinder reicht es?`:`Wie viel ist ${divisionState.total} geteilt durch ${divisionState.divisor}?`;
   elements.divisionObjects.replaceChildren();appendDiceGroup(elements.divisionObjects,divisionState.total,'🍓');
   const understanding=divisionState.mode==='understand';elements.divisionInverse.classList.toggle('hidden',!understanding);elements.divisionConceptControls.classList.toggle('hidden',!understanding);
@@ -1189,7 +1322,7 @@ function advanceDivisionConcept(){if(divisionState.mode!=='understand'||division
 function renderDivisionHelpGroups(){elements.divisionObjects.replaceChildren();const groups=divisionState.type==='share'?divisionState.divisor:divisionState.result;const perGroup=divisionState.type==='share'?divisionState.result:divisionState.divisor;for(let group=0;group<groups;group+=1){const box=document.createElement('span');box.className='division-help-group';const label=document.createElement('small');label.textContent=divisionState.type==='share'?`Kind ${group+1}`:`Päckchen ${group+1}`;box.append(label);const dice=document.createElement('div');dice.className='division-pool-dice';appendDiceGroup(dice,perGroup,'🍓');box.append(dice);elements.divisionObjects.append(box)}const explanation=document.createElement('p');explanation.className='division-group-caption';explanation.textContent=divisionState.type==='share'?`${divisionState.total} Erdbeeren werden auf ${divisionState.divisor} gleich große Kinder-Gruppen aufgeteilt.`:`Aus ${divisionState.total} Erdbeeren werden Päckchen mit jeweils ${divisionState.divisor} Erdbeeren gebildet.`;elements.divisionObjects.append(explanation)}
 
 function startGame(mode) {
-  if(requestRows('times',()=>startGame('mixed'), typeof mode==='number'?[mode]:null))return;
+  if(typeof mode==='number')activeRows=[mode];
   if (!getProfile()) return showProfileSelection();
   state = { mode, question: 0, score: 0, streak: 0, a: 2, b: 1, answer: '', locked: false, retryCount: 0, total: FREE_QUESTIONS, roundFacts:{} };
   elements.currentMode.textContent = activeRows.map(row=>`${row}er`).join(', ')+'-Reihen';
@@ -1495,6 +1628,8 @@ function getNewUnlocks(fromLevel,toLevel){
     THEMES.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Farbwelt „${item.name}“`}));
     TILE_STYLES.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Zahlenkarten „${item.name}“`}));
     GAME_REWARDS.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:item.name}));
+    RACE_ROUTES.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Rennstrecke „${item.name}“`}));
+    if(level>REWARD_ORDER.length+1)items.push({icon:'🏅',text:`Entdecker-Abzeichen ${level}`});
   }
   return items;
 }
@@ -1595,12 +1730,12 @@ function renderProfileHeader() {
   elements.activityProfileEmoji.textContent = profile?.emoji || '🌟';
   elements.activityProfileName.textContent = profile?.name || 'Profil';
   elements.shopEmoji.textContent = profile?.emoji || '🌟';
-  const catchUnlocked = getAreaLevel(profile,'mal') >= 2 || teacherPreview;
-  elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':'ab Mal-Level 2';elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
-  const pipeUnlocked=getAreaLevel(profile,'mal')>=4||teacherPreview;
-  elements.gamesPipeCard.disabled=!pipeUnlocked;elements.gamesPipeCard.classList.toggle('locked',!pipeUnlocked);elements.gamesPipeStatus.textContent=pipeUnlocked?'Jetzt spielen':'ab Mal-Level 4';elements.gamesPipeLock.textContent=pipeUnlocked?'→':'🔒';
-  const raceUnlocked=getAreaLevel(profile,'mal')>=6||teacherPreview;
-  elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':'ab Mal-Level 6';elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
+  const catchUnlocked = hasGameReward('catch');
+  elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':`ab Level ${gameRewardLevel('catch')}`;elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
+  const pipeUnlocked=hasGameReward('pipe');
+  elements.gamesPipeCard.disabled=!pipeUnlocked;elements.gamesPipeCard.classList.toggle('locked',!pipeUnlocked);elements.gamesPipeStatus.textContent=pipeUnlocked?'Jetzt spielen':`ab Level ${gameRewardLevel('pipe')}`;elements.gamesPipeLock.textContent=pipeUnlocked?'→':'🔒';
+  const raceUnlocked=hasGameReward('race');
+  elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':`ab Level ${gameRewardLevel('race')}`;elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
   elements.levelAvatar.textContent=profile?.emoji||'🌟';
   elements.levelNow.textContent='Deine Level';
   elements.levelRewardText.textContent='Jeder Lernbereich steigt für sich auf';
@@ -1622,10 +1757,13 @@ function renderRewards() {
   if (!profile) return;
   const level = getRewardLevel(profile);
 
-  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Deine Bereichslevel</strong><small>${formatAreaLevels(profile)}</small><small>Figuren und Farben: höchster Bereich auf Level ${level}</small>`;
+  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Deine Bereichslevel</strong><small>${formatAreaLevels(profile)}</small><small>Alle Freischaltungen: höchster Bereich auf Level ${level}</small>`;
   renderRewardGroup(elements.themeGrid, THEMES, profile.theme || 'classic', (id) => { profile.theme = id; });
   renderRewardGroup(elements.tileGrid, TILE_STYLES, profile.tileStyle || 'classic', (id) => { profile.tileStyle = id; });
-  elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(game=>{const malGame=['Lösungen auffangen','Rohr-Rechnen','Tempo-Rennen','Schnelle Fangwellen'].includes(game.name);const gameLevel=malGame?getAreaLevel(profile,'mal'):level;const locked=gameLevel<game.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${game.icon}</span><strong>${game.name}</strong><small>${locked?`ab ${malGame?'Mal-Level':'Bereichslevel'} ${game.level}`:'freigeschaltet'}</small></div>`}).join('');
+  const next=getNewUnlocks(level,level+1)[0];
+  elements.rewardSummary.innerHTML+=`<small>Nächste Belohnung auf Level ${level+1}: ${next.icon} ${next.text}</small>`;
+  elements.gameRewardGrid.innerHTML=[...GAME_REWARDS,...RACE_ROUTES.map(route=>({...route,name:`Rennstrecke: ${route.name}`}))].map(item=>{const locked=level<item.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${item.icon}</span><strong>${item.name}</strong><small>${locked?`ab Level ${item.level}`:'freigeschaltet'}</small></div>`}).join('');
+  if(level>REWARD_ORDER.length+1)elements.gameRewardGrid.innerHTML+=`<div class="reward-choice"><span>🏅</span><strong>Entdecker-Abzeichen</strong><small>Gesammelt: Level ${REWARD_ORDER.length+2} bis ${level}</small></div>`;
 }
 
 function renderRewardGroup(container, rewards, selected, choose) {
@@ -1646,10 +1784,14 @@ function renderRewardGroup(container, rewards, selected, choose) {
 
 function applyRewards() {
   const profile = getProfile();
-  document.body.classList.remove('theme-mint', 'theme-sunset', 'theme-night', 'theme-candy', 'tiles-rainbow', 'tiles-gold', 'tiles-space');
+  document.body.classList.remove(...THEMES.map(item=>`theme-${item.id}`),...TILE_STYLES.map(item=>`tiles-${item.id}`));
   if (!profile) return;
-  if (profile.theme && profile.theme !== 'classic') document.body.classList.add(`theme-${profile.theme}`);
-  if (profile.tileStyle && profile.tileStyle !== 'classic') document.body.classList.add(`tiles-${profile.tileStyle}`);
+  const level=getRewardLevel(profile);
+  const theme=THEMES.find(item=>item.id===profile.theme&&(teacherPreview||item.level<=level));
+  const tiles=TILE_STYLES.find(item=>item.id===profile.tileStyle&&(teacherPreview||item.level<=level));
+  if(theme&&theme.id!=='classic')document.body.classList.add(`theme-${theme.id}`);
+  if(tiles&&tiles.id!=='classic')document.body.classList.add(`tiles-${tiles.id}`);
+
 }
 
 function openProfileSettings() {
@@ -1818,7 +1960,9 @@ function addPointerDrag(tile, targetZone = elements.answerZone, dropAction = add
 
 elements.checkButton.addEventListener('click', checkAnswer);
 elements.deleteButton.addEventListener('click', removeDigit);
-elements.mixedMode.addEventListener('click', () => startGame('mixed'));
+elements.mixedMode.addEventListener('click',()=>selectMixedPractice('times'));
+document.querySelector('#timesContinue').addEventListener('click',()=>continuePractice('times'));
+document.querySelector('#divisionContinue').addEventListener('click',()=>continuePractice('division'));
 elements.homeButton.addEventListener('click', () => confirmLeaveGame('start'));
 elements.againButton.addEventListener('click', () => startGame(state.mode));
 elements.chooseButton.addEventListener('click', () => showScreen('start'));
@@ -1877,7 +2021,7 @@ elements.doubleChainDelete.addEventListener('click', removeDoubleChainDigit);
 elements.doubleChainCheck.addEventListener('click', checkDoubleChain);
 elements.doubleChainAgain.addEventListener('click', startDoubleChainGame);
 elements.doubleChainChoose.addEventListener('click', () => showScreen('games'));
-elements.divisionBack.addEventListener('click',()=>showScreen('games'));elements.divisionMixed.addEventListener('click',()=>startDivisionGame('mixed'));elements.divisionHome.addEventListener('click',()=>confirmLeaveGame('divisionStart'));elements.divisionDelete.addEventListener('click',removeDivisionDigit);elements.divisionCheck.addEventListener('click',checkDivisionAnswer);elements.divisionAgain.addEventListener('click',()=>startDivisionGame(divisionState.mode));elements.divisionChoose.addEventListener('click',()=>showScreen('games'));
+elements.divisionBack.addEventListener('click',()=>showScreen('games'));elements.divisionMixed.addEventListener('click',()=>selectMixedPractice('division'));elements.divisionHome.addEventListener('click',()=>confirmLeaveGame('divisionStart'));elements.divisionDelete.addEventListener('click',removeDivisionDigit);elements.divisionCheck.addEventListener('click',checkDivisionAnswer);elements.divisionAgain.addEventListener('click',()=>startDivisionGame(divisionState.mode));elements.divisionChoose.addEventListener('click',()=>showScreen('games'));
 elements.divisionConceptButton.addEventListener('click',advanceDivisionConcept);
 elements.catchArena.addEventListener('pointerdown', (event) => {
   elements.catchArena.setPointerCapture(event.pointerId);
@@ -1935,11 +2079,19 @@ function requestRows(key,start,initial=null){
     const text=document.createElement('span');text.textContent=`${row}er`;
     label.append(input,text);document.querySelector('#rowsOptions').append(label);
   }
+  document.querySelector('#duelRouteLabel').classList.toggle('hidden',key!=='duel');
+  if(key==='duel'){
+    const select=document.querySelector('#duelRouteSelect');select.replaceChildren();
+    RACE_ROUTES.forEach(route=>{const option=document.createElement('option');option.value=route.id;option.disabled=!teacherPreview&&getRewardLevel(getProfile())<route.level;option.textContent=`${route.icon} ${route.name}${option.disabled?` · ab Level ${route.level}`:''}`;select.append(option)});
+    select.value=RACE_ROUTES.some(route=>route.id===selectedDuelRoute&&(teacherPreview||route.level<=getRewardLevel(getProfile())))?selectedDuelRoute:'meadow';
+  }
   document.querySelector('#rowsError').textContent='';
-  document.querySelector('#rowsDescription').textContent=key==='duel'?'Steuert selbst durch den Parcours: Gas halten und mit Links/Rechts lenken. Erst an einer Schranke erscheint die Malaufgabe. Beide fahren dieselbe Strecke mit denselben zehn unterschiedlichen Aufgaben, aber in unterschiedlicher Reihenfolge. Bei einer falschen Antwort geht es zur vorherigen Schranke zurück.':'Wähle eine oder mehrere Reihen. Nur diese Reihen kommen vor. Bei gemischten Spielen gilt die Auswahl auch für passende Geteilt-Aufgaben.';
+  document.querySelector('#rowsDescription').textContent=key==='duel'?'Steuert selbst durch den Parcours: Gas halten und mit Links/Rechts lenken. Ihr dürft auch über die Wiese fahren. Jede Schranke muss der Reihe nach gelöst werden. Erst an einer Schranke erscheint die Malaufgabe. Beide fahren dieselbe Strecke mit denselben zehn unterschiedlichen Aufgaben, aber in unterschiedlicher Reihenfolge. Bei einer falschen Antwort geht es zur vorherigen Schranke zurück.':'Wähle eine oder mehrere Reihen. Nur diese Reihen kommen vor. Bei gemischten Spielen gilt die Auswahl auch für passende Geteilt-Aufgaben.';
+  if(key==='shop')document.querySelector('#rowsDescription').textContent='Wähle die Reihen für Mal- und Geteilt-Aufgaben im Laden. Bei Geteilt-Aufgaben wird durch eine ausgewählte Zahl geteilt. Plus und Minus sind unabhängig von dieser Auswahl.';
   pendingRowsStart=()=>{
     const rows=[...dialog.querySelectorAll('input:checked')].map(input=>Number(input.value));
     if(!rows.length){document.querySelector('#rowsError').textContent='Wähle mindestens eine Malreihe aus.';return}
+    if(key==='duel')selectedDuelRoute=document.querySelector('#duelRouteSelect').value;
     activeRows=rows;rowsByGame.set(key,[...rows]);dialog.close();
     launchingRows=true;try{start()}finally{launchingRows=false}
   };

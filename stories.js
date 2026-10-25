@@ -145,3 +145,28 @@ storyUI.storyHome.addEventListener('click',()=>showScreen('games'));
 document.getElementById('storyBegin').addEventListener('click',startStories);
 storyUI.storyCheck.addEventListener('click',checkStory);storyUI.storyHint.addEventListener('click',storyHint);
 storyUI.storyNext.addEventListener('click',()=>{storyState.question++;nextStory()});
+
+function storyKeyInput(key){
+  const field=storyUI.storyWork;
+  if(storyState.locked||field.disabled)return;
+  let start=field.selectionStart??field.value.length,end=field.selectionEnd??start;
+  let insert=key;
+  if(key==='⌫'){if(start===end)start=Math.max(0,start-1);insert=''}
+  if(key==='Löschen'){start=0;end=field.value.length;insert=''}
+  if(key==='Neue Zeile')insert='\n';
+  if(field.value.length-(end-start)+insert.length>500)return;
+  field.setRangeText(insert,start,end,'end');
+  field.dispatchEvent(new Event('input',{bubbles:true}));
+}
+for(const key of ['7','8','9','+','−','4','5','6','×',':','1','2','3','=','⌫','0',',','(',')','Neue Zeile','Löschen']){
+  const button=document.createElement('button');button.type='button';button.textContent=key;
+  button.className=key==='Neue Zeile'||key==='Löschen'?'math-key-wide':'';
+  button.setAttribute('aria-label',key==='⌫'?'Letzte Ziffer oder Auswahl löschen':key);
+  button.addEventListener('pointerdown',event=>event.preventDefault());
+  button.addEventListener('click',()=>storyKeyInput(key));document.querySelector('#storyKeypad').append(button);
+}
+storyUI.storyWork.addEventListener('keydown',event=>{
+  if(/^[0-9+\-−*×:=(),./ ]$/.test(event.key)||event.key==='Enter'||event.key==='Backspace'||event.key==='Delete'){
+    event.preventDefault();storyKeyInput(event.key==='Enter'?'Neue Zeile':event.key==='Backspace'?'⌫':event.key==='Delete'?'Löschen':event.key);
+  }
+});

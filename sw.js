@@ -1,7 +1,8 @@
-const CACHE_NAME = 'zahlen-abenteuer-v19';
+const CACHE_NAME = 'zahlen-abenteuer-v20';
 const CORE_ASSETS = [
   './', './index.html', './app.js', './duel.js', './story-pool.js', './stories.js', './updates.js',
   './supabase-config.js', './styles.css', './manifest.json',
+  './assets/themes/mint-v1.jpg', './assets/themes/sunset-v1.jpg', './assets/themes/ocean-v1.jpg', './assets/themes/forest-v1.jpg', './assets/themes/peach-v1.jpg', './assets/themes/night-v1.jpg', './assets/themes/ice-v1.jpg', './assets/themes/candy-v1.jpg', './assets/themes/aurora-v1.jpg',
   './icons/icon-192.png', './icons/icon-512.png', './apple-touch-icon.png',
 ];
 function supportsManualUpdates(worker){

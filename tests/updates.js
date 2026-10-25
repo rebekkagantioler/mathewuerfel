@@ -24,6 +24,7 @@ async function testWorker(manual,fail=false){
  let installation;events.install({waitUntil(promise){installation=promise}});
  if(fail){let rejected=false;try{await installation}catch{rejected=true}assert(rejected&&skipped===0,'Incomplete update activated');return}
  await installation;assert(skipped===(manual?0:1),'Legacy/manual activation policy');
+ assert(assets.filter(a=>a.url.startsWith('./assets/themes/')&&a.url.endsWith('.jpg')).length===9,'Offline theme illustrations missing');
  assert(assets.some(a=>a.url==='./stories.js')&&assets.some(a=>a.url==='./updates.js')&&assets.every(a=>a.cache==='reload'),'Atomic asset cache');
  let activation;events.activate({waitUntil(promise){activation=promise}});await activation;assert(deleted.join(',')==='zahlen-abenteuer-v13'&&claimed===1,'Cache deletion touched foreign data');
  let response;events.fetch({request:{url:'https://app.test/app.js',method:'GET'},respondWith(promise){response=promise}});assert(await response==='cached app','Core cache missed');

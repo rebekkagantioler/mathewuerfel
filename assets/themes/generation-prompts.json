@@ -1,0 +1,52 @@
+{
+  "tool": "Built-in image_gen",
+  "reference": "Pastellfarbene Mathe-Welten im Themenraster.png (user-provided style/composition reference)",
+  "base_prompt": "Use case: stylized-concept. Asset type: production background illustration for a children's mathematics web app. Input image: the attached 3x3 grid is a STYLE AND COMPOSITION REFERENCE ONLY. Create ONE full-bleed 1536x1024 landscape background, NOT a grid and NOT a screenshot. Recreate the sophisticated soft layered illustration quality and palette of the specified panel. No UI, no cards, no text, no letters, no numbers, no logos, no emoji, no device frame. Leave the central 65% calm with low detail, so real HTML UI can be overlaid. Detailed elegant scene elements should frame the left/right edges and bottom corners. Soft luminous gradients, translucent layered shapes, polished editorial illustration, subtle texture, gentle depth and light, no crude geometric clipart, no heavy outlines. Exact theme: ",
+  "themes": [
+    {
+      "id": "mint",
+      "file": "mint-v1.jpg",
+      "prompt": "Minzwiese, TOP LEFT panel of reference. Pale mint and sage green light background with beautifully painted translucent mint leaves, stems and botanical foliage along left and right edges and lower corners. Pale creamy green luminous open center. Delicate layered organic shapes, refined fresh botanical illustration."
+    },
+    {
+      "id": "sunset",
+      "file": "sunset-v1.jpg",
+      "prompt": "Sonnenuntergang, TOP MIDDLE panel of reference. Luminous peach/coral apricot sunset sky, golden sun in upper right quadrant, soft layered rolling hills at lower left and right edges in muted coral, rose and warm apricot. Open peach luminous center, subtle sunset glow, sophisticated softly blended illustrated landscape."
+    },
+    {
+      "id": "ocean",
+      "file": "ocean-v1.jpg",
+      "prompt": "Meeresbrise, TOP RIGHT panel of reference. Clear pastel sky blue and aqua marine light background with gentle translucent flowing water/wave layers at sides and bottom, a few beautiful glossy translucent water bubbles near left and right edges. Pale light blue open center. Sophisticated watery translucency and highlights, airy calm underwater atmosphere."
+    },
+    {
+      "id": "forest",
+      "file": "forest-v1.jpg",
+      "prompt": "Zauberwald, MIDDLE LEFT panel of reference. An enchanted forest framing a luminous pale sage misty clearing at center. Elegant dark teal and moss green layered tree trunks and leafy canopies along outer left and right edges, softly glowing tiny golden fireflies in the edges and bottom corners. Deep teal forest borders but open lighter center upper middle suitable for dark readable text. Sophisticated atmospheric children's storybook environment, softly painted layered foliage."
+    },
+    {
+      "id": "peach",
+      "file": "peach-v1.jpg",
+      "prompt": "Pfirsichgarten, MIDDLE CENTER panel of reference. Delicate blush pink and warm peach orchard atmosphere, soft translucent pink/coral peach leaves drifting at left/right borders and lower corners. Gentle palest peach illuminated center. Elegant organic layered botanical shapes with graceful delicate stems, refined soft illustrations. No giant literal peach or emoji, use subtle peach blossoms and leaves."
+    },
+    {
+      "id": "night",
+      "file": "night-v1.jpg",
+      "prompt": "Sternennacht, MIDDLE RIGHT panel of reference. Sophisticated luminous lavender and periwinkle night sky, a small elegant ivory crescent moon at upper left edge, a few softly glowing starlight points and one or two subtle shooting stars, softly layered indigo-lavender clouds and silhouettes of leaves at bottom corners and outer sides. Calm open medium purple blue center for WHITE headline text. Magical pastel violet night scene, polished gentle atmospheric illustration, avoid excessively dark navy."
+    },
+    {
+      "id": "ice",
+      "file": "ice-v1.jpg",
+      "prompt": "Eispalast, BOTTOM LEFT panel of reference. Airy luminous pale blue icy landscape, tall translucent faceted ice crystal formations framing left and right outer edges, subtle snowy curved drifts at bottom corners, faint glints and soft icy light. Center mostly open palest blue. Sophisticated translucent crystal material, layered ice facets in pastel sky blue and white, refined gently painted fantasy winter environment."
+    },
+    {
+      "id": "candy",
+      "file": "candy-v1.jpg",
+      "prompt": "Zuckerwatte, BOTTOM CENTER panel of reference. Dreamy pastel pink cotton candy cloud world. Soft sculpted fluffy candyfloss clouds in blush pink, pale rose and lavender frame left/right outer edges and bottom corners. Airy luminous light pink open central sky. Glossy subtle light bloom, delicate texture and volume, refined layered cloud illustration. No literal candy icons, no emoji, no rainbow, no characters."
+    },
+    {
+      "id": "aurora",
+      "file": "aurora-v1.jpg",
+      "prompt": "Polarlicht, BOTTOM RIGHT panel of reference. Enchanting luminous turquoise and teal aurora borealis ribbons flowing across a deep blue upper night sky with a few tiny sparkling stars, atmospheric aqua fog and rounded icy hills at outer lower edges. Rich teal and blue edges, center open medium blue suitable for WHITE headline text, gently glowing translucent aurora curtains near top and sides, refined luminous fantasy landscape. No hard geometric shapes or emoji."
+    }
+  ]
+}

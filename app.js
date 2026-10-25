@@ -1876,6 +1876,7 @@ function renderRewardGroup(container, rewards, selected, choose) {
     button.type = 'button';
     button.className = `reward-choice${selected === reward.id ? ' selected' : ''}${locked ? ' locked' : ''}`;
     button.disabled = locked;
+    if(rewards===THEMES&&reward.id!=='classic'){button.style.setProperty('--theme-preview-image',`url('./assets/themes/${reward.id}-v1.jpg')`);button.style.setProperty('--theme-preview-ink',['night','aurora'].includes(reward.id)?'#35276b':'#123f48')}
     button.innerHTML = `<span>${reward.icon}</span><strong>${reward.name}</strong><small>${locked ? `ab Level ${reward.level}` : 'freigeschaltet'}</small>`;
     button.addEventListener('click', () => { choose(reward.id); saveProfiles(); applyRewards(); renderRewards(); });
     container.append(button);
@@ -1885,11 +1886,12 @@ function renderRewardGroup(container, rewards, selected, choose) {
 function applyRewards() {
   const profile = getProfile();
   document.body.classList.remove(...THEMES.map(item=>`theme-${item.id}`),...TILE_STYLES.map(item=>`tiles-${item.id}`));
+  const label=document.querySelector('#currentThemeLabel');label.textContent='';label.classList.add('hidden');
   if (!profile) return;
   const level=getRewardLevel(profile);
   const theme=THEMES.find(item=>item.id===profile.theme&&(teacherPreview||item.level<=level));
   const tiles=TILE_STYLES.find(item=>item.id===profile.tileStyle&&(teacherPreview||item.level<=level));
-  if(theme&&theme.id!=='classic')document.body.classList.add(`theme-${theme.id}`);
+  if(theme&&theme.id!=='classic'){document.body.classList.add(`theme-${theme.id}`);label.textContent=`${theme.icon} ${theme.name}`;label.classList.remove('hidden')}
   if(tiles&&tiles.id!=='classic')document.body.classList.add(`tiles-${tiles.id}`);
 
 }

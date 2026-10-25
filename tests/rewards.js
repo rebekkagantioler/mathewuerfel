@@ -15,6 +15,13 @@ for(const id of ['catch','pipe','race']){
 profile.areaStars.mal=0;profile.areaStars.plus=0;profile.theme='night';profile.tileStyle='gold';applyRewards();
 assert(!document.body.classList.contains('theme-night')&&!document.body.classList.contains('tiles-gold'),'Locked appearance stayed active');
 profile.areaStars.plus=1000;applyRewards();assert(document.body.classList.contains('theme-night'),'Earned theme missing');
+for(const theme of THEMES.filter(theme=>theme.id!=='classic')){
+ profile.theme=theme.id;applyRewards();
+ assert(document.querySelector('#currentThemeLabel').textContent.includes(theme.name),'Missing world name');
+ assert(getComputedStyle(document.body,'::before').backgroundImage.includes(theme.id+'-v1.jpg'),'Missing illustrated background');
+ const asset=new Image();asset.src=`./assets/themes/${theme.id}-v1.jpg`;await asset.decode();assert(asset.naturalWidth>=1024,'Invalid world image');
+}
+profile.theme='classic';applyRewards();assert(document.querySelector('#currentThemeLabel').classList.contains('hidden'),'Classic world keeps old badge');
 profile.areaStars.plus=0;selectedDuelRoute='moon';beginDuel();cancelAnimationFrame(duelState.frame);assert(duelRoute.id==='meadow','Locked route started');stopDuel();
 const signatures=new Set();
 for(const route of RACE_ROUTES){

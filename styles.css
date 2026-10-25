@@ -416,60 +416,87 @@ body.tiles-lava .number-tile { background:linear-gradient(145deg,#774747,#3f3545
 #duelRouteSelect { width:100%;padding:12px;border:2px solid #dcd5ef;border-radius:12px;background:white;color:#453767;font:inherit; }
 
 
-/* Muted color worlds keep the original light cards, rounded shapes and quiet gradients. */
+/* Illustrated worlds follow the supplied nine-theme visual reference. */
 body.theme-mint {
-  --world-accent:#287464; --world-bright:#75b4a2; --world-tint:#dcefe7; --world-surface:#f3faf6; --world-border:#bbd5ca;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#e6f2ec,#cfe4d9);
+  --world-accent:#08705a; --world-bright:#91c9ad; --world-tint:#dcefe3; --world-surface:#f2faf4; --world-border:#b8dbca;
+  --world-ink:#103f3e; --world-muted:#52756e; --world-track:#b8dbca; --world-background:#e4efdc; --world-outside-ink:#103f3e; --world-outside-muted:#103f3e;
+  --world-image:url('./assets/themes/mint-v1.jpg');
 }
 body.theme-sunset {
-  --world-accent:#aa564a; --world-bright:#d7967f; --world-tint:#f6e2d8; --world-surface:#fff8f3; --world-border:#e4c8ba;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#f7e9dc,#e8c5ba);
+  --world-accent:#b84247; --world-bright:#ffb18e; --world-tint:#ffe2da; --world-surface:#fff7f2; --world-border:#f2c1b6;
+  --world-ink:#59243d; --world-muted:#8e5968; --world-track:#f2c1b6; --world-background:#ffdecf; --world-outside-ink:#59243d; --world-outside-muted:#59243d;
+  --world-image:url('./assets/themes/sunset-v1.jpg');
 }
 body.theme-ocean {
-  --world-accent:#356f8c; --world-bright:#7bb2c5; --world-tint:#dceef4; --world-surface:#f3f9fc; --world-border:#bdd6e0;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#e1eff5,#bddae6);
+  --world-accent:#087bb8; --world-bright:#8ddafa; --world-tint:#def2fc; --world-surface:#f3fbff; --world-border:#b5e1f2;
+  --world-ink:#0c3e70; --world-muted:#487897; --world-track:#b5e1f2; --world-background:#d4eff9; --world-outside-ink:#0c3e70; --world-outside-muted:#0c3e70;
+  --world-image:url('./assets/themes/ocean-v1.jpg');
 }
 body.theme-forest {
-  --world-accent:#5d7147; --world-bright:#9cae7c; --world-tint:#e6eddd; --world-surface:#f7f9f1; --world-border:#ced8bc;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#ecf0e4,#d2ddc6);
+  --world-accent:#17645b; --world-bright:#8cc4a8; --world-tint:#d9ede2; --world-surface:#f3faf6; --world-border:#b3d5c7;
+  --world-ink:#103f41; --world-muted:#4d7671; --world-track:#b3d5c7; --world-background:#9cbea1; --world-outside-ink:#103f41; --world-outside-muted:#103f41;
+  --world-image:url('./assets/themes/forest-v1.jpg');
 }
 body.theme-peach {
-  --world-accent:#a66942; --world-bright:#dbaf82; --world-tint:#faead6; --world-surface:#fffbf4; --world-border:#e5d1b7;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#fcf0de,#efd7bb);
+  --world-accent:#c64e62; --world-bright:#ffb7b0; --world-tint:#ffe2e2; --world-surface:#fff7f6; --world-border:#f4c5c9;
+  --world-ink:#662b46; --world-muted:#946173; --world-track:#f4c5c9; --world-background:#ffe3df; --world-outside-ink:#662b46; --world-outside-muted:#662b46;
+  --world-image:url('./assets/themes/peach-v1.jpg');
 }
 body.theme-night {
-  --world-accent:#555c96; --world-bright:#999ec7; --world-tint:#e3e5f6; --world-surface:#f5f5fc; --world-border:#c8cbe1;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#e4e6f4,#bfc6e2);
+  --world-accent:#6651bf; --world-bright:#b09bea; --world-tint:#e4dfff; --world-surface:#f7f5ff; --world-border:#c7bbf0;
+  --world-ink:#35276b; --world-muted:#716196; --world-track:#c7bbf0; --world-background:#7669be; --world-outside-ink:#ffffff; --world-outside-muted:#edf0ff;
+  --world-image:url('./assets/themes/night-v1.jpg');
 }
 body.theme-ice {
-  --world-accent:#527ca1; --world-bright:#a6c4dc; --world-tint:#e6eff8; --world-surface:#f8fbff; --world-border:#d1deed;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#f0f5fb,#d7e5f3);
+  --world-accent:#137fb9; --world-bright:#9cddff; --world-tint:#dff2ff; --world-surface:#f5fbff; --world-border:#badef4;
+  --world-ink:#123f74; --world-muted:#557e9f; --world-track:#badef4; --world-background:#dceffc; --world-outside-ink:#123f74; --world-outside-muted:#123f74;
+  --world-image:url('./assets/themes/ice-v1.jpg');
 }
 body.theme-candy {
-  --world-accent:#996080; --world-bright:#cc9ab5; --world-tint:#f4e3ee; --world-surface:#fdf7fb; --world-border:#e2c9dd;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#f7e7f0,#e7d7ee);
+  --world-accent:#c73887; --world-bright:#f4a2cf; --world-tint:#fce0ef; --world-surface:#fff6fc; --world-border:#efbed9;
+  --world-ink:#751b52; --world-muted:#9c5881; --world-track:#efbed9; --world-background:#fbe2f1; --world-outside-ink:#751b52; --world-outside-muted:#751b52;
+  --world-image:url('./assets/themes/candy-v1.jpg');
 }
 body.theme-aurora {
-  --world-accent:#4b777b; --world-bright:#93bcb3; --world-tint:#e0efec; --world-surface:#f5faf9; --world-border:#c9dad7;
-  background:radial-gradient(ellipse at 15% 0%,#ffffffa6,transparent 55%),linear-gradient(145deg,#e7e5f2,#cde5df);
+  --world-accent:#087e83; --world-bright:#7bdfd1; --world-tint:#d4f4ef; --world-surface:#f2fcfb; --world-border:#a8ddd4;
+  --world-ink:#074c59; --world-muted:#477d81; --world-track:#a8ddd4; --world-background:#19698a; --world-outside-ink:#ffffff; --world-outside-muted:#edf0ff;
+  --world-image:url('./assets/themes/aurora-v1.jpg');
 }
 
-body[class*="theme-"] { color:#322a51; background-attachment:fixed; }
-body[class*="theme-"] .shape-one { background:var(--world-tint);opacity:.6; }
-body[class*="theme-"] .shape-two { background:var(--world-bright);opacity:.1; }
-body[class*="theme-"] :is(.activity-header,.hero) :is(h1 span,.eyebrow) { color:var(--world-accent); }
+body[class*="theme-"] { color:var(--world-ink);background:var(--world-background);isolation:isolate; }
+body[class*="theme-"]::before { content:'';position:fixed;inset:0;z-index:-1;background:var(--world-image) center center / cover no-repeat;pointer-events:none; }
+body[class*="theme-"] .background-shape { display:none; }
+.world-topbar { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px; }
+.world-topbar .profile-button { margin:0 0 0 auto; }
+.world-badge { display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border-radius:99px;background:#ffffffb8;color:var(--world-ink,#4f426b);font-size:.84rem;font-weight:600;box-shadow:0 3px 18px #123e4820;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); }
+body[class*="theme-"] :is(.activity-header,.hero) :is(h1,h1 span,.eyebrow) { color:var(--world-outside-ink); }
+body[class*="theme-"] :is(.activity-header > p:last-child,.intro,.number-area > p,.streak,.streak strong,.mode-section > h2,.game-title small,.profile-welcome > p) { color:var(--world-outside-muted); }
+body[class*="theme-"] .game-title strong { color:var(--world-outside-ink); }
 body[class*="theme-"] :is(.activity-card,.exercise-card,.learning-path-card,.level-overview,.finish-screen,.concept-card,.shop-card-panel,.division-card-panel,.number-line-panel,.place-value-panel,.family-panel,.story-panel) {
-  background:linear-gradient(145deg,#fffffff5,var(--world-surface));
-  box-shadow:0 12px 32px #3834460d,0 1px 3px #38344606;
-  color:#322a51;
+  background:linear-gradient(145deg,#fffffff5,#ffffffeb);
+  box-shadow:0 12px 36px #173d4c14,0 1px 3px #ffffff30;
+  color:var(--world-ink);
 }
-body[class*="theme-"] :is(.activity-picture,.path-heading > span,.level-overview > div:first-child,.profile-button > span:first-child,.secondary-button,.game-group-heading) { background:var(--world-tint);color:var(--world-accent); }
-body[class*="theme-"] :is(.check-button,.mixed-button,.mascot,.path-level.current) { background:var(--world-accent);color:white;box-shadow:0 7px 18px #38344615; }
+body[class*="theme-"] .level-overview { width:min(760px,100%);max-width:760px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); }
+body[class*="theme-"] .level-overview :is(strong,.level-area-progress b) { color:var(--world-ink); }
+body[class*="theme-"] .level-overview :is(em,.level-area-progress > span > i) { color:var(--world-muted); }
+body[class*="theme-"] .level-area-progress > span { background:var(--world-tint);color:var(--world-ink); }
+body[class*="theme-"] .level-area-progress .area-level-track { background:var(--world-track); }
+body[class*="theme-"] :is(.activity-picture,.path-heading > span,.level-overview > div:first-child,.profile-button > span:first-child,.secondary-button,.game-group-heading) { background:var(--world-tint);color:var(--world-ink); }
+body[class*="theme-"] :is(.activity-card strong,.activity-card b,.exercise-card .equation,.number-line-panel h2,.place-value-panel > h2,.family-panel h2,.story-panel h2,.rewards-box h3) { color:var(--world-ink); }
+body[class*="theme-"] :is(.activity-card small,.activity-card em) { color:var(--world-muted); }
+body[class*="theme-"] :is(.check-button,.mixed-button,.mascot,.path-level.current) { background:var(--world-accent);color:white;box-shadow:0 7px 18px #183e4820; }
 body[class*="theme-"] :is(.progress-bar,.level-progress i,.level-overview .level-progress i,.area-level-track > i) { background:linear-gradient(90deg,var(--world-bright),var(--world-accent)); }
 body[class*="theme-"] :is(.eyebrow,.level-overview small,.text-button,.answer-digit) { color:var(--world-accent); }
 body[class*="theme-"] .answer-zone { background:var(--world-surface);border-color:var(--world-border); }
 body[class*="theme-"] :is(.mode-button,.icon-button) { background:var(--world-surface);color:var(--world-accent); }
 body[class*="theme-"] .reward-choice.selected { border-color:var(--world-accent);background:var(--world-tint); }
+#themeGrid .reward-choice { position:relative;isolation:isolate;overflow:hidden;min-height:96px;background:var(--theme-preview-image,linear-gradient(145deg,#eee8ff,#e9f5f2)) center / cover;color:var(--theme-preview-ink,#3d315b);box-shadow:0 3px 12px #27334c15; }
+#themeGrid .reward-choice::before { content:'';position:absolute;inset:0;z-index:-1;background:#ffffff80; }
+#themeGrid .reward-choice small { color:inherit; }
+#themeGrid .reward-choice.selected { border-color:var(--world-accent,#7052e9); }
+#themeGrid .reward-choice.locked { opacity:.7;filter:saturate(.5); }
+@media(max-width:520px) { .world-badge { padding:8px 10px;font-size:.7rem;gap:5px; }.world-topbar { gap:6px; } }
 
 /* Direct row selection in the practice screens. */
 .mode-button.selected { border-color:var(--world-accent,#7052e9);background:var(--world-tint,#e9e1ff);box-shadow:inset 0 0 0 1px var(--world-accent,#7052e9); }
@@ -565,3 +592,21 @@ body[class*="theme-"] .reward-choice.selected { border-color:var(--world-accent)
   #storyWork { grid-column:1;grid-row:5;min-height:150px; }
   #storyKeypad { grid-column:2;grid-row:3/6;width:100%;margin-top:0; }
 }
+
+/* Three level cards above two on tablets, matching the theme reference. */
+body[class*="theme-"] .level-area-progress { display:grid;grid-template-columns:repeat(6,minmax(0,1fr)); }
+body[class*="theme-"] .level-area-progress > span { grid-column:span 2;min-width:0; }
+body[class*="theme-"] .level-area-progress > span:nth-last-child(-n+2) { grid-column:span 3; }
+@media(max-width:520px) {
+  body[class*="theme-"] .level-overview { display:grid;grid-template-columns:40px minmax(0,1fr) 24px;gap:5px 10px;padding:14px; }
+  body[class*="theme-"] .level-overview > div:first-child { grid-column:1;grid-row:1/3;width:40px;height:40px; }
+  body[class*="theme-"] .level-overview > div:nth-child(2) { display:contents; }
+  body[class*="theme-"] .level-overview > b { grid-column:3;grid-row:1/3; }
+  body[class*="theme-"] #levelNow,body[class*="theme-"] #levelRewardText { grid-column:2; }
+  body[class*="theme-"] #levelProgressText { grid-column:1/-1;margin-top:7px; }
+  body[class*="theme-"] .level-area-progress { grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr)); }
+  body[class*="theme-"] .level-area-progress > span,body[class*="theme-"] .level-area-progress > span:nth-last-child(-n+2) { grid-column:span 1; }
+  body[class*="theme-"] .level-area-progress > span:last-child { grid-column:1/-1; }
+}
+
+body[class*="theme-"] :is(.profile-welcome h1,.teacher-header h1) { color:var(--world-outside-ink); }

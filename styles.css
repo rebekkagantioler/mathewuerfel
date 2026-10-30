@@ -610,3 +610,51 @@ body[class*="theme-"] .level-area-progress > span:nth-last-child(-n+2) { grid-co
 }
 
 body[class*="theme-"] :is(.profile-welcome h1,.teacher-header h1) { color:var(--world-outside-ink); }
+
+#minusRange { margin:12px; padding:10px; font:inherit; }
+
+.assignment-maker input[type="checkbox"] { width:auto; margin:0 8px 0 0; padding:0; vertical-align:middle; accent-color:#7557e7; }
+
+/* Reward collection and illustrated companions. */
+.collection-tabs { display:flex; flex-wrap:wrap; gap:7px; margin:18px 0; }
+.collection-tabs button { border:1px solid #dcd3ed; background:#f8f5ff; color:#64547c; border-radius:18px; padding:9px 12px; font:inherit; font-size:.75rem; cursor:pointer; }
+.collection-tabs button[aria-pressed="true"] { background:#7152c8; border-color:#7152c8; color:white; }
+.rewards-box { width:min(760px,94vw); }
+.rewards-box [data-collection-panel]>p { font-size:.8rem; color:#746585; }
+.level-roadmap { list-style:none; padding:0; margin:12px 0; text-align:left; }
+.roadmap-step { display:flex; align-items:center; gap:12px; padding:14px 10px; border-bottom:1px solid #e6deef; }
+.roadmap-step>div { flex:1; min-width:0; }
+.roadmap-step strong,.roadmap-step small { display:block; }
+.roadmap-step small { margin-top:4px; color:#776884; font-size:.76rem; }
+.roadmap-number { display:grid; place-items:center; flex-shrink:0; width:38px; height:38px; border-radius:50%; background:#ece7f3; color:#78668e; font-weight:700; }
+.roadmap-step.earned .roadmap-number { background:#d9eee2; color:#2a795a; }
+.roadmap-step.current { background:#f0e9ff; border-radius:14px; border:2px solid #b99bdd; }
+.roadmap-step.current .roadmap-number { background:#7152c8; color:white; }
+.roadmap-status { font-size:.65rem; color:#7c6a8b; }
+#companionGrid svg { width:90px; max-width:100%; height:98px; }
+#carPaintGrid svg,#carPatternGrid svg { width:100%; max-width:140px; height:70px; }
+.companion-spot { max-width:980px; margin:auto; padding:8px 20px 0; display:flex; justify-content:flex-end; }
+#learningCompanion { border:0; border-radius:20px; background:#ffffffc9; cursor:pointer; padding:0 12px; color:#78658d; }
+#learningCompanion svg { display:block; width:70px; height:78px; }
+.pet-body { transform-origin:55px 105px; animation:pet-breathe 4s ease-in-out infinite; }
+.pet-eye { transform-box:fill-box; transform-origin:center; animation:pet-blink 6s infinite; }
+.pet-celebrate .pet-body { animation:pet-hop .5s ease-in-out 2; }
+@keyframes pet-breathe { 50% { transform:scale(1.02,.98); } }
+@keyframes pet-blink { 0%,43%,47%,100% { transform:scaleY(1); } 45% { transform:scaleY(.1); } }
+@keyframes pet-hop { 50% { transform:translateY(-12px) rotate(-5deg); } }
+@media (prefers-reduced-motion:reduce) { .pet-body,.pet-eye,.pet-celebrate .pet-body { animation:none; } }
+@media (max-width:380px) { .collection-tabs button { padding:8px; font-size:.68rem; } .roadmap-step { gap:8px; padding:12px 5px; } }
+.rewards-box .reward-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.rewards-box .game-reward-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.rewards-box .reward-choice { min-width:0; overflow-wrap:anywhere; }
+.rewards-box .reward-choice svg { max-width:100%; }
+@media (max-width:420px) { .rewards-box { padding:30px 16px; } #companionGrid,#carPaintGrid,#carPatternGrid,#routeGrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+.profile-figure { display:inline-block; width:100%; height:100%; vertical-align:middle; }
+.figure-choice .profile-figure { display:block; width:100%; height:120px; margin:0 auto 8px; }
+.emoji-choice.figure-choice { height:auto; min-height:150px; padding:8px; }
+.emoji-choice.figure-choice small { display:block; font-size:.65rem; }
+#starterEmojiGrid,#emojiGrid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.avatar-circle .profile-figure { height:95%; width:95%; }
+:is(#profileEmoji,#gameEmoji,#activityProfileEmoji,#shopEmoji,#levelAvatar,#worldEmoji) .profile-figure { width:48px; height:58px; max-width:100%; }
+.profile-level-summary strong>.profile-figure { width:55px; height:65px; margin-right:8px; }

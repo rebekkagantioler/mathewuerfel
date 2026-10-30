@@ -83,13 +83,14 @@ function getStorySlotTier(profile,ceiling,question){
 }
 function nextStory(){
   if(storyState.profileId!==getProfile()?.id)return openStories();
+  if(storyState.question>=5){storyUI.storyQuestion.classList.add('hidden');storyUI.storyStart.classList.remove('hidden');let summary=document.getElementById('storyRoundSummary');if(!summary){summary=document.createElement('p');summary.id='storyRoundSummary';storyUI.storyStart.prepend(summary)}summary.textContent='Fünf Geschichten geschafft! ✨';return}
   const easy=storyState.question%2===0;
   const tier=getStorySlotTier(getProfile(),storyState.ceiling,storyState.question);
   const template=chooseStoryTemplate(getProfile(),tier,storyState.question,storyState.recent,storyState.seenThisRound);
   const previousText=getProfile()?.storyPractice?.types?.[template.id]?.lastText||'';
   storyState.task=makeStoryTask(template,easy,previousText);storyState.failed=false;storyState.helped=false;storyState.locked=false;
   storyState.recent.push(template.id);storyState.recent=storyState.recent.slice(-8);storyState.seenThisRound.add(template.id);
-  storyUI.storyBadge.textContent=`Geschichte ${storyState.question+1} · ${easy?'Zum Warmwerden':'Zum Knobeln'} · ${tier} ${tier===1?'Schritt':'Schritte'}`;
+  storyUI.storyBadge.textContent=`Geschichte ${storyState.question+1} von 5 · ${easy?'Zum Warmwerden':'Zum Knobeln'} · ${tier} ${tier===1?'Schritt':'Schritte'}`;
   storyUI.storyText.textContent=storyState.task.text;storyUI.storyWork.value='';storyUI.storyWork.disabled=false;
   storyUI.storyFeedback.textContent='';storyUI.storyFeedback.className='feedback';storyUI.storyCheck.disabled=false;storyUI.storyHint.disabled=false;storyUI.storyNext.classList.add('hidden');
 }

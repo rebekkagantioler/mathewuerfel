@@ -4,15 +4,20 @@ const a={id:'local-a',name:'Test A',emoji:'🌟',areaStars:{plus:20,minus:0,mal:
 const b={id:'local-b',name:'Test B',emoji:'🐱',areaStars:{plus:0,minus:0,mal:86,geteilt:0,stellenwert:0}};
 const c={id:'online-c',cloudId:'fake-cloud-id',name:'Test C',emoji:'🐶',areaStars:{mal:40}};
 profiles=[a,b,c];activeProfileId=a.id;
-for(const [stars,level,progress,missing] of [[0,1,0,40],[39,1,39,1],[40,2,0,40],[79,2,39,1],[80,3,0,40]]){
-  a.areaStars.mal=stars;const p=getLevelProgress(a,'mal');
-  assert(p.level===level&&p.progress===progress&&p.missing===missing&&p.target===40,'Mal boundary '+stars);
+a.areaStars.plus=0;
+for(const [stars,level,progress,missing] of [[0,1,0,50],[49,1,49,1],[50,2,0,50],[99,2,49,1],[100,3,0,50]]){
+ a.areaStars.mal=stars;const p=getLevelProgress(a,'mal');
+ assert(p.level===level&&p.progress===progress&&p.missing===missing&&p.target===50,'Shared boundary '+stars);
 }
-assert(getAreaLevel(a,'plus')===2&&getLevelProgress(a,'plus').target===20,'Other area threshold changed');
+a.areaStars.mal=20;a.areaStars.plus=30;
+assert(getAreaLevel(a,'plus')===2&&getAreaLevel(a,'mal')===2,'Points not combined');
+const legacy={areaStars:{mal:0,plus:100}};migrateProfileAreas(legacy);
+assert(getRewardLevel(legacy)>=6,'Migration removed earned rewards');
+const once=legacy.levelBonus;migrateProfileAreas(legacy);assert(once===legacy.levelBonus,'Repeated migration');
 renderProfileSelection();
 assert([...elements.profileSelectGrid.querySelectorAll('button')].every(button=>!button.textContent.includes('Level')),'Level exposed in picker');
 renderProfileHeader();
-assert(elements.levelAreaProgress.textContent.includes('/40 ★'),'Mal target missing');
+assert(elements.levelProgressText.textContent.includes('50 Punkten'),'Shared target missing');
 openProfileSettings();openDeleteProfile();
 const dialog=document.getElementById('deleteProfileDialog');assert(dialog.open,'Deletion dialog did not open');
 assert(document.getElementById('deleteProfileDescription').textContent.includes('endgültig'),'Local deletion explanation');
@@ -30,4 +35,4 @@ assert(deleteLocalProfile(b.id)&&profiles.length===0,'Last profile deletion fail
 assert(!deleteLocalProfile('missing'),'Unknown deletion accepted');
 assert(!screens.profiles.classList.contains('hidden')&&elements.profileSelectGrid.childElementCount===0,'Empty picker failed');
 assert(!document.body.classList.contains('duel-active'),'Game layout was left active');
-return 'Passed: private picker, 40-star boundaries, other area levels, cancel, delete, cloud-copy explanation, PIN cleanup, persistence, last profile and preview';
+return 'Passed: private picker, 50-point shared levels, migration, cancel, delete, cloud-copy explanation, PIN cleanup, persistence, last profile and preview';

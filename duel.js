@@ -227,9 +227,7 @@ function drawDuelCourse(player,index){
     if(Math.abs(item.x-cameraX)>width/zoom/2+50||Math.abs(item.y-cameraY)>height/zoom/2+50)continue;
     ctx.save();ctx.translate(item.x,item.y);
     if(duelRoute.id!=='meadow'&&duelRoute.id!=='forest'){
-      ctx.font=`${item.size*1.7}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
-      const landmarks={coast:['🌴','🐚','🌊'],desert:['🌵','🪨','🏜️'],snow:['🌲','❄️','⛄'],volcano:['🌋','🪨','🔥'],moon:['🪨','⭐','🛸']};
-      ctx.fillText(landmarks[duelRoute.id][item.variant],0,0);
+      drawDuelLandmark(ctx,item,duelRoute.id);
     }else if(item.type==='tree'){
       ctx.fillStyle='#44784a35';ctx.beginPath();ctx.ellipse(9,12,item.size+4,item.size*.7,0,0,Math.PI*2);ctx.fill();
       ctx.fillStyle='#8b6040';ctx.fillRect(-4,0,8,item.size+7);
@@ -264,11 +262,45 @@ function drawDuelCourse(player,index){
   for(let x=-9;x<10;x+=9)for(let y=-45;y<45;y+=9){ctx.fillStyle=((x+9)/9+(y+45)/9)%2?'#fff':'#27333c';ctx.fillRect(x,y,9,9)}ctx.restore();
   ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.heading);
   ctx.fillStyle='#223343';for(const x of [-13,8])for(const y of [-16,10])ctx.fillRect(x,y,10,6);
-  ctx.fillStyle=index===0?'#ed6158':'#509cfa';ctx.beginPath();ctx.roundRect(-23,-12,46,24,7);ctx.fill();
-  ctx.fillStyle='#d7f3ff';ctx.fillRect(0,-9,10,18);ctx.fillStyle='#293c51';ctx.fillRect(-12,-8,10,16);ctx.fillStyle='#fff6b7';ctx.fillRect(17,-10,4,5);ctx.fillRect(17,5,4,5);ctx.restore();ctx.restore();
+  const paint=equippedReward(CAR_PAINTS,'carPaint','classic');
+  ctx.fillStyle=paint.id==='classic'?(index===0?'#ed6158':'#509cfa'):paint.color;ctx.beginPath();ctx.roundRect(-23,-12,46,24,7);ctx.fill();
+  const pattern=equippedReward(CAR_PATTERNS,'carPattern','plain').id;
+  if(pattern==='stripes'){ctx.fillStyle='#fff7df';ctx.fillRect(-21,-6,41,3);ctx.fillRect(-21,3,41,3)}
+  if(pattern==='dots'){ctx.fillStyle='#fff7df';for(const [x,y] of [[-17,-6],[-14,6],[14,-5],[13,6]]){ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill()}}
+  ctx.fillStyle='#d7f3ff';ctx.fillRect(0,-9,10,18);ctx.fillStyle='#293c51';ctx.fillRect(-12,-8,10,16);ctx.fillStyle='#fff6b7';ctx.fillRect(17,-10,4,5);ctx.fillRect(17,5,4,5);ctx.fillStyle='#fff';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(String(index+1),-7,4);ctx.restore();ctx.restore();
   // A complete-course inset shows bends, remaining gates and the finish.
   const mapWidth=Math.min(72,width*.25),mapHeight=mapWidth*1.38,scale=mapWidth/900;
   ctx.save();ctx.translate(width-mapWidth-7,7);ctx.fillStyle='#f5faeddf';ctx.fillRect(0,0,mapWidth,mapHeight);
   ctx.scale(scale,scale);ctx.lineWidth=26;ctx.strokeStyle='#728272';ctx.beginPath();DUEL_COURSE.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
   ctx.fillStyle=index===0?'#c52b32':'#1761cf';ctx.beginPath();ctx.arc(player.x,player.y,30,0,Math.PI*2);ctx.fill();ctx.fillStyle='#223343';ctx.fillRect(680,60,60,35);ctx.restore();
+}
+
+// Canvas scenery keeps every world crisp at tablet resolution, without emoji fonts.
+function drawDuelLandmark(ctx,item,world){
+  const n=item.variant,r=item.size;
+  const ellipse=(x,y,rx,ry,color)=>{ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill()};
+  const line=(points,color,width)=>{ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke()};
+  const mountain=(color,snow=false)=>{ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-r*1.4,r);ctx.lineTo(0,-r*1.5);ctx.lineTo(r*1.5,r);ctx.closePath();ctx.fill();if(snow){ctx.fillStyle='#f9fdff';ctx.beginPath();ctx.moveTo(-r*.5,-r*.6);ctx.lineTo(0,-r*1.5);ctx.lineTo(r*.55,-r*.6);ctx.lineTo(0,-r*.8);ctx.fill()}};
+  ellipse(5,r*.65,r*1.2,r*.45,'#2334481a');
+  if(world==='coast'){
+    if(n===0){line([[3,21],[0,-14]],'#99734a',6);for(let i=0;i<6;i++){const a=i*Math.PI/3;line([[0,-14],[Math.cos(a)*r*.8,-18+Math.sin(a)*r*.6],[Math.cos(a)*r*1.2,-12+Math.sin(a)*r]],i%2?'#428a6b':'#5b9d66',7)}ellipse(2,-11,4,4,'#805a3a')}
+    else if(n===1){ellipse(0,0,r,r*.7,'#f9e5c7');for(let i=-2;i<=2;i++)line([[0,8],[i*5,-8]],'#d7b49c',2)}
+    else{ellipse(0,0,r*1.4,r*.8,'#75bfc9');line([[-r,0],[0,3],[r,-2]],'#d9f7f2',3)}
+  }else if(world==='desert'){
+    if(n===0){line([[0,20],[0,-20]],'#4d8c67',11);line([[0,1],[-14,1],[-14,-10]],'#4d8c67',8);line([[0,9],[13,9],[13,-2]],'#4d8c67',8);line([[-2,15],[-2,-16]],'#80ac7c',2)}
+    else if(n===1){ellipse(0,0,r,r*.6,'#a8947c');ellipse(-4,-4,r*.55,r*.2,'#cbbda1')}
+    else{ellipse(0,0,r*1.5,r*.65,'#e2bb76');ellipse(-4,-4,r*1.1,r*.4,'#f4d69b')}
+  }else if(world==='snow'){
+    if(n===0){line([[0,14],[0,-12]],'#876d63',7);for(let i=0;i<3;i++){ctx.fillStyle=i%2?'#e5f6f8':'#719a98';ctx.beginPath();ctx.moveTo(-r+i*4,14-i*11);ctx.lineTo(0,-r-i*3);ctx.lineTo(r-i*4,14-i*11);ctx.fill()}}
+    else if(n===1)mountain('#a4b9cc',true);
+    else{ellipse(0,8,14,15,'#fff');ellipse(0,-11,10,10,'#fff');ellipse(-3,-13,1.5,1.5,'#415164');ellipse(3,-13,1.5,1.5,'#415164');line([[-9,-2],[9,-2]],'#d8878b',4)}
+  }else if(world==='volcano'){
+    if(n===0){mountain('#4e4757');ellipse(0,-r,7,4,'#ef8753');line([[-2,-r],[5,0],[-3,r*.5]],'#e9804d',4)}
+    else if(n===1){ellipse(0,0,r,r*.7,'#4b4955');ellipse(-4,-4,r*.5,r*.2,'#74707b')}
+    else{ellipse(0,0,r,r*.7,'#a34f44');ellipse(0,0,r*.7,r*.4,'#f3a45a');ellipse(-3,-2,r*.3,r*.2,'#ffe1a0')}
+  }else if(world==='moon'){
+    if(n===0){ellipse(0,0,r*1.2,r*.8,'#777e9d');ellipse(2,3,r*.8,r*.5,'#5c6584');line([[-r,-2],[0,-r*.7],[r,-2]],'#b0b7ce',3)}
+    else if(n===1){ctx.fillStyle='#d8deec';ctx.fillRect(-12,-12,24,24);ctx.fillStyle='#6a8db4';ctx.fillRect(-31,-8,16,16);ctx.fillRect(15,-8,16,16);line([[0,-12],[5,-25]],'#e1e7f3',3);ellipse(6,-26,4,4,'#e7a988')}
+    else{ellipse(0,0,r,r*.6,'#bcc6da');ellipse(-4,-6,r*.55,r*.3,'#dbe2ed');line([[-7,7],[7,7]],'#7c8aa6',3)}
+  }
 }

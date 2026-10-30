@@ -117,3 +117,30 @@ grant execute on function public.find_student_profiles(text) to anon, authentica
 grant execute on function public.open_student_profile_by_id(uuid, text) to anon, authenticated;
 grant execute on function public.create_student_profile(text, text, jsonb) to anon, authenticated;
 grant execute on function public.save_student_profile(uuid, text, jsonb) to anon, authenticated;
+
+-- A teacher keeps the recovery code outside the child's profile. Codes are
+-- random, hashed, single-use and never returned by any profile read function.
+alter table public.student_profiles add column if not exists recovery_hash text;
+create or replace function public.set_student_recovery_code(p_id uuid, p_pin text, p_code text)
+returns boolean language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if p_code is null or p_code !~ '^[0-9a-f]{32}$' then return false; end if;
+  update public.student_profiles set recovery_hash=crypt(p_code,gen_salt('bf'))
+  where id=p_id and pin_hash=crypt(p_pin,pin_hash);
+  return found;
+end;
+$$;
+create or replace function public.reset_student_password(p_id uuid, p_code text, p_pin text)
+returns boolean language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if p_pin is null or p_pin !~ '^[0-9]{6,}$' then return false; end if;
+  update public.student_profiles
+  set pin_hash=crypt(p_pin,gen_salt('bf')), recovery_hash=null, updated_at=now()
+  where id=p_id and recovery_hash=crypt(p_code,recovery_hash);
+  return found;
+end;
+$$;
+revoke all on function public.set_student_recovery_code(uuid,text,text) from public;
+revoke all on function public.reset_student_password(uuid,text,text) from public;
+grant execute on function public.set_student_recovery_code(uuid,text,text) to anon,authenticated;
+grant execute on function public.reset_student_password(uuid,text,text) to anon,authenticated;

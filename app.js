@@ -54,7 +54,7 @@ const RACE_ROUTES=[
   {id:'volcano',name:'Vulkanroute',icon:'🌋',layout:0,ground:'#69505b',road:'#a17463'},
   {id:'moon',name:'Mondparcours',icon:'🌕',layout:2,ground:'#9b96b3',road:'#55516f'},
 ];
-// One shared reward at each new highest area level. The order is also the roadmap.
+// One reward at each shared level. The order is also the roadmap.
 const REWARD_ORDER=[
   'emoji:🦊','theme:mint','tile:rainbow','emoji:🐼','route:coast','emoji:🦁',
   'game:bakery','theme:sunset','emoji:🦋','tile:wood','game:catch','emoji:🦄',
@@ -199,7 +199,7 @@ let cloudSearchTimer;
 let cloudProfileMatches=[];
 let lastFact = '';
 let confidenceBoost = false;
-let starterEmoji = '🌟';
+let starterEmoji = 'cat';
 let shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: [], station: 'fruit', difficulty: 1 };
 let catchState = { question: 0, score: 0, a: 2, b: 2, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: false, mistake: false, bubbles: [] };
 const PIPE_COUNT = 9;
@@ -222,6 +222,7 @@ function showScreen(name) {
   document.body.classList.toggle('duel-active', name === 'duel');
   if(name==='duel')window.scrollTo(0,0);
   if(name !== 'duel' && typeof duelState !== 'undefined') stopDuel();
+  document.getElementById('companionSpot').classList.toggle('hidden',['profiles','teacher','duel'].includes(name));
   Object.entries(screens).forEach(([key, screen]) => screen.classList.toggle('hidden', key !== name));
 }
 
@@ -245,7 +246,7 @@ function openGamesCategory(category) {
 function confirmLeaveGame(destination, stopAction = null) {
   const profile=getProfile();const{area,level,progress,missing,target}=getLevelProgress(profile,getActiveArea());
   const round=screens.catch&&!screens.catch.classList.contains('hidden')?catchState.score:screens.pipe&&!screens.pipe.classList.contains('hidden')?pipeState.score:screens.placeValue&&!screens.placeValue.classList.contains('hidden')?placeValueState.score:screens.numberLine&&!screens.numberLine.classList.contains('hidden')?numberLineState.score:screens.race&&!screens.race.classList.contains('hidden')?raceState.score:screens.kingTower&&!screens.kingTower.classList.contains('hidden')?kingTowerState.score:screens.neighbor&&!screens.neighbor.classList.contains('hidden')?neighborState.score:screens.doubleChain&&!screens.doubleChain.classList.contains('hidden')?doubleChainState.score:screens.game&&!screens.game.classList.contains('hidden')?state.score:0;
-  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bei ${AREA_NAMES[area]} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/target*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von ${target} Sternen bei ${AREA_NAMES[area]} im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
+  elements.leaveLevelText.textContent=teacherPreview?'Lehrpersonen-Testmodus':`Noch ${missing} ${missing===1?'Stern':'Sterne'} bis Level ${level+1}`;elements.leaveLevelBar.style.width=`${progress/target*100}%`;elements.leaveRewardText.textContent=teacherPreview?`${round} in dieser Testrunde gesammelt – der Profilstand wird dabei nicht verändert.`:`${round} in dieser Runde · ${progress} von ${target} Punkten im aktuellen Level.`;elements.leaveModal.classList.remove('hidden');pendingLeaveAction=()=>{stopAction?.();showScreen(destination)};
 }
 
 function closeLeaveModal(){elements.leaveModal.classList.add('hidden');pendingLeaveAction=null}
@@ -260,6 +261,27 @@ function flashCatchError(message='⚡ Falsch gefangen!'){
   window.setTimeout(()=>{elements.catchFlash.classList.remove('show');elements.catchArena.classList.remove('wrong-catch')},1250);
 }
 
+function minusLearning(profile,range){
+  if(!profile)return {correct:0,recent:[]};
+  profile.minusPractice ||= {};
+  return profile.minusPractice[range] ||= {correct:0,recent:[]};
+}
+function makeMinusTask(profile,range){
+  const stats=minusLearning(profile,range),recent=stats.recent.slice(-10);
+  const secure=stats.correct>=20&&recent.length>=8&&recent.filter(Boolean).length>=8;
+  // Keep at least two thirds of tasks free of exchanges, including after mastery.
+  const exchange=secure&&Math.random()<.3;
+  const powers=range===100?[1,10]:range===1000?[1,10,100]:[1,10,100,1000];
+  const unit=powers[randomInt(range>100&&stats.correct<20?1:0,powers.length-1)];
+  let digits=powers.map(()=>stats.correct<10?0:randomInt(0,8));
+  digits[digits.length-1]=randomInt(1,8);
+  const index=powers.indexOf(unit);
+  digits[index]=randomInt(2,8);
+  let a=digits.reduce((sum,d,i)=>sum+d*powers[i],0);
+  let b=randomInt(1,digits[index])*unit;
+  if(exchange&&index<powers.length-1){digits[index]=0;digits[index+1]=Math.max(1,digits[index+1]);a=digits.reduce((sum,d,i)=>sum+d*powers[i],0);b=randomInt(1,9)*unit}
+  return {a,b};
+}
 function startConceptGame(operation){
   if(operation==='*'&&requestRows('concept',()=>startConceptGame(operation)))return;conceptState={operation,question:0,score:0,a:3,b:2,result:5,step:0,answer:'',remainderAnswer:'',activeAnswerField:'quotient',hasRemainder:false,remainder:0,locked:false,retry:0,faded:false};elements.conceptScore.textContent='0';showScreen('concept');nextConceptQuestion()}
 function nextConceptQuestion(){
@@ -479,10 +501,10 @@ function finishNumberLineGame(){elements.numberLineFinalScore.textContent=number
 
 const PLACE_VALUES=[1000,100,10,1],PLACE_NAMES=['Tausender','Hunderter','Zehner','Einer'],PLACE_SHORT=['T','H','Z','E'];
 function openPlaceValueWorkshop(){showScreen('placeValueStart')}
-function startPlaceValueGame(mode){placeValueState={mode,question:0,score:0,target:0,counts:[0,0,0,0],initial:[],positions:[[],[],[],[]],tradeIndex:3,subtrahend:0,startValue:0,locked:false};elements.placeValueScore.textContent='0';elements.placeValueModeTitle.textContent=mode==='build'?'Zahl bauen':mode==='trade'?'Tausch-Challenge':'Minus-Werkstatt';showScreen('placeValue');nextPlaceValueQuestion()}
+function startPlaceValueGame(mode){placeValueState={mode,range:Number(document.getElementById('minusRange').value),question:0,score:0,target:0,counts:[0,0,0,0],initial:[],positions:[[],[],[],[]],tradeIndex:3,subtrahend:0,startValue:0,locked:false};elements.placeValueScore.textContent='0';elements.placeValueModeTitle.textContent=mode==='build'?'Zahl bauen':mode==='trade'?'Tausch-Challenge':'Minus-Werkstatt';showScreen('placeValue');nextPlaceValueQuestion()}
 function nextPlaceValueQuestion(){
   if(placeValueState.question>=6)return finishPlaceValueGame();
-  const s=placeValueState;s.locked=false;
+  const s=placeValueState;s.locked=false;s.failed=false;s.helped=false;s.answer='';
   if(s.mode==='build'){
     s.target=randomInt(12,9999);s.counts=[0,0,0,0];s.initial=[0,0,0,0];s.positions=[[],[],[],[]];
     const digits=[Math.floor(s.target/1000)%10,Math.floor(s.target/100)%10,Math.floor(s.target/10)%10,s.target%10];
@@ -495,10 +517,13 @@ function nextPlaceValueQuestion(){
     elements.placeValueInstruction.textContent='Bündle immer zehn gleiche Punkte zu einem größeren. Am Ende sollen in jedem Haus höchstens neun Punkte liegen.';
     elements.placeValueTask.textContent=`Bündle ${formatNumber(s.target)}.`;
   }else{
-    const startZ=randomInt(2,9),startE=randomInt(0,9);s.startValue=startZ*10+startE;s.subtrahend=randomInt(1,s.startValue-1);s.target=s.startValue-s.subtrahend;
-    s.counts=[0,0,startZ,startE];s.initial=[...s.counts];
-    s.houseRange=[2,3];
-    elements.placeValueInstruction.textContent='Nimm genau so viele Punkte weg. Reicht ein Haus nicht, entbündle zuerst einen Zehner.';elements.placeValueTask.textContent=`${formatNumber(s.startValue)} − ${formatNumber(s.subtrahend)} = ?`;
+    const task=makeMinusTask(getProfile(),s.range);
+    s.startValue=task.a;s.subtrahend=task.b;s.target=task.a-task.b;
+    s.counts=PLACE_VALUES.map(unit=>Math.floor(task.a/unit)%10);s.initial=[...s.counts];
+    s.faded=getProfile()?.minusPractice?.[s.range]?.tryWithoutHouses===true;
+    elements.placeValueInstruction.textContent=s.faded?'Rechne im Kopf. Mit Hilfe kannst du die Häuser wieder öffnen.':'Nimm die passenden Punkte weg. Ein großer Punkt lässt sich in zehn kleinere aufteilen.';
+    elements.placeValueTask.textContent=`${formatNumber(s.startValue)} − ${formatNumber(s.subtrahend)} = ?`;
+
   }
   s.houseRange=[0,3];s.selectedTokens=[];s.selectedPlace=null;
   elements.placeValueProgress.style.width=`${s.question/6*100}%`;elements.placeValueFeedback.textContent='';elements.placeValueFeedback.className='feedback';renderPlaceValue();
@@ -556,7 +581,24 @@ function removeFreePosition(index,posIndex){
   s.positions[index].splice(posIndex,1);s.counts[index]=Math.max(0,s.counts[index]-1);
   renderPlaceValue();
 }
+function renderMinusAnswer(){
+  const s=placeValueState,area=document.getElementById('minusAnswerArea');
+  area.classList.toggle('hidden',s.mode!=='minus'||!s.faded);
+  document.getElementById('placeMinusHelp').classList.toggle('hidden',s.mode!=='minus'||!s.faded||s.helped);
+  for(const element of [elements.placeValueHouses,elements.placeValueActions,elements.placeValueReading])element.classList.toggle('hidden',s.mode==='minus'&&s.faded&&!s.helped);
+  document.getElementById('minusAnswer').textContent=s.answer||'?';
+}
+function minusAnswerInput(key){
+  const s=placeValueState;if(s.mode!=='minus'||!s.faded||s.locked)return;
+  if(key==='⌫')s.answer=s.answer.slice(0,-1);else if(s.answer.length<5)s.answer+=key;
+  renderMinusAnswer();
+}
+function recordPlaceMinus(success){
+  const s=placeValueState;if(teacherPreview||!getProfile()||s.mode!=='minus')return;
+  const stats=minusLearning(getProfile(),s.range);stats.recent.push(success);stats.recent=stats.recent.slice(-20);if(success)stats.correct++;
+}
 function renderPlaceValue(){
+  renderMinusAnswer();
   const s=placeValueState;elements.placeValueHouses.replaceChildren();
   elements.placeValueHouses.style.gridTemplateColumns=`repeat(${s.houseRange[1]-s.houseRange[0]+1},1fr)`;
   for(let index=s.houseRange[0];index<=s.houseRange[1];index+=1){
@@ -700,19 +742,21 @@ function tradePlace(from){return exchangePlaceSelection(from,10,from-1)}
 function untradePlace(from){return exchangePlaceSelection(from,1,from+1)}
 function checkPlaceValue(){
   const s=placeValueState;if(s.locked)return;
-  const rightValue=placeValueNumber(s.counts)===s.target;const normalized=s.counts.every(count=>count<10);
-  const correctRepresentation=s.mode==='trade'?s.counts.every((count,index)=>count===s.goalCounts[index]):s.mode==='minus'?normalized:true;
+  const rightValue=s.mode==='minus'&&s.faded? s.answer!==''&&Number(s.answer)===s.target:placeValueNumber(s.counts)===s.target;const normalized=s.counts.every(count=>count<10);
+  const correctRepresentation=s.mode==='trade'?s.counts.every((count,index)=>count===s.goalCounts[index]):s.mode==='minus'?(s.faded||normalized):true;
   if(!rightValue||!correctRepresentation){
+    if(s.mode==='minus'&&!s.failed){recordPlaceMinus(false);s.failed=true;saveProfiles()}
     elements.placeValueFeedback.textContent=!rightValue?(s.mode==='minus'?'Noch nicht. Vergleiche, wie viel du schon weggenommen hast, mit der Aufgabe.':'Der Wert stimmt noch nicht. Achte darauf, in welchem Haus ein Punkt liegt.'):'Der Wert stimmt, aber du kannst noch zehn gleiche Punkte gegen einen größeren tauschen.';
     elements.placeValueFeedback.className='feedback wrong';return;
   }
+  if(s.mode==='minus'&&!s.failed)recordPlaceMinus(!s.helped);
   s.locked=true;s.score+=1;s.question+=1;elements.placeValueScore.textContent=s.score;
   elements.placeValueFeedback.textContent=s.mode==='minus'?`Richtig: ${formatNumber(s.startValue)} − ${formatNumber(s.subtrahend)} = ${formatNumber(s.target)}! ✨`:'Richtig gebaut – jede Stelle hat ihren Wert! ✨';
   elements.placeValueFeedback.className='feedback correct';
   const profile=getProfile();if(profile&&!teacherPreview){addAreaStars(profile,'stellenwert',1);incrementActivity('placeValue');saveProfiles();renderProfileHeader()}
   window.setTimeout(nextPlaceValueQuestion,850);
 }
-function resetPlaceValue(){const s=placeValueState;s.counts=[...s.initial];s.selectedPlace=null;s.selectedTokens=[];if(s.mode==='build')s.positions=[[],[],[],[]];elements.placeValueFeedback.textContent='Noch einmal von vorne.';elements.placeValueFeedback.className='feedback';renderPlaceValue()}
+function resetPlaceValue(){const s=placeValueState;s.answer='';s.counts=[...s.initial];s.selectedPlace=null;s.selectedTokens=[];if(s.mode==='build')s.positions=[[],[],[],[]];elements.placeValueFeedback.textContent='Noch einmal von vorne.';elements.placeValueFeedback.className='feedback';renderPlaceValue()}
 function finishPlaceValueGame(){elements.placeValueFinalScore.textContent=placeValueState.score;elements.placeValueFinishText.textContent=`${placeValueState.score} von 6 Stellenwert-Aufgaben geschafft.`;showScreen('placeValueFinish');maybeShowLevelUp()}
 function startFamilyGame(mode='exact'){familyState={mode,question:0,score:0,selected:[],choices:[],locked:false};elements.familyPairs.textContent='0/6';elements.familyKind.textContent=mode==='exact'?'Mal ↔ Geteilt ohne Rest':'Geteilt mit Rest';showScreen('family');nextFamilyQuestion()}
 function nextFamilyQuestion(){const s=familyState;if(s.question>=6)return finishFamilyGame();s.selected=[];s.locked=false;elements.familyPairs.textContent=`${s.score}/6`;elements.familyFeedback.textContent='';elements.familyFeedback.className='feedback';if(s.mode==='exact'){const a=randomInt(2,10),b=randomInt(2,10),result=a*b;s.source=`${Array(a).fill(b).join(' + ')} = ${result}`;elements.familyPrompt.textContent='Wähle Mal-Aufgabe und Geteilt-Aufgabe, die diesen Weg beschreiben.';s.choices=shuffled([{text:`${a} × ${b} = ${result}`,correct:true,label:'Mal-Aufgabe'},{text:`${result} ÷ ${a} = ${b}`,correct:true,label:'Geteilt-Aufgabe'},{text:`${a} × ${Math.max(1,b-1)} = ${a*Math.max(1,b-1)}`,correct:false,label:'Mal-Aufgabe'},{text:`${result} ÷ ${b} = ${a+1}`,correct:false,label:'Geteilt-Aufgabe'}])}else{const divisor=randomInt(2,9),quotient=randomInt(2,9),remainder=randomInt(1,divisor-1),total=divisor*quotient+remainder;s.source=`${total} Murmeln werden auf ${divisor} Kinder verteilt. Es bleiben ${remainder} Murmel(n) übrig.`;elements.familyPrompt.textContent='Wähle die Geteilt-Aufgabe und den Malweg mit Rest.';s.choices=shuffled([{text:`${total} ÷ ${divisor} = ${quotient} Rest ${remainder}`,correct:true,label:'Geteilt-Aufgabe'},{text:`${quotient} × ${divisor} + ${remainder} = ${total}`,correct:true,label:'Malweg mit Rest'},{text:`${total} ÷ ${divisor} = ${quotient+1}`,correct:false,label:'Geteilt-Aufgabe'},{text:`${quotient} × ${divisor} = ${total}`,correct:false,label:'Malweg'}])}renderFamilyChoices()}
@@ -989,7 +1033,7 @@ function openShopWorld() {
   const profile = getProfile();
   if (!profile) return showProfileSelection();
   const level = getRewardLevel(profile);
-  elements.worldEmoji.textContent = profile.emoji; elements.worldLevel.textContent = level; elements.shopLevelLabel.textContent = `Dein Laden · höchstes Bereichslevel ${level}`;
+  elements.worldEmoji.innerHTML=profileAvatarArt(profile); elements.worldLevel.textContent = level; elements.shopLevelLabel.textContent = `Dein Laden · Level ${level}`;
   const size = level >= gameRewardLevel('stock') ? 4 : level >= gameRewardLevel('checkout') ? 3 : level >= gameRewardLevel('bakery') ? 2 : 1;
   elements.shopBuilding.className = `shop-building size-${size}`;
   const nextStation=GAME_REWARDS.find(item=>['bakery','checkout','stock'].includes(item.id)&&item.level>level);
@@ -1640,7 +1684,22 @@ function renderTeacherDashboard(){
   const weak=[...facts].filter(([,s])=>s.wrong>0).sort((a,b)=>(b[1].wrong/b[1].attempts)-(a[1].wrong/a[1].attempts)).slice(0,8);
   elements.weakFacts.innerHTML=weak.length?weak.map(([key,s])=>`<span>${key.replace('x',' × ')} <small>${s.wrong} Fehler</small></span>`).join(''):'<em>Noch keine schwierigen Aufgaben gespeichert.</em>';
   const labels={'+':'Plus','-':'Minus','*':'Mal','/':'Geteilt'};elements.operationStats.innerHTML=Object.entries(labels).map(([key,label])=>{const s=profile.operations?.[key];const value=s?.attempts?Math.round(s.correct/s.attempts*100):0;return`<div><span>${label}</span><i><b style="width:${value}%"></b></i><strong>${s?.attempts?`${value}%`:'–'}</strong></div>`}).join('');
+  document.querySelectorAll('[data-minus-without-houses]').forEach(input=>{input.checked=profile.minusPractice?.[input.dataset.minusWithoutHouses]?.tryWithoutHouses===true;input.disabled=teacherPreview});
+  document.getElementById('minusSettingsMessage').textContent='';
   const assignment=profile.assignment;elements.assignmentActivity.value=assignment?.activity||'multiplication';elements.assignmentTarget.value=assignment?.target||10;elements.assignmentNote.value=assignment?.note||'';elements.teacherMessage.textContent='';
+}
+
+function saveTeacherMinusSettings(){
+  const profile=getTeacherProfile();if(!profile||teacherPreview)return;
+  const message=document.getElementById('minusSettingsMessage');
+  if(profile.cloudId&&!cloudPins.has(profile.cloudId)){
+    message.textContent='Öffne dieses Profil zuerst mit seinem Passwort. Danach kannst du die Einstellung auch für andere Geräte speichern.';return;
+  }
+  document.querySelectorAll('[data-minus-without-houses]').forEach(input=>{
+    minusLearning(profile,Number(input.dataset.minusWithoutHouses)).tryWithoutHouses=input.checked;
+  });
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(profiles));scheduleCloudSync(profile);
+  message.textContent=profile.cloudId?'Gespeichert. Wird automatisch mit den anderen Geräten synchronisiert.':'Gespeichert.';
 }
 
 function saveTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;const activity=elements.assignmentActivity.value;profile.activityCounts||={};profile.assignment={activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts[activity]||0};saveProfiles();elements.teacherMessage.textContent='Auftrag gespeichert.';elements.teacherMessage.className='feedback correct';if(profile.id===activeProfileId)renderStudentAssignment()}
@@ -1653,6 +1712,14 @@ function loadProfiles() {
   return loaded;
 }
 function migrateProfileAreas(profile) {
+  if (!profile.sharedLevelVersion) {
+    const areas = profile.areaStars || {};
+    const oldLevel = Math.max(1, ...AREAS.map(a => Math.floor((areas[a] || 0) / (a === 'mal' ? 40 : 20)) + 1));
+    const total = AREAS.reduce((sum,a) => sum + (areas[a] || 0),0);
+    profile.levelBonus = Math.max(0,(oldLevel-1)*50-total);
+    profile.sharedLevelVersion = 1;
+  }
+  profile.areaRecent ||= Object.fromEntries(AREAS.map(a => [a, []]));
   if (profile.areaStars) return;
   profile.areaStars = {
     mal: Object.values(profile.facts || {}).reduce((sum, f) => sum + (f.correct || 0), 0) + (profile.concepts?.['*'] || 0),
@@ -1666,24 +1733,24 @@ function migrateProfileAreas(profile) {
 
 function saveProfiles() { if(!teacherPreview){localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));scheduleCloudSync();} }
 function startTeacherPreview(){teacherPreviewSnapshot=JSON.stringify(profiles);teacherPreview=true;selectProfile(elements.teacherProfileSelect.value);renderProfileHeader();showScreen('activities')}
-function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;renderProfileHeader();renderProfileSelection();saveProfiles();showScreen('activities')}
+function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;renderProfileHeader();renderProfileSelection();applyRewards();saveProfiles();showScreen('activities')}
 function getProfile() { return profiles.find((profile) => profile.id === activeProfileId); }
-const STARS_PER_LEVEL = 20;
-function getStarsPerLevel(area) { return area === 'mal' ? 40 : STARS_PER_LEVEL; }
+const STARS_PER_LEVEL = 50;
+function getStarsPerLevel(area) { return STARS_PER_LEVEL; }
 function getTotalStars(profile) {
   return AREAS.reduce((sum, area) => sum + (profile?.areaStars?.[area] || 0), 0);
 }
-function getAreaLevel(profile, area) { return Math.floor((profile?.areaStars?.[area] || 0) / getStarsPerLevel(area)) + 1; }
-// Shared cosmetic rewards follow the highest individual area level.
+function getAreaLevel(profile, area) { return Math.floor((getTotalStars(profile) + (profile?.levelBonus || 0)) / STARS_PER_LEVEL) + 1; }
+// All activities contribute to one shared level.
 function getRewardLevel(profile) { return Math.max(...AREAS.map(area => getAreaLevel(profile, area))); }
 function getLevelProgress(profile, area = 'mal') {
-  const stars = profile?.areaStars?.[area] || 0;
+  const stars = getTotalStars(profile) + (profile?.levelBonus || 0);
   const target = getStarsPerLevel(area);
   const progress = stars % target;
   return { area, level: getAreaLevel(profile, area), progress, target, missing: target - progress };
 }
 function formatAreaLevels(profile) {
-  return AREAS.map(area => `${AREA_NAMES[area]}: Level ${getAreaLevel(profile, area)}`).join(' · ');
+  return `Level ${getRewardLevel(profile)} · ${getTotalStars(profile)} Punkte gesammelt`;
 }
 function getActiveArea() {
   const visible = name => screens[name] && !screens[name].classList.contains('hidden');
@@ -1701,6 +1768,7 @@ function formatAreaStars(profile) {
 let pendingLevelUps=[];
 function addAreaStars(profile,area,amount){
   if(!profile||teacherPreview||!amount)return;
+  celebrateCompanion();
   const before=getAreaLevel(profile,area);
   const rewardBefore=getRewardLevel(profile);
   profile.areaStars[area]=(profile.areaStars[area]||0)+amount;
@@ -1724,11 +1792,16 @@ function getConceptStage(profile,op){
 function getNewUnlocks(fromLevel,toLevel){
   const items=[];
   for(let level=fromLevel+1;level<=toLevel;level+=1){
-    EMOJIS.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Figur ${item.icon}`}));
+    EMOJIS.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Figur ${PROFILE_FIGURES.find(figure=>figure.icon===item.icon)?.name||item.icon}`}));
+    PROFILE_FIGURES.filter(item=>item.id==='mermaid'&&item.level===level).forEach(item=>items.push({icon:item.icon,text:`Figur ${item.name}`}));
     THEMES.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Farbwelt „${item.name}“`}));
     TILE_STYLES.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Zahlenkarten „${item.name}“`}));
     GAME_REWARDS.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:item.name}));
     RACE_ROUTES.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Rennstrecke „${item.name}“`}));
+    FIGURE_ACCESSORIES.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:item.name}));
+    COMPANIONS.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Begleittier: ${item.name}`}));
+    CAR_PAINTS.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Autofarbe: ${item.name}`}));
+    CAR_PATTERNS.filter(item=>item.level===level).forEach(item=>items.push({icon:item.icon,text:`Automuster: ${item.name}`}));
     if(level>REWARD_ORDER.length+1)items.push({icon:'🏅',text:`Entdecker-Abzeichen ${level}`});
   }
   return items;
@@ -1737,15 +1810,17 @@ function queueLevelUpNotice(area,level,unlocks){pendingLevelUps.push({area,level
 function maybeShowLevelUp(){
   if(!pendingLevelUps.length||teacherPreview)return;
   const notices=pendingLevelUps;pendingLevelUps=[];
-  elements.levelUpNumber.textContent=notices.map(({area,level})=>`${AREA_NAMES[area]}: Level ${level}`).join(' · ');
+  elements.levelUpNumber.textContent=notices.map(({area,level})=>`Level ${level}`).join(' · ');
   const unlocks=notices.flatMap(notice=>notice.unlocks);
-  elements.levelUpUnlocks.innerHTML=unlocks.length?unlocks.map(item=>`<div class="level-up-item"><span>${item.icon}</span><small>${item.text}</small></div>`).join(''):'<p class="level-up-none">Weiter so – du bist in deinem Lernbereich ein Level weiter!</p>';
+  elements.levelUpUnlocks.innerHTML=unlocks.length?unlocks.map(item=>`<div class="level-up-item"><span>${item.icon}</span><small>${item.text}</small></div>`).join(''):'<p class="level-up-none">Weiter so – du bist ein Level weiter!</p>';
   elements.levelUpModal.classList.remove('hidden');
 }
 
 async function createProfile(name, emoji, pin) {
-  const profile = { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: name.trim(), emoji, xp: 0, facts: {}, masteredRows: [], theme: 'classic', tileStyle: 'classic', areaStars: Object.fromEntries(AREAS.map(a => [a, 0])), areaRecent: Object.fromEntries(AREAS.map(a => [a, []])) };
-  if (cloudClient) {
+  const profile = { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: name.trim(), emoji, sharedLevelVersion: 1, xp: 0, facts: {}, masteredRows: [], theme: 'classic', tileStyle: 'classic', areaStars: Object.fromEntries(AREAS.map(a => [a, 0])), areaRecent: Object.fromEntries(AREAS.map(a => [a, []])) };
+  const starterFigure=PROFILE_FIGURES.find(item=>item.id===emoji);if(starterFigure)chooseProfileFigure(profile,starterFigure);
+  if (!cloudClient) return window.alert('Zum Anlegen eines geräteübergreifenden Profils brauchst du eine Online-Verbindung.');
+  {
     const { data, error } = await cloudClient.rpc('create_student_profile', { p_name: profile.name, p_pin: pin, p_profile_data: profile });
     if (error) return window.alert(`Das Online-Profil konnte nicht angelegt werden: ${error.message}`);
     profile.cloudId = data;
@@ -1758,18 +1833,29 @@ async function createProfile(name, emoji, pin) {
   showScreen('activities');
 }
 
-function scheduleCloudSync() {
+const pendingCloudSaves = new Map();
+function scheduleCloudSync(profile=getProfile()) {
   if (!cloudClient || teacherPreview) return;
+  const pin=cloudPins.get(profile?.cloudId);
+  if(!profile?.cloudId||!pin)return;
+  pendingCloudSaves.set(profile.cloudId,{pin,profile:JSON.parse(JSON.stringify(profile))});
   window.clearTimeout(cloudSyncTimer);
-  cloudSyncTimer = window.setTimeout(async () => {
-    for (const profile of profiles) {
-      const pin = cloudPins.get(profile.cloudId);
-      if (!profile.cloudId || !pin) continue;
-      const { error } = await cloudClient.rpc('save_student_profile', { p_id: profile.cloudId, p_pin: pin, p_profile_data: profile });
-      if (error) console.warn('Online-Sicherung fehlgeschlagen:', error.message);
-    }
-  }, 700);
+  cloudSyncTimer=window.setTimeout(flushCloudSaves,350);
 }
+async function flushCloudSaves(){
+  for(const [id,entry] of pendingCloudSaves){
+    try{
+      const {data,error}=await cloudClient.rpc('save_student_profile',{p_id:id,p_pin:entry.pin,p_profile_data:entry.profile});
+      if(error||!data)throw Error('save');
+      if(pendingCloudSaves.get(id)===entry)pendingCloudSaves.delete(id);
+    }catch{
+      document.getElementById('cloudSyncStatus').textContent='Noch nicht synchronisiert – bitte online bleiben. Erneuter Versuch folgt.';
+      cloudSyncTimer=window.setTimeout(flushCloudSaves,5000);return;
+    }
+  }
+  document.getElementById('cloudSyncStatus').textContent='Lernstand automatisch gespeichert';
+}
+window.addEventListener('online',()=>flushCloudSaves());
 
 async function backUpProfileOnline() {
   const profile = getProfile();
@@ -1794,9 +1880,10 @@ async function searchCloudProfiles(){
   elements.cloudProfileMessage.textContent='Profile werden gesucht …';const {data,error}=await cloudClient.rpc('find_student_profiles',{p_prefix:prefix});
   if(error){elements.cloudProfileMessage.textContent='Die Profilsuche ist gerade nicht verfügbar.';return}
   cloudProfileMatches=data||[];elements.cloudProfileMessage.textContent=cloudProfileMatches.length?'Wähle dein Profil aus.':'Kein Profil mit diesem Anfang gefunden.';
-  cloudProfileMatches.forEach(match=>{const button=document.createElement('button');button.type='button';button.className='cloud-profile-match';button.innerHTML=`<span>${match.profile_emoji||'🌟'}</span><strong>${escapeHtml(match.profile_name)}</strong><small>auswählen</small>`;button.addEventListener('click',()=>{cloudProfileMatches.forEach(item=>item.selected=false);match.selected=true;elements.cloudSearchArea.classList.add('hidden');elements.cloudProfileSelected.classList.remove('hidden');elements.cloudProfileSelected.innerHTML=`<span>${match.profile_emoji||'🌟'}</span><strong>${escapeHtml(match.profile_name)}</strong><small>ausgewähltes Profil</small>`;elements.cloudProfileMessage.textContent='Jetzt nur noch deinen PIN eingeben.';elements.cloudProfilePin.focus()});elements.cloudProfileMatches.append(button)})
+  cloudProfileMatches.forEach(match=>{const button=document.createElement('button');button.type='button';button.className='cloud-profile-match';button.innerHTML=`<span>${match.profile_emoji||'🌟'}</span><strong>${escapeHtml(match.profile_name)}</strong><small>auswählen</small>`;button.addEventListener('click',()=>{cloudProfileMatches.forEach(item=>item.selected=false);match.selected=true;elements.cloudSearchArea.classList.add('hidden');elements.cloudProfileSelected.classList.remove('hidden');elements.cloudProfileSelected.innerHTML=`<span>${match.profile_emoji||'🌟'}</span><strong>${escapeHtml(match.profile_name)}</strong><small>ausgewähltes Profil</small>`;elements.cloudProfileMessage.textContent='Jetzt dein Passwort eingeben.';elements.cloudProfilePin.focus()});elements.cloudProfileMatches.append(button)})
 }
 async function loadSelectedCloudProfile(){
+  if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)return window.alert('Bitte zuerst die Synchronisierung abschließen.')}
   const match=cloudProfileMatches.find(item=>item.selected),pin=elements.cloudProfilePin.value;if(!match)return elements.cloudProfileMessage.textContent='Wähle zuerst dein Profil aus.';if(!/^\d{6,}$/.test(pin))return elements.cloudProfileMessage.textContent='Gib deinen PIN mit mindestens 6 Ziffern ein.';
   const {data,error}=await cloudClient.rpc('open_student_profile_by_id',{p_id:match.id,p_pin:pin});
   if (error) return window.alert(`Das Online-Profil konnte nicht geöffnet werden: ${error.message}`);
@@ -1813,8 +1900,40 @@ async function loadSelectedCloudProfile(){
   showScreen('activities');
 }
 
+async function openSavedProfile(profile){
+  if(!profile.cloudId){selectProfile(profile.id);showScreen('activities');return}
+  if(!cloudClient)return window.alert('Die Online-Verbindung ist nicht verfügbar.');
+  if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)return window.alert('Bitte zuerst die Synchronisierung abschließen.')}
+  const pin=window.prompt('Dein Passwort (mindestens 6 Ziffern):');if(!pin)return;
+  try{
+    const {data,error}=await cloudClient.rpc('open_student_profile_by_id',{p_id:profile.cloudId,p_pin:pin});
+    if(error||!data?.[0])return window.alert('Profil konnte nicht geöffnet werden. Prüfe Passwort und Verbindung.');
+    const fresh=data[0].profile_data;fresh.cloudId=profile.cloudId;migrateProfileAreas(fresh);
+    profiles[profiles.indexOf(profile)]=fresh;cloudPins.set(fresh.cloudId,pin);
+    selectProfile(fresh.id);saveProfiles();showScreen('activities');
+  }catch{window.alert('Zum Laden des aktuellen Lernstands brauchst du eine Online-Verbindung.')}
+}
+async function generateRecoveryCode(){
+  const profile=getProfile();if(!profile?.cloudId)return;
+  const pin=cloudPins.get(profile.cloudId)||window.prompt('Aktuelles Passwort:');if(!pin)return;
+  const bytes=crypto.getRandomValues(new Uint8Array(16));
+  const code=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  const {data,error}=await cloudClient.rpc('set_student_recovery_code',{p_id:profile.cloudId,p_pin:pin,p_code:code});
+  if(error||!data)return window.alert('Rücksetzcode konnte nicht erstellt werden. Prüfe Passwort und Verbindung.');
+  window.prompt('Diesen Rücksetzcode als Lehrperson sicher aufbewahren. Er ersetzt den bisherigen Code und gilt einmal:',code);
+}
+async function resetCloudPassword(){
+  const match=cloudProfileMatches.find(p=>p.selected);if(!match)return elements.cloudProfileMessage.textContent='Wähle zuerst dein Profil aus.';
+  const code=window.prompt('Rücksetzcode von deiner Lehrperson:');if(!code)return;
+  const pin=window.prompt('Neues Passwort (mindestens 6 Ziffern):');if(!pin)return;
+  if(!/^\d{6,}$/.test(pin))return window.alert('Bitte mindestens 6 Ziffern eingeben.');
+  const {data,error}=await cloudClient.rpc('reset_student_password',{p_id:match.id,p_code:code,p_pin:pin});
+  if(error||!data)return window.alert('Zurücksetzen fehlgeschlagen. Prüfe Code und Verbindung.');
+  elements.cloudProfilePin.value=pin;await loadSelectedCloudProfile();
+}
 function selectProfile(id) {
   activeProfileId = id;
+  selectedDuelRoute=getProfile()?.raceRoute||'meadow';
   localStorage.setItem(`${STORAGE_KEY}:active`, id);
   renderProfileHeader();
   renderProfileSelection();
@@ -1825,26 +1944,25 @@ function selectProfile(id) {
 function renderProfileHeader() {
   const profile = getProfile();
   elements.profileName.textContent = profile?.name || 'Profil anlegen';
-  elements.profileEmoji.textContent = profile?.emoji || '🌟';
-  elements.gameEmoji.textContent = profile?.emoji || '🌟';
-  elements.activityProfileEmoji.textContent = profile?.emoji || '🌟';
+  elements.profileEmoji.innerHTML=profileAvatarArt(profile);
+  elements.gameEmoji.innerHTML=profileAvatarArt(profile);
+  elements.activityProfileEmoji.innerHTML=profileAvatarArt(profile);
   elements.activityProfileName.textContent = profile?.name || 'Profil';
-  elements.shopEmoji.textContent = profile?.emoji || '🌟';
+  elements.shopEmoji.innerHTML=profileAvatarArt(profile);
   const catchUnlocked = hasGameReward('catch');
   elements.gamesCatchCard.disabled=!catchUnlocked;elements.gamesCatchCard.classList.toggle('locked',!catchUnlocked);elements.gamesCatchStatus.textContent=catchUnlocked?'Jetzt spielen':`ab Level ${gameRewardLevel('catch')}`;elements.gamesCatchLock.textContent=catchUnlocked?'→':'🔒';
   const pipeUnlocked=hasGameReward('pipe');
   elements.gamesPipeCard.disabled=!pipeUnlocked;elements.gamesPipeCard.classList.toggle('locked',!pipeUnlocked);elements.gamesPipeStatus.textContent=pipeUnlocked?'Jetzt spielen':`ab Level ${gameRewardLevel('pipe')}`;elements.gamesPipeLock.textContent=pipeUnlocked?'→':'🔒';
   const raceUnlocked=hasGameReward('race');
   elements.gamesRaceCard.disabled=!raceUnlocked;elements.gamesRaceCard.classList.toggle('locked',!raceUnlocked);elements.gamesRaceStatus.textContent=raceUnlocked?'Gegen die Uhr':`ab Level ${gameRewardLevel('race')}`;elements.gamesRaceLock.textContent=raceUnlocked?'→':'🔒';
-  elements.levelAvatar.textContent=profile?.emoji||'🌟';
-  elements.levelNow.textContent='Deine Level';
-  elements.levelRewardText.textContent='Jeder Lernbereich steigt für sich auf';
-  elements.levelProgressBar.parentElement.classList.add('hidden');
-  elements.levelProgressText.textContent=`Mal: je 40 Sterne ein Level · Andere Bereiche: je ${STARS_PER_LEVEL} Sterne · Belohnungen nach deinem höchsten Bereichslevel`;
-  elements.levelAreaProgress.innerHTML=AREAS.map(area=>{
-    const {level,progress,missing,target}=getLevelProgress(profile,area);
-    return `<span><b>${AREA_NAMES[area]} · Level ${level}</b><i>${progress}/${target} ★ · noch ${missing} ★</i><span class="area-level-track"><i style="width:${progress/target*100}%"></i></span></span>`;
-  }).join('');elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
+  elements.levelAvatar.innerHTML=profileAvatarArt(profile);
+  elements.levelNow.textContent=`Level ${getRewardLevel(profile)}`;
+  const progress=getLevelProgress(profile);
+  elements.levelRewardText.textContent='Alle Lernbereiche sammeln gemeinsam Punkte';
+  elements.levelProgressBar.parentElement.classList.remove('hidden');
+  elements.levelProgressBar.style.width=`${progress.progress/progress.target*100}%`;
+  elements.levelProgressText.textContent=`${progress.progress} von 50 Punkten · noch ${progress.missing} bis Level ${progress.level+1}`;
+  elements.levelAreaProgress.replaceChildren();elements.teacherPreviewBanner.classList.toggle('hidden',!teacherPreview);
 }
 
 function openRewards() {
@@ -1857,12 +1975,13 @@ function renderRewards() {
   if (!profile) return;
   const level = getRewardLevel(profile);
 
-  elements.rewardSummary.innerHTML = `<strong>${profile.emoji} Deine Bereichslevel</strong><small>${formatAreaLevels(profile)}</small><small>Alle Freischaltungen: höchster Bereich auf Level ${level}</small>`;
+  elements.rewardSummary.innerHTML = `<strong>${profileAvatarArt(profile)} Dein Level</strong><small>${formatAreaLevels(profile)}</small><small>Alle Freischaltungen auf Level ${level}</small>`;
   renderRewardGroup(elements.themeGrid, THEMES, profile.theme || 'classic', (id) => { profile.theme = id; });
   renderRewardGroup(elements.tileGrid, TILE_STYLES, profile.tileStyle || 'classic', (id) => { profile.tileStyle = id; });
-  const next=getNewUnlocks(level,level+1)[0];
-  elements.rewardSummary.innerHTML+=`<small>Nächste Belohnung auf Level ${level+1}: ${next.icon} ${next.text}</small>`;
-  elements.gameRewardGrid.innerHTML=[...GAME_REWARDS,...RACE_ROUTES.map(route=>({...route,name:`Rennstrecke: ${route.name}`}))].map(item=>{const locked=level<item.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${item.icon}</span><strong>${item.name}</strong><small>${locked?`ab Level ${item.level}`:'freigeschaltet'}</small></div>`}).join('');
+  const next=getNewUnlocks(level,level+1);
+  elements.rewardSummary.innerHTML+=`<small>Nächste Belohnung auf Level ${level+1}: ${next.map(item=>`${item.icon} ${item.text}`).join(' · ')}</small>`;
+  elements.gameRewardGrid.innerHTML=GAME_REWARDS.map(item=>{const locked=level<item.level&&!teacherPreview;return `<div class="reward-choice game-reward${locked?' locked':''}"><span>${item.icon}</span><strong>${item.name}</strong><small>${locked?`ab Level ${item.level}`:'freigeschaltet'}</small></div>`}).join('');
+  renderCollectionExtras();
   if(level>REWARD_ORDER.length+1)elements.gameRewardGrid.innerHTML+=`<div class="reward-choice"><span>🏅</span><strong>Entdecker-Abzeichen</strong><small>Gesammelt: Level ${REWARD_ORDER.length+2} bis ${level}</small></div>`;
 }
 
@@ -1875,9 +1994,9 @@ function renderRewardGroup(container, rewards, selected, choose) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `reward-choice${selected === reward.id ? ' selected' : ''}${locked ? ' locked' : ''}`;
-    button.disabled = locked;
+    button.disabled = locked;button.setAttribute('aria-pressed',String(selected===reward.id));
     if(rewards===THEMES&&reward.id!=='classic'){button.style.setProperty('--theme-preview-image',`url('./assets/themes/${reward.id}-v1.jpg')`);button.style.setProperty('--theme-preview-ink',['night','aurora'].includes(reward.id)?'#35276b':'#123f48')}
-    button.innerHTML = `<span>${reward.icon}</span><strong>${reward.name}</strong><small>${locked ? `ab Level ${reward.level}` : 'freigeschaltet'}</small>`;
+    button.innerHTML = `<span>${reward.icon}</span><strong>${reward.name}</strong><small>${locked ? `ab Level ${reward.level}` : selected===reward.id?'Ausgewählt':'Auswählen'}</small>`;
     button.addEventListener('click', () => { choose(reward.id); saveProfiles(); applyRewards(); renderRewards(); });
     container.append(button);
   });
@@ -1885,6 +2004,7 @@ function renderRewardGroup(container, rewards, selected, choose) {
 
 function applyRewards() {
   const profile = getProfile();
+  renderCompanion();
   document.body.classList.remove(...THEMES.map(item=>`theme-${item.id}`),...TILE_STYLES.map(item=>`tiles-${item.id}`));
   const label=document.querySelector('#currentThemeLabel');label.textContent='';label.classList.add('hidden');
   if (!profile) return;
@@ -1904,12 +2024,13 @@ function openProfileSettings() {
   elements.profileForm.classList.add('hidden');
   elements.emojiPicker.classList.remove('hidden');
   renderEmojis();
+  elements.cloudBackupButton.textContent=profile.cloudId?'🔑 Rücksetzcode erstellen':'Profil mit Passwort verbinden';
   document.getElementById('deleteProfileButton').disabled=teacherPreview;
   elements.profileModal.classList.remove('hidden');
 }
 
 function openNewProfile() {
-  starterEmoji = '🌟';
+  starterEmoji = 'cat';
   elements.profileModalTitle.textContent = 'Neuer Benutzer';
   elements.profileForm.classList.remove('hidden');
   elements.emojiPicker.classList.add('hidden');
@@ -1932,8 +2053,8 @@ function renderProfileSelection() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'profile-select';
-    button.innerHTML = `<span class="avatar-circle">${profile.emoji}</span><strong>${escapeHtml(profile.name)}</strong>`;
-    button.addEventListener('click', () => { selectProfile(profile.id); showScreen('activities'); });
+    button.innerHTML = `<span class="avatar-circle">${profileAvatarArt(profile)}</span><strong>${escapeHtml(profile.name)}</strong>`;
+    button.addEventListener('click', () => openSavedProfile(profile));
     elements.profileSelectGrid.append(button);
   });
 }
@@ -1967,13 +2088,9 @@ document.getElementById('confirmDeleteProfile').addEventListener('click',()=>{
 
 function renderStarterEmojis() {
   elements.starterEmojiGrid.replaceChildren();
-  EMOJIS.filter(({ level }) => level === 1).forEach(({ icon }) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `emoji-choice${starterEmoji === icon ? ' selected' : ''}`;
-    button.textContent = icon;
-    button.addEventListener('click', () => { starterEmoji = icon; renderStarterEmojis(); });
-    elements.starterEmojiGrid.append(button);
+  PROFILE_FIGURES.filter(item=>item.level===1).forEach(item=>{
+    const button=document.createElement('button');button.type='button';button.className=`emoji-choice figure-choice${starterEmoji===item.id?' selected':''}`;button.setAttribute('aria-pressed',String(starterEmoji===item.id));button.innerHTML=`${figureArt(item)}<small>${item.name}</small>`;
+    button.addEventListener('click',()=>{starterEmoji=item.id;renderStarterEmojis()});elements.starterEmojiGrid.append(button);
   });
 }
 
@@ -1983,15 +2100,16 @@ function renderEmojis() {
   elements.emojiGrid.replaceChildren();
   if (!profile) return;
   const level = getRewardLevel(profile);
-  elements.profileLevelSummary.innerHTML = `<strong>${profile.emoji} Deine Bereichslevel</strong><small>${formatAreaLevels(profile)}</small>`;
-  EMOJIS.forEach(({ icon, level: needed }) => {
+  elements.profileLevelSummary.innerHTML = `<strong>${profileAvatarArt(profile)} Dein Level</strong><small>${formatAreaLevels(profile)}</small>`;
+  renderFigureChoices(elements.emojiGrid,profile,()=>{saveProfiles();renderEmojis();renderProfileHeader();renderProfileSelection()});
+  EMOJIS.filter(item=>!PROFILE_FIGURES.some(figure=>figure.icon===item.icon)).forEach(({ icon, level: needed }) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `emoji-choice${profile.emoji === icon ? ' selected' : ''}${level < needed && !teacherPreview ? ' locked' : ''}`;
     button.innerHTML = `${icon}${level < needed ? `<small>Level ${needed}</small>` : ''}`;
     button.disabled = level < needed && !teacherPreview;
     button.setAttribute('aria-label', level < needed ? `${icon} ab Level ${needed}` : `${icon} auswählen`);
-    button.addEventListener('click', () => { profile.emoji = icon; saveProfiles(); renderEmojis(); renderProfileHeader(); renderProfileSelection(); });
+    button.addEventListener('click', () => { profile.emoji = icon; delete profile.avatarId; saveProfiles(); renderEmojis(); renderProfileHeader(); renderProfileSelection(); });
     elements.emojiGrid.append(button);
   });
 }
@@ -2135,8 +2253,12 @@ elements.catchArena.addEventListener('pointermove', (event) => {
   const bounds = elements.catchArena.getBoundingClientRect(); moveBasket(event.clientX - bounds.left - 38);
 });
 elements.addProfileButton.addEventListener('click', openNewProfile);
+document.getElementById('placeMinusHelp').addEventListener('click',()=>{placeValueState.helped=true;renderPlaceValue()});
+for(const key of ['1','2','3','4','5','6','7','8','9','0','⌫']){const button=document.createElement('button');button.type='button';button.textContent=key;button.addEventListener('click',()=>minusAnswerInput(key));document.getElementById('minusAnswerKeys').append(button)}
+document.getElementById('resetCloudPassword').addEventListener('click',resetCloudPassword);
 elements.openCloudProfileButton.addEventListener('click', openCloudProfile);elements.closeCloudProfiles.addEventListener('click',()=>elements.cloudProfileModal.classList.add('hidden'));elements.cloudProfileSearch.addEventListener('input',()=>{window.clearTimeout(cloudSearchTimer);cloudSearchTimer=window.setTimeout(searchCloudProfiles,250)});elements.loadCloudProfile.addEventListener('click',loadSelectedCloudProfile);elements.cloudProfilePin.addEventListener('keydown',event=>{if(event.key==='Enter')loadSelectedCloudProfile()});elements.cloudProfileModal.addEventListener('click',event=>{if(event.target===elements.cloudProfileModal)elements.cloudProfileModal.classList.add('hidden')});
 elements.teacherAreaButton.addEventListener('click',()=>{const code=window.prompt('Lehrpersonen-Code:');if(code==='2468')openTeacherArea();else if(code!==null)window.alert('Der Code ist nicht richtig.')});elements.teacherBack.addEventListener('click',()=>showScreen('profiles'));elements.teacherProfileSelect.addEventListener('change',renderTeacherDashboard);elements.saveAssignment.addEventListener('click',saveTeacherAssignment);elements.removeAssignment.addEventListener('click',removeTeacherAssignment);
+document.getElementById('saveMinusSettings').addEventListener('click',saveTeacherMinusSettings);
 elements.teacherPreviewButton.addEventListener('click',startTeacherPreview);elements.endPreview.addEventListener('click',endTeacherPreview);
 elements.stayButton.addEventListener('click',closeLeaveModal);
 elements.levelUpClose.addEventListener('click',()=>elements.levelUpModal.classList.add('hidden'));
@@ -2157,7 +2279,7 @@ elements.saveProfileName.addEventListener('click', () => {
   renderProfileHeader();
   renderProfileSelection();
 });
-elements.cloudBackupButton.addEventListener('click', backUpProfileOnline);
+elements.cloudBackupButton.addEventListener('click', () => getProfile()?.cloudId ? generateRecoveryCode() : backUpProfileOnline());
 elements.closeProfiles.addEventListener('click', () => elements.profileModal.classList.add('hidden'));
 elements.profileForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -2238,6 +2360,8 @@ document.addEventListener('keydown', (event) => {
     if(/^[0-9]$/.test(event.key))addDivisionDigit(event.key);if(event.key==='Backspace')removeDivisionDigit();if(event.key==='Enter')checkDivisionAnswer();
   } else if (!screens.concept.classList.contains('hidden')) {
     if(/^[0-9]$/.test(event.key))addConceptDigit(event.key);if(event.key==='Backspace')removeConceptDigit();if(event.key==='Enter')checkConceptAnswer();
+  } else if (!screens.placeValue.classList.contains('hidden')&&placeValueState.mode==='minus'&&placeValueState.faded) {
+    if(/^[0-9]$/.test(event.key))minusAnswerInput(event.key);if(event.key==='Backspace')minusAnswerInput('⌫');if(event.key==='Enter')checkPlaceValue();
   } else if (!screens.race.classList.contains('hidden')) {
     if(/^[0-9]$/.test(event.key))addRaceDigit(event.key);if(event.key==='Backspace')removeRaceDigit();if(event.key==='Enter')checkRaceAnswer();
   } else if (!screens.neighbor.classList.contains('hidden')) {

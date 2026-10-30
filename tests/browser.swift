@@ -13,7 +13,7 @@ class CheckDelegate: NSObject, WKNavigationDelegate {
         ("stories",390,844),("stories",844,390),("stories",320,568),
         ("stories",1024,768),("stories",667,320),
         ("duel",390,844),("duel",844,390),("duel",320,568),
-        ("duel",1024,768),("duel",667,320),("updates",390,844),("learning",390,844),("learning",320,568),("learning",1024,768),("homework",390,844),("rewards",390,844),("profiles",390,844)
+        ("duel",1024,768),("duel",667,320),("updates",390,844),("learning",390,844),("learning",320,568),("learning",1024,768),("homework",390,844),("rewards",390,844),("profiles",390,844),("minus",390,844),("minus",320,568),("collection",390,844),("collection",320,568),("collection",1024,768)
     ]
     func webView(_ webView:WKWebView,didFinish navigation:WKNavigation!){ run(webView,0) }
     func run(_ webView:WKWebView,_ index:Int){

@@ -22,13 +22,14 @@ return (()=>{try {
  assert(chooseStoryTemplate(prof,1,0,[]).id!==weak.id,'New task');
  assert(chooseStoryTemplate(prof,1,2,[weak.id]).id!==weak.id,'Recent repeat');
  openStories();launchingRows=true;startStories();launchingRows=false;
- for(let i=0;i<8;i++){
+ for(let i=0;i<5;i++){
    assert(storyUI.storyBadge.textContent.includes(i%2===0?'Warmwerden':'Knobeln'),'Difficulty alternation');
    const t=storyState.task;storyUI.storyWork.value=t.steps.map((x,j)=>x+'='+t.results[j]).join('\n');checkStory();assert(storyState.locked,'Completion');storyState.question++;nextStory();
  }
+ assert(storyUI.storyQuestion.classList.contains('hidden')&&document.getElementById('storyRoundSummary').textContent.includes('Fünf'),'Round did not stop after five');
  teacherPreview=false;
  for(const level of [1,2,3,4,5,6]){
-   prof.areaStars.mal=(level-1)*40;renderProfileHeader();
+   prof.areaStars.mal=(level-1)*50;renderProfileHeader();
    assert(elements.gamesCatchCard.disabled===(level<gameRewardLevel('catch')),'Catch unlock');assert(elements.gamesPipeCard.disabled===(level<gameRewardLevel('pipe')),'Pipe unlock');assert(elements.gamesRaceCard.disabled===(level<gameRewardLevel('race')),'Race unlock');
  }
  storyState.task=makeStoryTask(STORY_TEMPLATES[0]);storyState.profileId=prof.id;storyState.failed=false;storyState.helped=false;storyState.locked=false;

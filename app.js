@@ -225,6 +225,7 @@ function showScreen(name) {
   if(name !== 'duel' && typeof duelState !== 'undefined') stopDuel();
   document.getElementById('companionSpot').classList.toggle('hidden',['profiles','teacher','duel'].includes(name));
   Object.entries(screens).forEach(([key, screen]) => screen.classList.toggle('hidden', key !== name));
+  if(name==='profiles')window.setTimeout(()=>window.applyPendingAppUpdate?.(),0);
 }
 
 function stopActiveGame(){
@@ -2435,3 +2436,7 @@ document.addEventListener('keydown', (event) => {
 document.getElementById('teacherResetPassword').addEventListener('click',createTeacherResetCode);
 
 document.getElementById('teacherLoadOnline').addEventListener('click',loadAllTeacherProfiles);
+
+window.canApplyAppUpdate=()=>!screens.profiles.classList.contains('hidden')
+  &&!document.querySelector('.modal-backdrop:not(.hidden)')
+  &&pendingCloudSaves.size===0&&!teacherPreview;

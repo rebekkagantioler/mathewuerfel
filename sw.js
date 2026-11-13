@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zahlen-abenteuer-v27';
+const CACHE_NAME = 'zahlen-abenteuer-v28';
 const CORE_ASSETS = [
   './', './index.html', './app.js', './collection.js', './duel.js', './story-pool.js', './stories.js', './updates.js',
   './assets/accessories/cat-crown.png',
@@ -19,7 +19,7 @@ function supportsManualUpdates(worker){
 }
 self.addEventListener('install',event=>{
   // A complete new cache is installed before the update is offered.
-  // Existing windows keep their running version until the user chooses to update.
+  // Existing windows keep their running version until the app can safely apply the update.
   event.waitUntil((async()=>{
     const manual=await supportsManualUpdates(self.registration.active);
     const cache=await caches.open(CACHE_NAME);

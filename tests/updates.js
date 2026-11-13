@@ -1,7 +1,7 @@
 const assert=(value,message)=>{if(!value)throw Error(message)};
 const buttons=[{disabled:false,textContent:''},{disabled:false,textContent:''}],statuses=[{textContent:''}],listeners={};let reloads=0;
-const win={isSecureContext:true,addEventListener(){},location:{reload(){reloads++}}};
-const doc={querySelectorAll:selector=>selector==='[data-update-status]'?statuses:buttons};buttons.forEach(b=>b.addEventListener=()=>{});
+const win={isSecureContext:true,addEventListener(){},setInterval(){},location:{reload(){reloads++}}};
+const doc={addEventListener(){},querySelectorAll:selector=>selector==='[data-update-status]'?statuses:buttons};buttons.forEach(b=>b.addEventListener=()=>{});
 let updates=0;
 const reg={waiting:null,installing:null,async update(){updates++},addEventListener(){}};
 const nav={onLine:true,serviceWorker:{controller:{},addEventListener(name,fn){listeners[name]=fn},getRegistration:async()=>reg}};
@@ -14,6 +14,23 @@ reg.update=async()=>{throw Error('offline')};await api.checkAppUpdate();assert(s
 let workerEvents={};const installing={state:'installing',addEventListener(n,fn){workerEvents[n]=fn},removeEventListener(){}};
 reg.update=async()=>{reg.installing=installing;setTimeout(()=>{installing.state='installed';reg.installing=null;reg.waiting={postMessage(msg){assert(msg.type==='SKIP_WAITING','Wrong activation message');listeners.controllerchange()}};workerEvents.statechange()},10)};
 await api.checkAppUpdate();assert(reloads===1,'User requested update did not reload');listeners.controllerchange();assert(reloads===1,'Reload loop');
+// Automatic updates must wait for a safe screen, visibility and connectivity.
+let safe=false,autoReloads=0,autoChecks=0,activations=0,intervalMs=0;
+const autoEvents={},autoDoc={visibilityState:'visible',querySelectorAll:doc.querySelectorAll,addEventListener(name,fn){autoEvents[name]=fn}};
+const autoWin={isSecureContext:true,canApplyAppUpdate:()=>safe,location:{reload(){autoReloads++}},addEventListener(name,fn){autoEvents[name]=fn},setInterval(fn,ms){intervalMs=ms}};
+const autoNav={onLine:true,serviceWorker:{controller:{},addEventListener(name,fn){autoEvents[name]=fn}}};
+const autoApi=new Function('window','document','navigator',updatesSource+'\nreturn {observeAppUpdates,checkAutomaticAppUpdate,applyPendingAppUpdate}')(autoWin,autoDoc,autoNav);
+const autoReg={waiting:null,installing:null,addEventListener(){},async update(){autoChecks++}};
+autoApi.observeAppUpdates(autoReg);
+await autoApi.checkAutomaticAppUpdate(true);assert(autoChecks===1&&intervalMs===60000,'Automatic check missing');
+await autoApi.checkAutomaticAppUpdate();assert(autoChecks===1,'Automatic check not throttled');
+autoNav.onLine=false;await autoApi.checkAutomaticAppUpdate(true);assert(autoChecks===1,'Checked while offline');autoNav.onLine=true;
+autoDoc.visibilityState='hidden';await autoApi.checkAutomaticAppUpdate(true);assert(autoChecks===1,'Checked while hidden');autoDoc.visibilityState='visible';
+autoReg.waiting={postMessage(){activations++;autoEvents.controllerchange()}};
+autoApi.applyPendingAppUpdate();assert(activations===0&&autoReloads===0,'Interrupted an exercise');
+safe=true;autoDoc.visibilityState='hidden';autoApi.applyPendingAppUpdate();assert(activations===0,'Activated while hidden');
+autoDoc.visibilityState='visible';autoApi.applyPendingAppUpdate();assert(activations===1&&autoReloads===1,'Safe automatic activation failed');
+autoApi.applyPendingAppUpdate();autoEvents.controllerchange();assert(autoReloads===1,'Automatic reload loop');
 async function testWorker(manual,fail=false){
  const events={},deleted=[],assets=[];let skipped=0,claimed=0;
  const scope={registration:{active:{postMessage(message,ports){if(manual)ports[0].postMessage({manualUpdates:true})}}},location:{origin:'https://app.test'},addEventListener(name,fn){events[name]=fn},skipWaiting:async()=>{skipped++},clients:{claim:async()=>{claimed++}}};
@@ -32,4 +49,4 @@ async function testWorker(manual,fail=false){
  let skip;events.message({data:{type:'SKIP_WAITING'},waitUntil(promise){skip=promise}});await skip;assert(skipped===(manual?1:2),'Explicit activation');
 }
 await testWorker(true);await testWorker(false);await testWorker(true,true);
-return 'Passed: current version, offline, failure recovery, install/activate/reload, no reload loop, legacy upgrade, atomic cache, profile/cache preservation';
+return 'Passed: automatic checks, throttle, safe activation, visibility, offline, current version, offline, failure recovery, install/activate/reload, no reload loop, legacy upgrade, atomic cache, profile/cache preservation';

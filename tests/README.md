@@ -34,3 +34,9 @@ die Supabase-Funktionen zusätzlich nach der Einrichtung mit einem Testprofil pr
 
 `node tests/teacher-directory.cjs` prüft die Online-Liste mit simulierten
 Datenbankantworten: gleichnamige Profile, getrennte Startseite und Fehlerfälle.
+
+Updates werden beim Start, bei Rückkehr zur sichtbaren App, bei erneuter
+Internetverbindung und sonst alle 15 Minuten geprüft. Die automatische Aktivierung
+wartet auf die Profilstartseite ohne offenen Dialog und ohne ausstehende
+Lernstand-Synchronisierung. Die Update-Tests prüfen auch diese Bedingungen
+und den Schutz gegen wiederholtes Neuladen.

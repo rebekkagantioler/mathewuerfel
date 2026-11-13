@@ -215,7 +215,7 @@
         <div class="progress-track"><div id="shopProgress" class="progress-bar"></div></div>
         <section class="shop-card-panel">
           <div id="shopScene" class="shop-scene">🛒 🍎 🥖</div>
-          <p class="task-label">Was musst du rechnen?</p>
+          <p class="task-label">Welche Rechenart passt? Wähle +, −, × oder ÷.</p>
           <h2 id="shopStory">Du kaufst etwas im Laden.</h2>
           <div class="operation-preview"><span id="shopPreviewA">12</span><b>□</b><span id="shopPreviewB">3</span><b>=</b><span>?</span></div>
           <div id="operationChoices" class="operation-choices">
@@ -224,12 +224,8 @@
             <button type="button" data-operation="*"><span>×</span><small>Mal</small></button>
             <button type="button" data-operation="/"><span>÷</span><small>Geteilt</small></button>
           </div>
-          <div id="shopWriteArea" class="shop-write-area hidden"><label for="shopEquationInput">Schreibe den ganzen Rechenweg auf:</label><input id="shopEquationInput" inputmode="text" placeholder="zum Beispiel 12 + 5 = 17" /><button id="shopWriteCheck" class="check-button" type="button">Rechenweg prüfen</button></div>
-          <div id="shopEquation" class="shop-equation hidden"><span id="shopA"></span><span id="shopOperator"></span><span id="shopB"></span><span>=</span><div id="shopAnswerZone" class="answer-zone"></div></div>
           <p id="shopFeedback" class="feedback"></p>
-          <div id="shopActions" class="action-row hidden"><button id="shopDelete" class="secondary-button" type="button">⌫ Löschen</button><button id="shopCheck" class="check-button" type="button" disabled>Prüfen</button></div>
         </section>
-        <section id="shopNumberArea" class="number-area hidden"><p>Deine Zahlen</p><div id="shopNumberTray" class="number-tray"></div></section>
       </section>
 
       <section id="shopFinishScreen" class="screen finish-screen hidden">

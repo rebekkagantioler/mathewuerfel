@@ -136,18 +136,13 @@ const elements = {
   rewardSummary: document.querySelector('#rewardSummary'), themeGrid: document.querySelector('#themeGrid'), tileGrid: document.querySelector('#tileGrid'), gameRewardGrid:document.querySelector('#gameRewardGrid'),
   shopHomeButton: document.querySelector('#shopHomeButton'), shopEmoji: document.querySelector('#shopEmoji'), shopScore: document.querySelector('#shopScore'),
   shopProgress: document.querySelector('#shopProgress'), shopScene: document.querySelector('#shopScene'), shopStory: document.querySelector('#shopStory'),
-  operationChoices: document.querySelector('#operationChoices'), shopEquation: document.querySelector('#shopEquation'),
-  shopA: document.querySelector('#shopA'), shopOperator: document.querySelector('#shopOperator'), shopB: document.querySelector('#shopB'),
-  shopAnswerZone: document.querySelector('#shopAnswerZone'), shopFeedback: document.querySelector('#shopFeedback'),
-  shopActions: document.querySelector('#shopActions'), shopDelete: document.querySelector('#shopDelete'), shopCheck: document.querySelector('#shopCheck'),
-  shopNumberArea: document.querySelector('#shopNumberArea'), shopNumberTray: document.querySelector('#shopNumberTray'),
+  operationChoices: document.querySelector('#operationChoices'),
+  shopFeedback: document.querySelector('#shopFeedback'),
   shopFinalScore: document.querySelector('#shopFinalScore'), shopFinishText: document.querySelector('#shopFinishText'),
   shopAgain: document.querySelector('#shopAgain'), shopChoose: document.querySelector('#shopChoose'),
   leaveShopButton: document.querySelector('#leaveShopButton'), shopBuilding: document.querySelector('#shopBuilding'),
   shopLevelLabel: document.querySelector('#shopLevelLabel'), worldEmoji: document.querySelector('#worldEmoji'), worldLevel: document.querySelector('#worldLevel'),
   shopInstruction: document.querySelector('#shopInstruction'),
-  shopWriteArea: document.querySelector('#shopWriteArea'), shopEquationInput: document.querySelector('#shopEquationInput'),
-  shopWriteCheck: document.querySelector('#shopWriteCheck'),
   shopPreviewA: document.querySelector('#shopPreviewA'), shopPreviewB: document.querySelector('#shopPreviewB'),
   catchHome: document.querySelector('#catchHome'), catchQuestion: document.querySelector('#catchQuestion'), catchScore: document.querySelector('#catchScore'),
   catchBack: document.querySelector('#catchBack'), catchModeGrid: document.querySelector('#catchModeGrid'), catchMixedMode: document.querySelector('#catchMixedMode'),
@@ -200,7 +195,7 @@ let cloudProfileMatches=[];
 let lastFact = '';
 let confidenceBoost = false;
 let starterEmoji = 'cat';
-let shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: [], station: 'fruit', difficulty: 1 };
+let shopState = { question: 0, score: 0, task: null, operationChosen: false, locked: false, hadHelp: false, operations: [], station: 'fruit' };
 let catchState = { question: 0, score: 0, a: 2, b: 2, queue: [], y: -75, x: 0, basketX: 0, lastTime: 0, frame: 0, running: false, mistake: false, bubbles: [] };
 const PIPE_COUNT = 9;
 let pipeState = { question: 0, score: 0, a: 2, b: 2, op: '*', result: 4, running: false, bubbles: [], pipesBusy: new Array(PIPE_COUNT).fill(false), lastTime: 0, nextSpawnAt: 0, frame: 0 };
@@ -1013,14 +1008,6 @@ for (let digit = 0; digit <= 9; digit += 1) {
   elements.numberTray.append(tile);
 }
 
-for (let digit = 0; digit <= 9; digit += 1) {
-  const tile = document.createElement('button');
-  tile.type = 'button'; tile.className = 'number-tile'; tile.textContent = digit; tile.dataset.digit = digit; tile.draggable = true;
-  tile.addEventListener('click', () => addShopDigit(String(digit)));
-  tile.addEventListener('dragstart', (event) => event.dataTransfer.setData('text/plain', String(digit)));
-  addPointerDrag(tile, elements.shopAnswerZone, addShopDigit);
-  elements.shopNumberTray.append(tile);
-}
 
 for (let digit = 0; digit <= 9; digit += 1) {
   const tile = document.createElement('button'); tile.type='button'; tile.className='number-tile'; tile.textContent=digit; tile.dataset.digit=digit; tile.draggable=true;
@@ -1054,9 +1041,8 @@ function openShopWorld() {
 function startShopGame(station = shopState.station || 'fruit') {
   if(requestRows('shop',()=>startShopGame(station)))return;
   if (!getProfile()) return showProfileSelection();
-  const level = getRewardLevel(getProfile());
   if(station!=='fruit'&&!hasGameReward(station))return;
-  shopState = { question: 0, score: 0, task: null, operationChosen: false, answer: '', retryCount: 0, locked: false, hadHelp: false, operations: makeOperationRound(), station, difficulty: level >= 8 ? 3 : level >= 4 ? 2 : 1 };
+  shopState = { question: 0, score: 0, task: null, operationChosen: false, locked: false, hadHelp: false, operations: makeOperationRound(), station };
   elements.shopScore.textContent = '0';
   showScreen('shop');
   nextShopQuestion();
@@ -1084,24 +1070,16 @@ function makeOperationRound() {
 function nextShopQuestion() {
   if (shopState.question >= SHOP_QUESTIONS) return finishShopGame();
   shopState.task = makeShopTask(shopState.operations[shopState.question], shopState.station);
-  shopState.operationChosen = false; shopState.answer = ''; shopState.retryCount = 0; shopState.locked = false; shopState.hadHelp = false;
+  shopState.operationChosen = false; shopState.locked = false; shopState.hadHelp = false;
   elements.shopStory.textContent = shopState.task.story;
   elements.shopPreviewA.textContent = shopState.task.a; elements.shopPreviewB.textContent = shopState.task.b;
   elements.shopScene.textContent = shopState.task.scene;
   elements.shopProgress.style.width = `${(shopState.question / SHOP_QUESTIONS) * 100}%`;
   elements.shopFeedback.textContent = ''; elements.shopFeedback.className = 'feedback';
-  elements.shopEquation.classList.add('hidden'); elements.shopActions.classList.add('hidden'); elements.shopNumberArea.classList.add('hidden'); elements.shopWriteArea.classList.add('hidden');
-  elements.shopEquationInput.value = '';
-  const choices = [...elements.operationChoices.querySelectorAll('button')];
-  choices.forEach((button) => { button.disabled = false; button.classList.remove('chosen','wrong','hidden'); });
-  if (shopState.difficulty === 1) {
-    const correct = shopState.task.operation;
-    const distractor = shuffled(['+','-','*','/'].filter((item) => item !== correct))[0];
-    choices.forEach((button) => button.classList.toggle('hidden', ![correct,distractor].includes(button.dataset.operation)));
-  }
-  elements.operationChoices.classList.toggle('hidden', shopState.difficulty === 3);
-  if (shopState.difficulty === 3) elements.shopWriteArea.classList.remove('hidden');
-  renderShopAnswer();
+  elements.operationChoices.classList.remove('hidden');
+  elements.operationChoices.querySelectorAll('button').forEach(button=>{
+    button.disabled=false;button.classList.remove('chosen','wrong','hidden');
+  });
 }
 
 const STATION_STORIES = {
@@ -1154,48 +1132,15 @@ function chooseShopOperation(operation, button) {
   }
   shopState.operationChosen = true; button.classList.add('chosen'); rememberOperation(true);
   elements.operationChoices.querySelectorAll('button').forEach((item) => { item.disabled = true; });
-  elements.shopA.textContent = shopState.task.a; elements.shopB.textContent = shopState.task.b;
-  elements.shopOperator.textContent = { '+': '+', '-': '−', '*': '×', '/': '÷' }[operation];
-  elements.shopEquation.classList.remove('hidden'); elements.shopActions.classList.remove('hidden'); elements.shopNumberArea.classList.remove('hidden');
-  elements.shopFeedback.textContent = 'Richtige Rechenart! Jetzt berechne das Ergebnis.'; elements.shopFeedback.className = 'feedback correct';
+  completeShopTask();
 }
 
 function operationHint(operation) {
   return { '+': 'Achte auf „dazu“ oder „jetzt zusammen“: Die Menge wird größer.', '-': 'Achte auf „ausgeben“, „verkauft“ oder „übrig“: Die Menge wird kleiner.', '*': 'Es gibt mehrere gleich große Packungen oder Gruppen.', '/': 'Eine Menge wird gleichmäßig oder gerecht verteilt.' }[operation];
 }
 
-function addShopDigit(digit) { if (!shopState.operationChosen || shopState.locked || shopState.answer.length >= 3) return; shopState.answer += digit; renderShopAnswer(); }
-function removeShopDigit() { if (shopState.locked) return; shopState.answer = shopState.answer.slice(0,-1); renderShopAnswer(); }
-function renderShopAnswer() {
-  elements.shopAnswerZone.textContent = shopState.answer || '?';
-  elements.shopAnswerZone.style.color = shopState.answer ? '#6c4fe0' : '#c1b5dd';
-  elements.shopCheck.disabled = !shopState.answer || shopState.locked;
-}
-
-function checkShopAnswer() {
-  if (!shopState.answer || shopState.locked) return;
-  if (Number(shopState.answer) !== shopState.task.result) {
-    shopState.retryCount += 1; shopState.hadHelp = true; shopState.answer = '';
-    elements.shopFeedback.textContent = shopState.retryCount === 1 ? 'Noch nicht ganz. Lies die Geschichte und rechne Schritt für Schritt.' : `Tipp: Das Ergebnis liegt zwischen ${Math.max(0,shopState.task.result-2)} und ${shopState.task.result+2}.`;
-    elements.shopFeedback.className = 'feedback wrong'; renderShopAnswer(); return;
-  }
-  completeShopTask();
-}
-
-function checkWrittenEquation() {
-  if (shopState.locked || !elements.shopEquationInput.value.trim()) return;
-  const normalized = elements.shopEquationInput.value.replace(/\s/g,'').replace(/[xX×·]/g,'*').replace(/[÷:]/g,'/').replace(/−/g,'-');
-  const expected = `${shopState.task.a}${shopState.task.operation}${shopState.task.b}=${shopState.task.result}`;
-  if (normalized !== expected) {
-    shopState.hadHelp = true; shopState.retryCount += 1; rememberOperation(false);
-    elements.shopFeedback.textContent = shopState.retryCount === 1 ? `Schau noch einmal: ${operationHint(shopState.task.operation)}` : `Der Rechenweg beginnt mit ${shopState.task.a} und verwendet die beiden Zahlen aus der Geschichte.`;
-    elements.shopFeedback.className = 'feedback wrong'; return;
-  }
-  rememberOperation(true);
-  completeShopTask();
-}
-
 function completeShopTask() {
+  if(shopState.locked)return;
   shopState.locked = true; shopState.question += 1;
   if (!shopState.hadHelp) shopState.score += 1;
   const profile = getProfile(); if (profile) { addAreaStars(profile,OP_TO_AREA[shopState.task.operation],1); saveProfiles(); renderProfileHeader(); }
@@ -2300,9 +2245,6 @@ elements.answerZone.addEventListener('drop', (event) => {
   elements.answerZone.classList.remove('drag-over');
   addDigit(event.dataTransfer.getData('text/plain'));
 });
-elements.shopAnswerZone.addEventListener('dragover', (event) => { event.preventDefault(); elements.shopAnswerZone.classList.add('drag-over'); });
-elements.shopAnswerZone.addEventListener('dragleave', () => elements.shopAnswerZone.classList.remove('drag-over'));
-elements.shopAnswerZone.addEventListener('drop', (event) => { event.preventDefault(); elements.shopAnswerZone.classList.remove('drag-over'); addShopDigit(event.dataTransfer.getData('text/plain')); });
 elements.divisionAnswerZone.addEventListener('dragover',(event)=>{event.preventDefault();elements.divisionAnswerZone.classList.add('drag-over')});
 elements.divisionAnswerZone.addEventListener('dragleave',()=>elements.divisionAnswerZone.classList.remove('drag-over'));
 elements.divisionAnswerZone.addEventListener('drop',(event)=>{event.preventDefault();elements.divisionAnswerZone.classList.remove('drag-over');addDivisionDigit(event.dataTransfer.getData('text/plain'))});
@@ -2383,9 +2325,6 @@ elements.leaveShopButton.addEventListener('click', () => showScreen('games'));
 elements.shopHomeButton.addEventListener('click',()=>confirmLeaveGame('shopWorld',openShopWorld));
 document.querySelectorAll('.store-station').forEach((station) => station.addEventListener('click', () => startShopGame(station.dataset.station)));
 elements.operationChoices.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => chooseShopOperation(button.dataset.operation, button)));
-elements.shopDelete.addEventListener('click', removeShopDigit);
-elements.shopCheck.addEventListener('click', checkShopAnswer);
-elements.shopWriteCheck.addEventListener('click', checkWrittenEquation);
 elements.shopAgain.addEventListener('click', startShopGame);
 elements.shopChoose.addEventListener('click', () => showScreen('games'));
 elements.catchHome.addEventListener('click', () => confirmLeaveGame('games',()=>{catchState.running=false;clearCatchBubbles();cancelAnimationFrame(catchState.frame)}));
@@ -2521,12 +2460,6 @@ document.addEventListener('keydown', (event) => {
     if (/^[0-9]$/.test(event.key)) addDigit(event.key);
     if (event.key === 'Backspace') removeDigit();
     if (event.key === 'Enter') checkAnswer();
-  } else if (!screens.shop.classList.contains('hidden')) {
-    if (shopState.difficulty < 3) {
-      if (/^[0-9]$/.test(event.key)) addShopDigit(event.key);
-      if (event.key === 'Backspace') removeShopDigit();
-      if (event.key === 'Enter') checkShopAnswer();
-    } else if (event.key === 'Enter') checkWrittenEquation();
   } else if (!screens.catch.classList.contains('hidden')) {
     if (event.key === 'ArrowLeft') moveBasket(catchState.basketX - 38);
     if (event.key === 'ArrowRight') moveBasket(catchState.basketX + 38);

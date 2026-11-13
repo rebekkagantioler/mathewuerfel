@@ -52,3 +52,8 @@ und Wiederherstellung zusätzlich mit einem Testprofil auf zwei Geräten prüfen
 `node tests/profile-actions.cjs` prüft das Kopieren von Einmalcodes einschließlich
 verweigerter oder fehlender Zwischenablage, das Leeren des Codefelds beim
 Profilwechsel sowie die Sperren gegen mehrfaches Anlegen und Verbinden.
+
+Die Laden-Prüfungen testen auf Handy und iPad ausschließlich die Auswahl der
+Rechenart, auf allen Stationen und bei Level 1, 4, 9, 11 und 100. Geprüft werden
+vier sichtbare Rechenarten, Fehlversuche, direktes Abschließen ohne Ergebnis- oder
+Rechenwegeingabe, Lernfortschritt und Schutz gegen doppelte Wertung.

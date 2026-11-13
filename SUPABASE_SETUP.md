@@ -96,3 +96,8 @@ dann das vorhandene Profil öffnen. Falls die App einen höheren Stand auf dem
 Gerät meldet, dessen Online-Sicherung bestätigen. Erst nach bestätigter
 Online-Speicherung den Stand auf einem anderen Gerät prüfen. Die Änderung allein
 stellt bisher nur lokal gespeicherte Lernstände nicht aus der Ferne wieder her.
+
+Einmalcodes erscheinen zusätzlich in einem auswählbaren Textfeld mit
+„Code kopieren“. Falls die Zwischenablage nicht freigegeben ist, lässt sich
+der markierte Code über das Kopiermenü des Geräts übernehmen. Beim Wechsel
+des ausgewählten Profils wird der angezeigte Code entfernt.

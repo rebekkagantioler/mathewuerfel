@@ -48,3 +48,7 @@ eines laufenden Uploads. Außerdem werden die Wiederherstellung eines höheren
 lokalen Levels und der Schutz gegen das Überschreiben durch einen niedrigeren
 Online-Stand geprüft. Datenbankantworten werden simuliert; echte Online-Speicherung
 und Wiederherstellung zusätzlich mit einem Testprofil auf zwei Geräten prüfen.
+
+`node tests/profile-actions.cjs` prüft das Kopieren von Einmalcodes einschließlich
+verweigerter oder fehlender Zwischenablage, das Leeren des Codefelds beim
+Profilwechsel sowie die Sperren gegen mehrfaches Anlegen und Verbinden.

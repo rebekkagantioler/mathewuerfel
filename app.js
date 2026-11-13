@@ -1707,6 +1707,7 @@ async function saveOnlineTeacherChanges(profile,patch,message){
 }
 function renderTeacherDashboard(){
   document.getElementById('teacherResetMessage').textContent='';
+  clearTeacherResetCode();
   const profile=getTeacherProfile();if(!profile)return;const facts=Object.entries(profile.facts||{});const attempts=facts.reduce((sum,[,s])=>sum+s.attempts,0);const correct=facts.reduce((sum,[,s])=>sum+s.correct,0);const accuracy=attempts?Math.round(correct/attempts*100):0;
   const totalStars=AREAS.reduce((sum,a)=>sum+(profile.areaStars?.[a]||0),0);
   elements.teacherStats.innerHTML=`<div><strong>${formatAreaLevels(profile)}</strong><small>${totalStars} Sterne gesamt</small></div><div><strong>${accuracy}%</strong><small>Einmaleins richtig</small></div><div><strong>${attempts}</strong><small>Einmaleins-Versuche</small></div>`;
@@ -1855,7 +1856,17 @@ function maybeShowLevelUp(){
   elements.levelUpModal.classList.remove('hidden');
 }
 
-async function createProfile(name, emoji, pin) {
+let profileCreationBusy=false;
+async function createProfile(name,emoji,pin){
+  if(profileCreationBusy)return;
+  profileCreationBusy=true;
+  const submit=elements.profileForm.querySelector('[type="submit"]');
+  if(submit)submit.disabled=true;
+  try{return await createProfileOnce(name,emoji,pin)}
+  catch{window.alert('Profil konnte nicht angelegt werden. Prüfe die Verbindung.')}
+  finally{profileCreationBusy=false;if(submit)submit.disabled=false}
+}
+async function createProfileOnce(name, emoji, pin) {
   const profile = { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: name.trim(), emoji, sharedLevelVersion: 1, xp: 0, facts: {}, masteredRows: [], theme: 'classic', tileStyle: 'classic', areaStars: Object.fromEntries(AREAS.map(a => [a, 0])), areaRecent: Object.fromEntries(AREAS.map(a => [a, []])) };
   const starterFigure=PROFILE_FIGURES.find(item=>item.id===emoji);if(starterFigure)chooseProfileFigure(profile,starterFigure);
   if (!cloudClient) return window.alert('Zum Anlegen eines geräteübergreifenden Profils brauchst du eine Online-Verbindung.');
@@ -1870,6 +1881,7 @@ async function createProfile(name, emoji, pin) {
   saveProfiles();
   elements.profileModal.classList.add('hidden');
   showScreen('activities');
+  return true;
 }
 
 const CLOUD_QUEUE_KEY=`${STORAGE_KEY}:pending-cloud`;
@@ -1954,8 +1966,15 @@ async function reconcileOpenedCloudProfile(id,pin,cloudProfile){
   return data[0];
 }
 
-async function backUpProfileOnline() {
-  const profile = getProfile();
+const onlineBackupInFlight=new Set();
+async function backUpProfileOnline(){
+  const profile=getProfile();if(!profile||profile.cloudId||onlineBackupInFlight.has(profile.id))return;
+  onlineBackupInFlight.add(profile.id);
+  try{return await backUpProfileOnlineOnce(profile)}
+  catch{window.alert('Die Online-Sicherung konnte nicht abgeschlossen werden. Dein Stand bleibt auf diesem Gerät erhalten.')}
+  finally{onlineBackupInFlight.delete(profile.id)}
+}
+async function backUpProfileOnlineOnce(profile) {
   if (!profile || !cloudClient) return window.alert('Die Online-Sicherung ist noch nicht eingerichtet.');
   const pin = window.prompt('Verbinde diesen Lernstand online. Lege ein Passwort mit mindestens 6 Ziffern fest:');
   if (!pin) return;
@@ -2017,15 +2036,39 @@ async function openSavedProfile(profile){
     selectProfile(fresh.id);saveProfiles();showScreen('activities');
   }catch{window.alert('Zum Laden des aktuellen Lernstands brauchst du eine Online-Verbindung.')}
 }
+function clearTeacherResetCode(){
+  document.getElementById('teacherResetCode').value='';
+  document.getElementById('teacherResetCodeArea').classList.add('hidden');
+  document.getElementById('teacherResetCopyMessage').textContent='';
+}
+async function copyTeacherResetCode(){
+  const input=document.getElementById('teacherResetCode'),message=document.getElementById('teacherResetCopyMessage');
+  const code=input.value;if(!code)return;
+  // Select first so iPad users can also copy with the native selection menu.
+  input.focus();input.select();input.setSelectionRange(0,code.length);
+  try{
+    if(!navigator.clipboard?.writeText)throw Error('clipboard unavailable');
+    await navigator.clipboard.writeText(code);
+    if(input.value===code)message.textContent='Code kopiert.';
+  }catch{
+    if(input.value!==code)return;
+    input.focus();input.select();input.setSelectionRange(0,code.length);
+    message.textContent='Code ist markiert. Halte das Textfeld gedrückt und wähle „Kopieren“.';
+  }
+}
 async function createTeacherResetCode(){
   const profile=getTeacherProfile(),message=document.getElementById('teacherResetMessage');
   if(!profile?.cloudId||!cloudClient){message.textContent='Wähle ein online verbundenes Profil aus.';return}
   const secret=teacherOnlineSecret||window.prompt('Lehrpersonen-Schlüssel zum Zurücksetzen (in Supabase eingerichtet):');if(!secret)return;
-  const button=document.getElementById('teacherResetPassword');button.disabled=true;message.textContent='Einmalcode wird erstellt …';
+  const button=document.getElementById('teacherResetPassword');if(button.disabled)return;
+  const targetId=profile.cloudId;clearTeacherResetCode();button.disabled=true;message.textContent='Einmalcode wird erstellt …';
   try{
     const {data,error}=await cloudClient.rpc('teacher_create_reset_code',{p_id:profile.cloudId,p_secret:secret});
     if(error||!data){message.textContent='Code konnte nicht erstellt werden. Prüfe den Lehrpersonen-Schlüssel, die Verbindung und die Supabase-Einrichtung.';return}
     cloudPins.delete(profile.cloudId);
+    if(getTeacherProfile()?.cloudId!==targetId)return;
+    document.getElementById('teacherResetCode').value=data;
+    document.getElementById('teacherResetCodeArea').classList.remove('hidden');
     message.textContent=`Einmalcode für ${profile.name}: ${data}. Gültig für 24 Stunden. Das Kind gibt ihn statt seines Passworts ein.`;
   }catch{message.textContent='Keine Verbindung. Bitte noch einmal versuchen.'}finally{button.disabled=false}
 }
@@ -2416,9 +2459,8 @@ elements.closeProfiles.addEventListener('click', () => elements.profileModal.cla
 elements.profileForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (!elements.newProfileName.value.trim() || !/^\d{6,}$/.test(elements.newProfilePin.value)) return;
-  await createProfile(elements.newProfileName.value, starterEmoji, elements.newProfilePin.value);
-  elements.newProfileName.value = '';
-  elements.newProfilePin.value = '';
+  const created=await createProfile(elements.newProfileName.value, starterEmoji, elements.newProfilePin.value);
+  if(created){elements.newProfileName.value='';elements.newProfilePin.value=''}
 });
 let activeRows = Array.from({length:10},(_,i)=>i+1);
 const rowsByGame = new Map();
@@ -2512,3 +2554,5 @@ window.canApplyAppUpdate=()=>!screens.profiles.classList.contains('hidden')
   &&pendingCloudSaves.size===0&&!cloudQueueStorageFailed&&!teacherPreview;
 
 renderCloudSyncStatus();
+
+document.getElementById('copyTeacherResetCode').addEventListener('click',copyTeacherResetCode);

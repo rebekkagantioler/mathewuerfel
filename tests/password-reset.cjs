@@ -18,7 +18,7 @@ async function run(responses,answers){
     test=await run([{data:[]},{data:true}],answers);assert.equal(test.result.cancelled,true);assert.equal(test.calls.length,2);assert.equal(test.pins.size,1);
   }
   test=await run([{data:[]},{data:true},{data:true},{data:[{id:'student'}]}],['654321','654321']);
-  assert.equal(test.result.pin,'654321');assert.equal(test.calls[2].name,'reset_student_password');assert.equal(test.calls[2].args.p_code,'1234567890123456');assert.equal(test.calls[3].args.p_pin,'654321');assert.equal(test.pins.size,0);assert.equal(test.saves.size,0);
+  assert.equal(test.result.pin,'654321');assert.equal(test.calls[2].name,'reset_student_password');assert.equal(test.calls[2].args.p_code,'1234567890123456');assert.equal(test.calls[3].args.p_pin,'654321');assert.equal(test.pins.size,0);assert.equal(test.saves.size,1);
   test=await run([{data:[]},{data:true},{error:{message:'expired'}}],['654321','654321']);assert.equal(test.result.cancelled,true);assert.equal(test.calls.length,3);
   test=await run([{error:{message:'offline'}}],[]);assert.equal(test.calls.length,1);
   console.log('Passed: normal login, invalid code, cancellation, validation, confirmation mismatch, successful reset, failed reset, connection error');

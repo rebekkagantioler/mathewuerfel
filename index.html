@@ -30,7 +30,7 @@
         <div id="profileSelectGrid" class="profile-select-grid"></div>
         <button id="addProfileButton" class="add-profile-button" type="button"><span>＋</span><strong>Neuer Benutzer</strong></button>
         <button id="openCloudProfileButton" class="text-button" type="button">☁️ Vorhandenes Online-Profil öffnen</button>
-        <div class="app-update"><button type="button" data-update-check>↻ App aktualisieren</button><small data-update-status role="status">Updates direkt hier laden – dein Homebildschirm-Symbol bleibt.</small></div>
+        <p data-cloud-sync-status role="status">Online-Speicherung wird geprüft …</p><div class="app-update"><button type="button" data-update-check>↻ App aktualisieren</button><small data-update-status role="status">Updates direkt hier laden – dein Homebildschirm-Symbol bleibt.</small></div>
         <button id="teacherAreaButton" class="teacher-link" type="button">🔒 Bereich für Lehrpersonen</button>
       </section>
 
@@ -53,7 +53,7 @@
           <button id="everydayActivity" class="activity-card shop-card" type="button"><span class="activity-picture">🛒</span><span><small>Rechnen im Alltag</small><strong>Mathe-Geschichten</strong><em>Im Laden die richtige Rechenart finden</em></span><b>→</b></button>
         </div>
         <button id="activityRewardsButton" class="studio-button" type="button">🎁 Mein Belohnungsstudio</button>
-        <div class="app-update"><button type="button" data-update-check>↻ App aktualisieren</button><small data-update-status role="status">Updates direkt hier laden – dein Homebildschirm-Symbol bleibt.</small></div>
+        <p data-cloud-sync-status role="status">Online-Speicherung wird geprüft …</p><div class="app-update"><button type="button" data-update-check>↻ App aktualisieren</button><small data-update-status role="status">Updates direkt hier laden – dein Homebildschirm-Symbol bleibt.</small></div>
       </section>
 
       <section id="gamesScreen" class="screen activity-screen hidden"><button id="gamesBack" class="icon-button" type="button">←</button><header class="activity-header"><p id="gamesEyebrow" class="eyebrow">Mathe trainieren</p><h1 id="gamesTitle">Wähle dein Thema</h1><p id="gamesDescription">Jede Übung gehört zu einer Mathe-Welt.</p></header><div class="activity-grid games-grid"><div class="game-group-heading" data-game-category="mal"><strong>✖️ Mal &amp; Geteilt</strong><small>Rechnen, ableiten und verbinden</small></div>
@@ -411,7 +411,7 @@
           <h3>Figur auswählen</h3>
           <p>Mit höheren Levels schaltest du neue Figuren und Schätze frei.</p>
           <div id="emojiGrid" class="emoji-grid"></div>
-          <p id="cloudSyncStatus">Lernstand wird automatisch gespeichert</p><button id="cloudBackupButton" class="secondary-button" type="button">🔑 Rücksetzcode erstellen</button>
+          <p id="cloudSyncStatus" data-cloud-sync-status role="status">Online-Speicherung wird geprüft …</p><button id="cloudBackupButton" class="secondary-button" type="button">🔑 Rücksetzcode erstellen</button>
           <button id="switchProfileButton" class="secondary-button switch-profile" type="button">Benutzer wechseln</button>
           <button id="deleteProfileButton" class="delete-profile-button" type="button">Benutzer von diesem Gerät löschen</button>
         </section>

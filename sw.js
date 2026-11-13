@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zahlen-abenteuer-v28';
+const CACHE_NAME = 'zahlen-abenteuer-v29';
 const CORE_ASSETS = [
   './', './index.html', './app.js', './collection.js', './duel.js', './story-pool.js', './stories.js', './updates.js',
   './assets/accessories/cat-crown.png',

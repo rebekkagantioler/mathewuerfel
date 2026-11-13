@@ -223,6 +223,7 @@ function showScreen(name) {
   document.body.classList.toggle('duel-active', name === 'duel');
   if(name==='duel')window.scrollTo(0,0);
   if(name !== 'duel' && typeof duelState !== 'undefined') stopDuel();
+  if(typeof renderCloudSyncStatus==='function')window.setTimeout(renderCloudSyncStatus,0);
   document.getElementById('companionSpot').classList.toggle('hidden',['profiles','teacher','duel'].includes(name));
   Object.entries(screens).forEach(([key, screen]) => screen.classList.toggle('hidden', key !== name));
   if(name==='profiles')window.setTimeout(()=>window.applyPendingAppUpdate?.(),0);
@@ -1689,12 +1690,12 @@ async function loadAllTeacherProfiles(){
   const secret=teacherOnlineSecret||window.prompt('Lehrpersonen-Schlüssel für alle Online-Profile:');if(!secret)return;
   button.disabled=true;message.textContent='Online-Profile werden geladen …';
   try{
-    if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)throw Error('sync')}
+    if(pendingCloudSaves.size)await flushCloudSaves();
     const {data,error}=await cloudClient.rpc('teacher_list_profiles',{p_secret:secret});
     if(error||!Array.isArray(data))throw Error('load');
     const loaded=data.map(row=>{const profile={...row.profile_data,id:row.id,cloudId:row.id,name:row.profile_name,cloudUpdatedAt:row.updated_at};migrateProfileAreas(profile);return profile});
     teacherOnlineSecret=secret;teacherOnlineProfiles=loaded;openTeacherArea();
-    message.textContent=`${loaded.length} Online-Profile geladen. Gleiche Namen werden mit Level und Profilkennung angezeigt. Stand: ${new Date().toLocaleTimeString('de-DE')}`;
+    message.textContent=`${loaded.length} Online-Profile geladen.${pendingCloudSaves.size?' Auf diesem Gerät warten noch Änderungen auf Online-Sicherung.':''} Gleiche Namen werden mit Level und Profilkennung angezeigt. Stand: ${new Date().toLocaleTimeString('de-DE')}`;
   }catch{message.textContent='Profile konnten nicht geladen werden. Prüfe den Lehrpersonen-Schlüssel, die Verbindung und die Supabase-Einrichtung.'}finally{button.disabled=false}
 }
 async function saveOnlineTeacherChanges(profile,patch,message){
@@ -1735,8 +1736,8 @@ function saveTeacherMinusSettings(){
   message.textContent=profile.cloudId?'Gespeichert. Wird automatisch mit den anderen Geräten synchronisiert.':'Gespeichert.';
 }
 
-function saveTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;if(teacherOnlineProfiles){const activity=elements.assignmentActivity.value;return saveOnlineTeacherChanges(profile,{assignment:{activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts?.[activity]||0}},elements.teacherMessage)}const activity=elements.assignmentActivity.value;profile.activityCounts||={};profile.assignment={activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts[activity]||0};saveProfiles();elements.teacherMessage.textContent='Auftrag gespeichert.';elements.teacherMessage.className='feedback correct';if(profile.id===activeProfileId)renderStudentAssignment()}
-function removeTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;if(teacherOnlineProfiles)return saveOnlineTeacherChanges(profile,{assignment:null},elements.teacherMessage);delete profile.assignment;saveProfiles();elements.teacherMessage.textContent='Auftrag entfernt.';if(profile.id===activeProfileId)renderStudentAssignment()}
+function saveTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;if(teacherOnlineProfiles){const activity=elements.assignmentActivity.value;return saveOnlineTeacherChanges(profile,{assignment:{activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts?.[activity]||0}},elements.teacherMessage)}const activity=elements.assignmentActivity.value;profile.activityCounts||={};profile.assignment={activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts[activity]||0};saveProfiles(profile);elements.teacherMessage.textContent='Auftrag gespeichert.';elements.teacherMessage.className='feedback correct';if(profile.id===activeProfileId)renderStudentAssignment()}
+function removeTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;if(teacherOnlineProfiles)return saveOnlineTeacherChanges(profile,{assignment:null},elements.teacherMessage);delete profile.assignment;saveProfiles(profile);elements.teacherMessage.textContent='Auftrag entfernt.';if(profile.id===activeProfileId)renderStudentAssignment()}
 
 function loadProfiles() {
   let loaded;
@@ -1764,7 +1765,12 @@ function migrateProfileAreas(profile) {
   profile.areaRecent = Object.fromEntries(AREAS.map(a => [a, []]));
 }
 
-function saveProfiles() { if(!teacherPreview){localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));scheduleCloudSync();} }
+function saveProfiles(profile=getProfile()) {
+  if(teacherPreview)return;
+  scheduleCloudSync(profile);
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(profiles))}
+  catch{cloudQueueStorageFailed=true;renderCloudSyncStatus()}
+}
 function startTeacherPreview(){teacherPreviewActiveProfileId=activeProfileId;teacherPreviewSnapshot=JSON.stringify(profiles);teacherPreview=true;if(teacherOnlineProfiles){const selected=getTeacherProfile();profiles.push({...JSON.parse(JSON.stringify(selected)),id:`preview-${selected.cloudId}`});selectProfile(`preview-${selected.cloudId}`)}else selectProfile(elements.teacherProfileSelect.value);renderProfileHeader();showScreen('activities')}
 function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;if(teacherOnlineProfiles){activeProfileId=teacherPreviewActiveProfileId;localStorage.setItem(`${STORAGE_KEY}:active`,activeProfileId||'')}renderProfileHeader();renderProfileSelection();applyRewards();saveProfiles();showScreen('activities')}
 function getProfile() { return profiles.find((profile) => profile.id === activeProfileId); }
@@ -1866,34 +1872,92 @@ async function createProfile(name, emoji, pin) {
   showScreen('activities');
 }
 
+const CLOUD_QUEUE_KEY=`${STORAGE_KEY}:pending-cloud`;
 const pendingCloudSaves = new Map();
+let cloudSaveInFlight=null;
+let cloudQueueStorageFailed=false;
+try{
+  const queued=JSON.parse(localStorage.getItem(CLOUD_QUEUE_KEY)||'[]');
+  for(const [id,profile] of queued){
+    if(profile?.cloudId!==id)continue;
+    pendingCloudSaves.set(id,{profile});
+    const index=profiles.findIndex(item=>item.cloudId===id);
+    if(index>=0)profiles[index]=profile;else profiles.push(profile);
+  }
+}catch{cloudQueueStorageFailed=true}
+function persistCloudQueue(){
+  try{localStorage.setItem(CLOUD_QUEUE_KEY,JSON.stringify([...pendingCloudSaves].map(([id,entry])=>[id,entry.profile])));cloudQueueStorageFailed=false}
+  catch{cloudQueueStorageFailed=true}
+}
+function renderCloudSyncStatus(){
+  const profile=getProfile();let message;
+  if(cloudQueueStorageFailed)message='Speicherung auf dem Gerät fehlgeschlagen. App offen lassen und online sichern.';
+  else if(pendingCloudSaves.size){
+    const needsLogin=[...pendingCloudSaves.keys()].some(id=>!cloudPins.has(id));
+    message=needsLogin?'Noch nicht online gesichert. Betroffenes Profil mit Passwort öffnen.':navigator.onLine?'Lernstand wird online gesichert …':'Offline: Lernstand wartet auf Internet. Noch nicht online gesichert.';
+  }else if(profile&&!profile.cloudId)message='Nur auf diesem Gerät: Profil jetzt online verbinden.';
+  else if(profile?.cloudId&&!cloudPins.has(profile.cloudId))message='Profil mit Passwort öffnen, um den Online-Stand zu prüfen.';
+  else message=profile?.cloudId?'Lernstand online gespeichert':'Online-Speicherung nach dem Öffnen eines Profils.';
+  document.querySelectorAll('[data-cloud-sync-status]').forEach(element=>element.textContent=message);
+}
 function scheduleCloudSync(profile=getProfile()) {
-  if (!cloudClient || teacherPreview) return;
-  const pin=cloudPins.get(profile?.cloudId);
-  if(!profile?.cloudId||!pin)return;
-  pendingCloudSaves.set(profile.cloudId,{pin,profile:JSON.parse(JSON.stringify(profile))});
+  if(teacherPreview)return;
+  if(!profile?.cloudId){renderCloudSyncStatus();return}
+  pendingCloudSaves.set(profile.cloudId,{profile:JSON.parse(JSON.stringify(profile))});
+  persistCloudQueue();renderCloudSyncStatus();
   window.clearTimeout(cloudSyncTimer);
   cloudSyncTimer=window.setTimeout(flushCloudSaves,350);
 }
-async function flushCloudSaves(){
-  for(const [id,entry] of pendingCloudSaves){
-    try{
-      const {data,error}=await cloudClient.rpc('save_student_profile',{p_id:id,p_pin:entry.pin,p_profile_data:entry.profile});
-      if(error||!data)throw Error('save');
-      if(pendingCloudSaves.get(id)===entry)pendingCloudSaves.delete(id);
-    }catch{
-      document.getElementById('cloudSyncStatus').textContent='Noch nicht synchronisiert – bitte online bleiben. Erneuter Versuch folgt.';
-      cloudSyncTimer=window.setTimeout(flushCloudSaves,5000);return;
+function flushCloudSaves(){
+  if(cloudSaveInFlight)return cloudSaveInFlight;
+  cloudSaveInFlight=(async()=>{
+    if(!cloudClient||!navigator.onLine)return;
+    for(const [id,entry] of pendingCloudSaves){
+      const pin=cloudPins.get(id);if(!pin)continue;
+      try{
+        const {data,error}=await cloudClient.rpc('save_student_profile',{p_id:id,p_pin:pin,p_profile_data:entry.profile});
+        if(error)throw Error('connection');
+        if(!data){cloudPins.delete(id);continue}
+        if(pendingCloudSaves.get(id)===entry){pendingCloudSaves.delete(id);persistCloudQueue()}
+      }catch{/* The durable queue retains this snapshot for the next attempt. */}
     }
-  }
-  document.getElementById('cloudSyncStatus').textContent='Lernstand automatisch gespeichert';
+  })().finally(()=>{
+    cloudSaveInFlight=null;renderCloudSyncStatus();
+    window.clearTimeout(cloudSyncTimer);
+    if([...pendingCloudSaves.keys()].some(id=>cloudPins.has(id)))cloudSyncTimer=window.setTimeout(flushCloudSaves,5000);
+  });
+  return cloudSaveInFlight;
 }
 window.addEventListener('online',()=>flushCloudSaves());
+window.addEventListener('offline',renderCloudSyncStatus);
+window.addEventListener('pagehide',()=>{persistCloudQueue();flushCloudSaves()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')flushCloudSaves();else persistCloudQueue()});
+window.setInterval(()=>{if(document.visibilityState==='visible')flushCloudSaves()},30000);
+
+// Authenticate before uploading retained changes, then read the newly saved state.
+async function reconcileOpenedCloudProfile(id,pin,cloudProfile){
+  const local=profiles.find(profile=>profile.cloudId===id);
+  if(!pendingCloudSaves.has(id)&&local){
+    const remote=JSON.parse(JSON.stringify(cloudProfile.profile_data));migrateProfileAreas(remote);
+    const localPoints=getTotalStars(local)+(local.levelBonus||0),remotePoints=getTotalStars(remote)+(remote.levelBonus||0);
+    if(localPoints>remotePoints){
+      if(!window.confirm(`Auf diesem Gerät liegt Level ${getRewardLevel(local)}, online nur Level ${getRewardLevel(remote)}. Den höheren Stand dieses Geräts jetzt online sichern?`))return null;
+      pendingCloudSaves.set(id,{profile:JSON.parse(JSON.stringify(local))});persistCloudQueue();
+    }
+  }
+  if(!pendingCloudSaves.has(id))return cloudProfile;
+  cloudPins.set(id,pin);
+  await flushCloudSaves();
+  if(pendingCloudSaves.has(id)){window.alert('Dein Stand ist noch nicht online gesichert. Er bleibt auf diesem Gerät erhalten. Bitte mit Internet erneut öffnen.');return null}
+  const {data,error}=await cloudClient.rpc('open_student_profile_by_id',{p_id:id,p_pin:pin});
+  if(error||!data?.[0]){window.alert('Der aktuelle Online-Stand konnte nicht geladen werden. Bitte erneut versuchen.');return null}
+  return data[0];
+}
 
 async function backUpProfileOnline() {
   const profile = getProfile();
   if (!profile || !cloudClient) return window.alert('Die Online-Sicherung ist noch nicht eingerichtet.');
-  const pin = window.prompt('Lege einen PIN mit mindestens 6 Ziffern fest.');
+  const pin = window.prompt('Verbinde diesen Lernstand online. Lege ein Passwort mit mindestens 6 Ziffern fest:');
   if (!pin) return;
   if (!/^\d{6,}$/.test(pin)) return window.alert('Der PIN muss mindestens 6 Ziffern haben.');
   const { data, error } = await cloudClient.rpc('create_student_profile', { p_name: profile.name, p_pin: pin, p_profile_data: profile });
@@ -1901,7 +1965,7 @@ async function backUpProfileOnline() {
   profile.cloudId = data;
   cloudPins.set(data, pin);
   saveProfiles();
-  window.alert('Dein Profil ist jetzt online gesichert.');
+  window.alert('Dein bisheriger Lernstand ist jetzt online gesichert.');
 }
 
 function openCloudProfile(){
@@ -1916,13 +1980,13 @@ async function searchCloudProfiles(){
   cloudProfileMatches.forEach(match=>{const button=document.createElement('button');button.type='button';button.className='cloud-profile-match';button.innerHTML=`<span>${match.profile_emoji||'🌟'}</span><strong>${escapeHtml(match.profile_name)}</strong><small>auswählen</small>`;button.addEventListener('click',()=>{cloudProfileMatches.forEach(item=>item.selected=false);match.selected=true;elements.cloudSearchArea.classList.add('hidden');elements.cloudProfileSelected.classList.remove('hidden');elements.cloudProfileSelected.innerHTML=`<span>${match.profile_emoji||'🌟'}</span><strong>${escapeHtml(match.profile_name)}</strong><small>ausgewähltes Profil</small>`;elements.cloudProfileMessage.textContent='Jetzt dein Passwort eingeben.';elements.cloudProfilePin.focus()});elements.cloudProfileMatches.append(button)})
 }
 async function loadSelectedCloudProfile(){
-  if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)return window.alert('Bitte zuerst die Synchronisierung abschließen.')}
   const match=cloudProfileMatches.find(item=>item.selected);let pin=elements.cloudProfilePin.value;if(!match)return elements.cloudProfileMessage.textContent='Wähle zuerst dein Profil aus.';if(!/^\d{6,}$/.test(pin))return elements.cloudProfileMessage.textContent='Gib deinen PIN mit mindestens 6 Ziffern ein.';
   const opened=await openWithPasswordOrReset(match.id,pin);if(opened.cancelled)return;
   const {data,error}=opened.result;pin=opened.pin;
   if (error) return window.alert(`Das Online-Profil konnte nicht geöffnet werden: ${error.message}`);
-  const cloudProfile = data?.[0];
+  let cloudProfile = data?.[0];
   if (!cloudProfile) return window.alert('Kein passendes Online-Profil gefunden. Prüfe Name und PIN.');
+  cloudProfile=await reconcileOpenedCloudProfile(match.id,pin,cloudProfile);if(!cloudProfile)return;
   const profile = cloudProfile.profile_data;
   profile.cloudId = cloudProfile.id;
   migrateProfileAreas(profile);
@@ -1935,15 +1999,20 @@ async function loadSelectedCloudProfile(){
 }
 
 async function openSavedProfile(profile){
-  if(!profile.cloudId){selectProfile(profile.id);showScreen('activities');return}
+  if(!profile.cloudId){
+    selectProfile(profile.id);
+    await backUpProfileOnline();
+    if(!profile.cloudId)return;
+    showScreen('activities');return;
+  }
   if(!cloudClient)return window.alert('Die Online-Verbindung ist nicht verfügbar.');
-  if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)return window.alert('Bitte zuerst die Synchronisierung abschließen.')}
   let pin=window.prompt('Dein Passwort oder Einmalcode (mindestens 6 Ziffern):');if(!pin)return;
   try{
     const opened=await openWithPasswordOrReset(profile.cloudId,pin);if(opened.cancelled)return;
     const {data,error}=opened.result;pin=opened.pin;
     if(error||!data?.[0])return window.alert('Profil konnte nicht geöffnet werden. Prüfe Passwort und Verbindung.');
-    const fresh=data[0].profile_data;fresh.cloudId=profile.cloudId;migrateProfileAreas(fresh);
+    const reconciled=await reconcileOpenedCloudProfile(profile.cloudId,pin,data[0]);if(!reconciled)return;
+    const fresh=reconciled.profile_data;fresh.cloudId=profile.cloudId;migrateProfileAreas(fresh);
     profiles[profiles.indexOf(profile)]=fresh;cloudPins.set(fresh.cloudId,pin);
     selectProfile(fresh.id);saveProfiles();showScreen('activities');
   }catch{window.alert('Zum Laden des aktuellen Lernstands brauchst du eine Online-Verbindung.')}
@@ -1956,7 +2025,7 @@ async function createTeacherResetCode(){
   try{
     const {data,error}=await cloudClient.rpc('teacher_create_reset_code',{p_id:profile.cloudId,p_secret:secret});
     if(error||!data){message.textContent='Code konnte nicht erstellt werden. Prüfe den Lehrpersonen-Schlüssel, die Verbindung und die Supabase-Einrichtung.';return}
-    cloudPins.delete(profile.cloudId);pendingCloudSaves.delete(profile.cloudId);
+    cloudPins.delete(profile.cloudId);
     message.textContent=`Einmalcode für ${profile.name}: ${data}. Gültig für 24 Stunden. Das Kind gibt ihn statt seines Passworts ein.`;
   }catch{message.textContent='Keine Verbindung. Bitte noch einmal versuchen.'}finally{button.disabled=false}
 }
@@ -1972,7 +2041,7 @@ async function openWithPasswordOrReset(id,pin){
   if(confirmation!==newPin){if(confirmation!==null)window.alert('Die Passwörter stimmen nicht überein. Dein Einmalcode bleibt gültig.');return {cancelled:true}}
   const reset=await cloudClient.rpc('reset_student_password',{p_id:id,p_code:pin,p_pin:newPin});
   if(reset.error||!reset.data){window.alert('Zurücksetzen fehlgeschlagen. Prüfe Code und Verbindung.');return {cancelled:true}}
-  cloudPins.delete(id);pendingCloudSaves.delete(id);
+  cloudPins.delete(id);
   return {result:await cloudClient.rpc('open_student_profile_by_id',{p_id:id,p_pin:newPin}),pin:newPin};
 }
 async function generateRecoveryCode(){
@@ -2135,6 +2204,7 @@ function deleteLocalProfile(id){
   if(teacherPreview)return false;
   const profile=profiles.find(item=>item.id===id);if(!profile)return false;
   stopActiveGame();stopDuel();
+  if(profile.cloudId&&pendingCloudSaves.has(profile.cloudId)){window.alert('Dieses Profil hat noch nicht online gesicherte Änderungen. Bitte zuerst mit Passwort öffnen und synchronisieren.');return false}
   if(profile.cloudId)cloudPins.delete(profile.cloudId);
   profiles=profiles.filter(item=>item.id!==id);
   if(activeProfileId===id){activeProfileId=null;localStorage.removeItem(`${STORAGE_KEY}:active`)}
@@ -2439,4 +2509,6 @@ document.getElementById('teacherLoadOnline').addEventListener('click',loadAllTea
 
 window.canApplyAppUpdate=()=>!screens.profiles.classList.contains('hidden')
   &&!document.querySelector('.modal-backdrop:not(.hidden)')
-  &&pendingCloudSaves.size===0&&!teacherPreview;
+  &&pendingCloudSaves.size===0&&!cloudQueueStorageFailed&&!teacherPreview;
+
+renderCloudSyncStatus();

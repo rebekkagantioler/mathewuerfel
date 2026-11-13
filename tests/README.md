@@ -40,3 +40,11 @@ Internetverbindung und sonst alle 15 Minuten geprüft. Die automatische Aktivier
 wartet auf die Profilstartseite ohne offenen Dialog und ohne ausstehende
 Lernstand-Synchronisierung. Die Update-Tests prüfen auch diese Bedingungen
 und den Schutz gegen wiederholtes Neuladen.
+
+`node tests/cloud-sync.cjs` prüft die dauerhafte Speicherwarteschlange,
+Offline- und Neustartfälle, fehlende Anmeldung, Verbindungsfehler, ungültige PINs,
+parallel ausgelöste Speicherungen und den Erhalt neuerer Änderungen während
+eines laufenden Uploads. Außerdem werden die Wiederherstellung eines höheren
+lokalen Levels und der Schutz gegen das Überschreiben durch einen niedrigeren
+Online-Stand geprüft. Datenbankantworten werden simuliert; echte Online-Speicherung
+und Wiederherstellung zusätzlich mit einem Testprofil auf zwei Geräten prüfen.

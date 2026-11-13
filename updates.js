@@ -1,5 +1,5 @@
 // Check regularly and apply updates automatically when the app is idle on the profile screen.
-const APP_VERSION = '2026.11.13.1';
+const APP_VERSION = '2026.11.13.2';
 let updateRegistration=null;
 let updateRequested=false;
 let updateReloading=false;

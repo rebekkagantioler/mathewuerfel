@@ -72,3 +72,27 @@ bleibt nur während der geöffneten App im Arbeitsspeicher.
 Aufträge und Minus-Einstellungen lassen sich für diese Profile online speichern.
 Die Liste lässt sich über denselben Knopf aktualisieren. Rein lokale Profile
 anderer Geräte sind erst nach ihrer Online-Verbindung verfügbar.
+
+## Zuverlässige Online-Speicherung
+
+Jede Änderung eines verbundenen Profils wird sofort in einer dauerhaften
+Warteschlange vorgemerkt und nach kurzer Wartezeit online gesendet. Fehlversuche
+werden wiederholt; Internet-Rückkehr und Öffnen der App lösen weitere Versuche aus.
+Die Warteschlange enthält Lernstände, aber keine Passwörter. Nach einem Neustart
+muss das betroffene Profil mit seinem Passwort geöffnet werden, bevor wartende
+Änderungen hochgeladen werden können. Bis dahin wird es als ungesichert angezeigt.
+„Lernstand online gespeichert“ erscheint erst nach erfolgreicher Online-Speicherung.
+
+Alte rein lokale Profile müssen vor dem Weiterspielen online verbunden werden;
+der bisherige Lernstand wird dabei mit übernommen. Bei bereits verbundenen
+Profilen wird vor dem Ersetzen eines höheren lokalen Stands durch einen niedrigeren
+Online-Stand die Sicherung des höheren Stands angeboten. Abbrechen behält den
+Stand auf dem Gerät. Ausstehende Änderungen verhindern die automatische
+App-Aktualisierung und das Entfernen des betroffenen Profils vom Gerät.
+Für diese Verbesserungen ist kein weiteres SQL-Update nötig.
+
+Beim Übergang von älteren App-Versionen auf dem betroffenen iPad aktualisieren,
+dann das vorhandene Profil öffnen. Falls die App einen höheren Stand auf dem
+Gerät meldet, dessen Online-Sicherung bestätigen. Erst nach bestätigter
+Online-Speicherung den Stand auf einem anderen Gerät prüfen. Die Änderung allein
+stellt bisher nur lokal gespeicherte Lernstände nicht aus der Ferne wieder her.

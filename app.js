@@ -215,6 +215,7 @@ let neighborState={question:0,score:0,a:4,b:8,target:32,helperB:7,helperResult:2
 let doubleChainState={question:0,score:0,n:2,direction:'up',step:0,values:[0,0,0],answer:'',locked:false};
 let teacherPreview=false;
 let teacherPreviewSnapshot=null;
+let teacherPreviewActiveProfileId=null;
 let pendingLeaveAction=null;
 
 function showScreen(name) {
@@ -1668,16 +1669,42 @@ function renderStudentAssignment() {
   elements.assignmentBar.style.width = `${(done / assignment.target) * 100}%`;
 }
 
+let teacherOnlineProfiles=null;
+let teacherOnlineSecret=null;
+function teacherProfiles(){return teacherOnlineProfiles||profiles}
 function openTeacherArea() {
   elements.teacherProfileSelect.replaceChildren();
-  profiles.forEach((profile) => { const option=document.createElement('option');option.value=profile.id;option.textContent=profile.name;elements.teacherProfileSelect.append(option); });
-  elements.teacherEmpty.classList.toggle('hidden', profiles.length > 0); elements.teacherContent.classList.toggle('hidden', !profiles.length);
-  if (profiles.length) { elements.teacherProfileSelect.value = activeProfileId && profiles.some(p=>p.id===activeProfileId) ? activeProfileId : profiles[0].id; renderTeacherDashboard(); }
+  teacherProfiles().forEach((profile) => { const option=document.createElement('option');option.value=profile.id;option.textContent=teacherOnlineProfiles?`${profile.name} · Level ${getRewardLevel(profile)} · Profil ${profile.cloudId.slice(0,8)} · ${profile.cloudUpdatedAt?new Date(profile.cloudUpdatedAt).toLocaleDateString('de-DE'):'–'}`:profile.name;elements.teacherProfileSelect.append(option); });
+  const available=teacherProfiles();
+  elements.teacherEmpty.classList.toggle('hidden', available.length > 0); elements.teacherContent.classList.toggle('hidden', !available.length);
+  if (available.length) { elements.teacherProfileSelect.value = activeProfileId && available.some(p=>p.id===activeProfileId) ? activeProfileId : available[0].id; renderTeacherDashboard(); }
   showScreen('teacher');
 }
 
-function getTeacherProfile(){return profiles.find(profile=>profile.id===elements.teacherProfileSelect.value)}
+function getTeacherProfile(){return teacherProfiles().find(profile=>profile.id===elements.teacherProfileSelect.value)}
+async function loadAllTeacherProfiles(){
+  const message=document.getElementById('teacherOnlineMessage'),button=document.getElementById('teacherLoadOnline');
+  if(!cloudClient){message.textContent='Keine Online-Verbindung eingerichtet.';return}
+  const secret=teacherOnlineSecret||window.prompt('Lehrpersonen-Schlüssel für alle Online-Profile:');if(!secret)return;
+  button.disabled=true;message.textContent='Online-Profile werden geladen …';
+  try{
+    if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)throw Error('sync')}
+    const {data,error}=await cloudClient.rpc('teacher_list_profiles',{p_secret:secret});
+    if(error||!Array.isArray(data))throw Error('load');
+    const loaded=data.map(row=>{const profile={...row.profile_data,id:row.id,cloudId:row.id,name:row.profile_name,cloudUpdatedAt:row.updated_at};migrateProfileAreas(profile);return profile});
+    teacherOnlineSecret=secret;teacherOnlineProfiles=loaded;openTeacherArea();
+    message.textContent=`${loaded.length} Online-Profile geladen. Gleiche Namen werden mit Level und Profilkennung angezeigt. Stand: ${new Date().toLocaleTimeString('de-DE')}`;
+  }catch{message.textContent='Profile konnten nicht geladen werden. Prüfe den Lehrpersonen-Schlüssel, die Verbindung und die Supabase-Einrichtung.'}finally{button.disabled=false}
+}
+async function saveOnlineTeacherChanges(profile,patch,message){
+  try{
+    const {data,error}=await cloudClient.rpc('teacher_update_profile',{p_id:profile.cloudId,p_secret:teacherOnlineSecret,p_patch:patch});
+    if(error||!data){message.textContent='Nicht gespeichert. Bitte Verbindung und Lehrpersonen-Schlüssel prüfen.';return}
+    Object.assign(profile,patch);message.textContent='Online gespeichert.';
+  }catch{message.textContent='Nicht gespeichert. Bitte erneut versuchen.'}
+}
 function renderTeacherDashboard(){
+  document.getElementById('teacherResetMessage').textContent='';
   const profile=getTeacherProfile();if(!profile)return;const facts=Object.entries(profile.facts||{});const attempts=facts.reduce((sum,[,s])=>sum+s.attempts,0);const correct=facts.reduce((sum,[,s])=>sum+s.correct,0);const accuracy=attempts?Math.round(correct/attempts*100):0;
   const totalStars=AREAS.reduce((sum,a)=>sum+(profile.areaStars?.[a]||0),0);
   elements.teacherStats.innerHTML=`<div><strong>${formatAreaLevels(profile)}</strong><small>${totalStars} Sterne gesamt</small></div><div><strong>${accuracy}%</strong><small>Einmaleins richtig</small></div><div><strong>${attempts}</strong><small>Einmaleins-Versuche</small></div>`;
@@ -1692,6 +1719,11 @@ function renderTeacherDashboard(){
 function saveTeacherMinusSettings(){
   const profile=getTeacherProfile();if(!profile||teacherPreview)return;
   const message=document.getElementById('minusSettingsMessage');
+  if(teacherOnlineProfiles){
+    const minusPractice=JSON.parse(JSON.stringify(profile.minusPractice||{}));
+    document.querySelectorAll('[data-minus-without-houses]').forEach(input=>{const range=input.dataset.minusWithoutHouses;minusPractice[range]={...minusPractice[range],tryWithoutHouses:input.checked}});
+    return saveOnlineTeacherChanges(profile,{minusPractice},message);
+  }
   if(profile.cloudId&&!cloudPins.has(profile.cloudId)){
     message.textContent='Öffne dieses Profil zuerst mit seinem Passwort. Danach kannst du die Einstellung auch für andere Geräte speichern.';return;
   }
@@ -1702,8 +1734,8 @@ function saveTeacherMinusSettings(){
   message.textContent=profile.cloudId?'Gespeichert. Wird automatisch mit den anderen Geräten synchronisiert.':'Gespeichert.';
 }
 
-function saveTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;const activity=elements.assignmentActivity.value;profile.activityCounts||={};profile.assignment={activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts[activity]||0};saveProfiles();elements.teacherMessage.textContent='Auftrag gespeichert.';elements.teacherMessage.className='feedback correct';if(profile.id===activeProfileId)renderStudentAssignment()}
-function removeTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;delete profile.assignment;saveProfiles();elements.teacherMessage.textContent='Auftrag entfernt.';if(profile.id===activeProfileId)renderStudentAssignment()}
+function saveTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;if(teacherOnlineProfiles){const activity=elements.assignmentActivity.value;return saveOnlineTeacherChanges(profile,{assignment:{activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts?.[activity]||0}},elements.teacherMessage)}const activity=elements.assignmentActivity.value;profile.activityCounts||={};profile.assignment={activity,target:Math.max(1,Number(elements.assignmentTarget.value)||10),note:elements.assignmentNote.value.trim(),baseline:profile.activityCounts[activity]||0};saveProfiles();elements.teacherMessage.textContent='Auftrag gespeichert.';elements.teacherMessage.className='feedback correct';if(profile.id===activeProfileId)renderStudentAssignment()}
+function removeTeacherAssignment(){const profile=getTeacherProfile();if(!profile)return;if(teacherOnlineProfiles)return saveOnlineTeacherChanges(profile,{assignment:null},elements.teacherMessage);delete profile.assignment;saveProfiles();elements.teacherMessage.textContent='Auftrag entfernt.';if(profile.id===activeProfileId)renderStudentAssignment()}
 
 function loadProfiles() {
   let loaded;
@@ -1732,8 +1764,8 @@ function migrateProfileAreas(profile) {
 }
 
 function saveProfiles() { if(!teacherPreview){localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));scheduleCloudSync();} }
-function startTeacherPreview(){teacherPreviewSnapshot=JSON.stringify(profiles);teacherPreview=true;selectProfile(elements.teacherProfileSelect.value);renderProfileHeader();showScreen('activities')}
-function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;renderProfileHeader();renderProfileSelection();applyRewards();saveProfiles();showScreen('activities')}
+function startTeacherPreview(){teacherPreviewActiveProfileId=activeProfileId;teacherPreviewSnapshot=JSON.stringify(profiles);teacherPreview=true;if(teacherOnlineProfiles){const selected=getTeacherProfile();profiles.push({...JSON.parse(JSON.stringify(selected)),id:`preview-${selected.cloudId}`});selectProfile(`preview-${selected.cloudId}`)}else selectProfile(elements.teacherProfileSelect.value);renderProfileHeader();showScreen('activities')}
+function endTeacherPreview(){if(teacherPreviewSnapshot)profiles=JSON.parse(teacherPreviewSnapshot);teacherPreview=false;teacherPreviewSnapshot=null;if(teacherOnlineProfiles){activeProfileId=teacherPreviewActiveProfileId;localStorage.setItem(`${STORAGE_KEY}:active`,activeProfileId||'')}renderProfileHeader();renderProfileSelection();applyRewards();saveProfiles();showScreen('activities')}
 function getProfile() { return profiles.find((profile) => profile.id === activeProfileId); }
 const STARS_PER_LEVEL = 50;
 function getStarsPerLevel(area) { return STARS_PER_LEVEL; }
@@ -1884,8 +1916,9 @@ async function searchCloudProfiles(){
 }
 async function loadSelectedCloudProfile(){
   if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)return window.alert('Bitte zuerst die Synchronisierung abschließen.')}
-  const match=cloudProfileMatches.find(item=>item.selected),pin=elements.cloudProfilePin.value;if(!match)return elements.cloudProfileMessage.textContent='Wähle zuerst dein Profil aus.';if(!/^\d{6,}$/.test(pin))return elements.cloudProfileMessage.textContent='Gib deinen PIN mit mindestens 6 Ziffern ein.';
-  const {data,error}=await cloudClient.rpc('open_student_profile_by_id',{p_id:match.id,p_pin:pin});
+  const match=cloudProfileMatches.find(item=>item.selected);let pin=elements.cloudProfilePin.value;if(!match)return elements.cloudProfileMessage.textContent='Wähle zuerst dein Profil aus.';if(!/^\d{6,}$/.test(pin))return elements.cloudProfileMessage.textContent='Gib deinen PIN mit mindestens 6 Ziffern ein.';
+  const opened=await openWithPasswordOrReset(match.id,pin);if(opened.cancelled)return;
+  const {data,error}=opened.result;pin=opened.pin;
   if (error) return window.alert(`Das Online-Profil konnte nicht geöffnet werden: ${error.message}`);
   const cloudProfile = data?.[0];
   if (!cloudProfile) return window.alert('Kein passendes Online-Profil gefunden. Prüfe Name und PIN.');
@@ -1904,14 +1937,42 @@ async function openSavedProfile(profile){
   if(!profile.cloudId){selectProfile(profile.id);showScreen('activities');return}
   if(!cloudClient)return window.alert('Die Online-Verbindung ist nicht verfügbar.');
   if(pendingCloudSaves.size){await flushCloudSaves();if(pendingCloudSaves.size)return window.alert('Bitte zuerst die Synchronisierung abschließen.')}
-  const pin=window.prompt('Dein Passwort (mindestens 6 Ziffern):');if(!pin)return;
+  let pin=window.prompt('Dein Passwort oder Einmalcode (mindestens 6 Ziffern):');if(!pin)return;
   try{
-    const {data,error}=await cloudClient.rpc('open_student_profile_by_id',{p_id:profile.cloudId,p_pin:pin});
+    const opened=await openWithPasswordOrReset(profile.cloudId,pin);if(opened.cancelled)return;
+    const {data,error}=opened.result;pin=opened.pin;
     if(error||!data?.[0])return window.alert('Profil konnte nicht geöffnet werden. Prüfe Passwort und Verbindung.');
     const fresh=data[0].profile_data;fresh.cloudId=profile.cloudId;migrateProfileAreas(fresh);
     profiles[profiles.indexOf(profile)]=fresh;cloudPins.set(fresh.cloudId,pin);
     selectProfile(fresh.id);saveProfiles();showScreen('activities');
   }catch{window.alert('Zum Laden des aktuellen Lernstands brauchst du eine Online-Verbindung.')}
+}
+async function createTeacherResetCode(){
+  const profile=getTeacherProfile(),message=document.getElementById('teacherResetMessage');
+  if(!profile?.cloudId||!cloudClient){message.textContent='Wähle ein online verbundenes Profil aus.';return}
+  const secret=teacherOnlineSecret||window.prompt('Lehrpersonen-Schlüssel zum Zurücksetzen (in Supabase eingerichtet):');if(!secret)return;
+  const button=document.getElementById('teacherResetPassword');button.disabled=true;message.textContent='Einmalcode wird erstellt …';
+  try{
+    const {data,error}=await cloudClient.rpc('teacher_create_reset_code',{p_id:profile.cloudId,p_secret:secret});
+    if(error||!data){message.textContent='Code konnte nicht erstellt werden. Prüfe den Lehrpersonen-Schlüssel, die Verbindung und die Supabase-Einrichtung.';return}
+    cloudPins.delete(profile.cloudId);pendingCloudSaves.delete(profile.cloudId);
+    message.textContent=`Einmalcode für ${profile.name}: ${data}. Gültig für 24 Stunden. Das Kind gibt ihn statt seines Passworts ein.`;
+  }catch{message.textContent='Keine Verbindung. Bitte noch einmal versuchen.'}finally{button.disabled=false}
+}
+async function openWithPasswordOrReset(id,pin){
+  const result=await cloudClient.rpc('open_student_profile_by_id',{p_id:id,p_pin:pin});
+  if(result.error||result.data?.length)return {result,pin};
+  const check=await cloudClient.rpc('check_student_reset_code',{p_id:id,p_code:pin});
+  if(check.error||check.data!==true)return {result,pin};
+  const newPin=window.prompt('Neues Passwort eingeben (mindestens 6 Ziffern):');
+  if(newPin===null)return {cancelled:true};
+  if(!/^\d{6,}$/.test(newPin)){window.alert('Bitte mindestens 6 Ziffern eingeben.');return {cancelled:true}}
+  const confirmation=window.prompt('Neues Passwort noch einmal eingeben:');
+  if(confirmation!==newPin){if(confirmation!==null)window.alert('Die Passwörter stimmen nicht überein. Dein Einmalcode bleibt gültig.');return {cancelled:true}}
+  const reset=await cloudClient.rpc('reset_student_password',{p_id:id,p_code:pin,p_pin:newPin});
+  if(reset.error||!reset.data){window.alert('Zurücksetzen fehlgeschlagen. Prüfe Code und Verbindung.');return {cancelled:true}}
+  cloudPins.delete(id);pendingCloudSaves.delete(id);
+  return {result:await cloudClient.rpc('open_student_profile_by_id',{p_id:id,p_pin:newPin}),pin:newPin};
 }
 async function generateRecoveryCode(){
   const profile=getProfile();if(!profile?.cloudId)return;
@@ -2370,3 +2431,7 @@ document.addEventListener('keydown', (event) => {
     if(/^[0-9]$/.test(event.key))addDoubleChainDigit(event.key);if(event.key==='Backspace')removeDoubleChainDigit();if(event.key==='Enter')checkDoubleChain();
   }
 });
+
+document.getElementById('teacherResetPassword').addEventListener('click',createTeacherResetCode);
+
+document.getElementById('teacherLoadOnline').addEventListener('click',loadAllTeacherProfiles);

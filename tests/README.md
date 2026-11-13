@@ -27,3 +27,10 @@ Einschalten der Häuser.
 Die Sammlungsprüfungen testen Levelweg, acht Kategorien, Tier- und Autoauswahl,
 Sperren, Speicherung, getrennte Profile und die Streckenvorauswahl auf drei
 Bildschirmgrößen. `collection.js` wird auch für die Offline-Nutzung gecacht.
+
+Die Anmelde- und Abbruchfälle beim Einmalcode lassen sich mit
+`node tests/password-reset.cjs` prüfen. Dabei werden die Datenbankantworten simuliert;
+die Supabase-Funktionen zusätzlich nach der Einrichtung mit einem Testprofil prüfen.
+
+`node tests/teacher-directory.cjs` prüft die Online-Liste mit simulierten
+Datenbankantworten: gleichnamige Profile, getrennte Startseite und Fehlerfälle.

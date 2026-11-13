@@ -30,3 +30,45 @@ Ein Profil bitte jeweils auf einem Gerät zur selben Zeit bearbeiten: gespeicher
 wird weiterhin der vollständige Lernstand, parallele Sitzungen werden nicht
 zusammengeführt. Bestehende rein lokale Profile lassen sich in ihren
 Einstellungen mit einem Passwort online verbinden.
+
+## Passwort im Lehrpersonenbereich zurücksetzen
+
+Einmalig das aktualisierte `supabase/schema.sql` im SQL Editor ausführen.
+Danach einen eigenen, langen Lehrpersonen-Schlüssel setzen (Platzhalter ersetzen):
+
+```sql
+insert into public.teacher_reset_settings (id, secret_hash)
+values (true, extensions.crypt('HIER-EIGENEN-LANGEN-SCHLUESSEL-EINSETZEN', extensions.gen_salt('bf')))
+on conflict (id) do update set secret_hash=excluded.secret_hash;
+```
+
+Den Schlüssel nur bei der Lehrperson aufbewahren; nicht in die App-Konfiguration
+schreiben. Er ist unabhängig vom bisherigen Code zum Öffnen des Lehrpersonenbereichs.
+Falls pgcrypto im Schema `public` installiert ist, im obigen SQL `extensions.crypt`
+und `extensions.gen_salt` durch `public.crypt` und `public.gen_salt` ersetzen.
+
+Im Lehrpersonenbereich das bekannte Online-Profil auswählen und „Einmalcode erstellen“
+anklicken. Nach Eingabe des Lehrpersonen-Schlüssels erscheint ein 16-stelliger Code.
+Das Kind gibt ihn beim Öffnen seines Profils anstelle des Passworts ein. Danach
+wird es nach einem neuen Passwort und dessen Bestätigung gefragt. Der Code gilt
+24 Stunden, ersetzt einen bisherigen Rücksetzcode und wird nach erfolgreicher
+Änderung ungültig. Lernstände bleiben erhalten. Bei Abbruch bleibt der Code gültig.
+Das alte Passwort bleibt bis zum erfolgreichen Ändern gültig.
+
+Nach der Einrichtung mit einem Testprofil prüfen: falscher Lehrpersonen-Schlüssel,
+Code erstellen, Eingabe über beide Profil-Anmeldewege, Abbruch und unterschiedliche
+Passwortbestätigung, erfolgreiche Änderung, erneute Verwendung des verbrauchten
+Codes, Anmeldung mit altem/neuem Passwort und unveränderter Lernstand.
+
+## Alle Profile für Lehrpersonen
+
+Nach erneutem Ausführen von `supabase/schema.sql` im Lehrpersonenbereich
+„Alle Online-Profile laden / aktualisieren“ wählen und den oben eingerichteten
+Lehrpersonen-Schlüssel eingeben. Die Liste umfasst alle Online-Profile dieses
+Supabase-Projekts. Gleiche Namen werden durch Level, eine Profilkennung und das
+Datum der letzten Speicherung unterschieden. Die Profile werden nicht zur
+Startseite der Kinder hinzugefügt und nicht lokal gespeichert. Der Schlüssel
+bleibt nur während der geöffneten App im Arbeitsspeicher.
+Aufträge und Minus-Einstellungen lassen sich für diese Profile online speichern.
+Die Liste lässt sich über denselben Knopf aktualisieren. Rein lokale Profile
+anderer Geräte sind erst nach ihrer Online-Verbindung verfügbar.

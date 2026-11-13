@@ -121,11 +121,12 @@ grant execute on function public.save_student_profile(uuid, text, jsonb) to anon
 -- A teacher keeps the recovery code outside the child's profile. Codes are
 -- random, hashed, single-use and never returned by any profile read function.
 alter table public.student_profiles add column if not exists recovery_hash text;
+alter table public.student_profiles add column if not exists recovery_expires_at timestamptz;
 create or replace function public.set_student_recovery_code(p_id uuid, p_pin text, p_code text)
 returns boolean language plpgsql security definer set search_path = public, extensions as $$
 begin
   if p_code is null or p_code !~ '^[0-9a-f]{32}$' then return false; end if;
-  update public.student_profiles set recovery_hash=crypt(p_code,gen_salt('bf'))
+  update public.student_profiles set recovery_hash=crypt(p_code,gen_salt('bf')), recovery_expires_at=null
   where id=p_id and pin_hash=crypt(p_pin,pin_hash);
   return found;
 end;
@@ -135,8 +136,9 @@ returns boolean language plpgsql security definer set search_path = public, exte
 begin
   if p_pin is null or p_pin !~ '^[0-9]{6,}$' then return false; end if;
   update public.student_profiles
-  set pin_hash=crypt(p_pin,gen_salt('bf')), recovery_hash=null, updated_at=now()
-  where id=p_id and recovery_hash=crypt(p_code,recovery_hash);
+  set pin_hash=crypt(p_pin,gen_salt('bf')), recovery_hash=null, recovery_expires_at=null, updated_at=now()
+  where id=p_id and recovery_hash=crypt(p_code,recovery_hash)
+    and (recovery_expires_at is null or recovery_expires_at > now());
   return found;
 end;
 $$;
@@ -144,3 +146,75 @@ revoke all on function public.set_student_recovery_code(uuid,text,text) from pub
 revoke all on function public.reset_student_password(uuid,text,text) from public;
 grant execute on function public.set_student_recovery_code(uuid,text,text) to anon,authenticated;
 grant execute on function public.reset_student_password(uuid,text,text) to anon,authenticated;
+
+-- Set the teacher secret only through the SQL Editor (see SUPABASE_SETUP.md).
+create table if not exists public.teacher_reset_settings (
+  id boolean primary key default true check (id),
+  secret_hash text not null
+);
+alter table public.teacher_reset_settings enable row level security;
+revoke all on table public.teacher_reset_settings from public, anon, authenticated;
+
+create or replace function public.teacher_create_reset_code(p_id uuid, p_secret text)
+returns text language plpgsql security definer set search_path = public, extensions as $$
+declare code text := ''; random_bytes bytea; i integer;
+begin
+  if p_secret is null or not exists (
+    select 1 from public.teacher_reset_settings
+    where secret_hash=crypt(p_secret,secret_hash)
+  ) then return null; end if;
+  random_bytes := gen_random_bytes(16);
+  for i in 0..15 loop
+    code := code || (get_byte(random_bytes,i) % 10)::text;
+  end loop;
+  update public.student_profiles
+  set recovery_hash=crypt(code,gen_salt('bf')), recovery_expires_at=now()+interval '24 hours'
+  where id=p_id;
+  if not found then return null; end if;
+  return code;
+end;
+$$;
+
+create or replace function public.check_student_reset_code(p_id uuid, p_code text)
+returns boolean language sql security definer set search_path = public, extensions as $$
+  select exists (
+    select 1 from public.student_profiles where id=p_id
+      and recovery_hash=crypt(p_code,recovery_hash)
+      and recovery_expires_at > now()
+  );
+$$;
+revoke all on function public.teacher_create_reset_code(uuid,text) from public;
+revoke all on function public.check_student_reset_code(uuid,text) from public;
+grant execute on function public.teacher_create_reset_code(uuid,text) to anon,authenticated;
+grant execute on function public.check_student_reset_code(uuid,text) to anon,authenticated;
+
+-- Teacher-only directory: kept separate from the child's local profile picker.
+create or replace function public.teacher_list_profiles(p_secret text)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if p_secret is null or not exists (
+    select 1 from public.teacher_reset_settings where secret_hash=crypt(p_secret,secret_hash)
+  ) then raise exception 'Ungültiger Lehrpersonen-Schlüssel'; end if;
+  return (select coalesce(jsonb_agg(jsonb_build_object(
+    'id',sp.id,'profile_name',sp.profile_name,'profile_data',sp.profile_data,'updated_at',sp.updated_at
+  ) order by lower(sp.profile_name),sp.id),'[]'::jsonb) from public.student_profiles sp);
+end;
+$$;
+
+-- Patch only teacher-managed fields, preserving the current learning progress.
+create or replace function public.teacher_update_profile(p_id uuid,p_secret text,p_patch jsonb)
+returns boolean language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if p_secret is null or not exists (
+    select 1 from public.teacher_reset_settings where secret_hash=crypt(p_secret,secret_hash)
+  ) then return false; end if;
+  if p_patch is null or jsonb_typeof(p_patch)<>'object' then return false; end if;
+  if exists (select 1 from jsonb_object_keys(p_patch) as keys(key) where key not in ('assignment','minusPractice')) then return false; end if;
+  update public.student_profiles set profile_data=profile_data || p_patch,updated_at=now() where id=p_id;
+  return found;
+end;
+$$;
+revoke all on function public.teacher_list_profiles(text) from public;
+revoke all on function public.teacher_update_profile(uuid,text,jsonb) from public;
+grant execute on function public.teacher_list_profiles(text) to anon,authenticated;
+grant execute on function public.teacher_update_profile(uuid,text,jsonb) to anon,authenticated;

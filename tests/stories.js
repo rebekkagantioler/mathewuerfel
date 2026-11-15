@@ -22,11 +22,11 @@ return (()=>{try {
  assert(chooseStoryTemplate(prof,1,0,[]).id!==weak.id,'New task');
  assert(chooseStoryTemplate(prof,1,2,[weak.id]).id!==weak.id,'Recent repeat');
  openStories();launchingRows=true;startStories();launchingRows=false;
- for(let i=0;i<5;i++){
+ for(let i=0;i<7;i++){
    assert(storyUI.storyBadge.textContent.includes(i%2===0?'Warmwerden':'Knobeln'),'Difficulty alternation');
    const t=storyState.task;storyUI.storyWork.value=t.steps.map((x,j)=>x+'='+t.results[j]).join('\n');checkStory();assert(storyState.locked,'Completion');storyState.question++;nextStory();
  }
- assert(storyUI.storyQuestion.classList.contains('hidden')&&document.getElementById('storyRoundSummary').textContent.includes('Fünf'),'Round did not stop after five');
+ assert(storyUI.storyQuestion.classList.contains('hidden')&&!document.getElementById('storyFinish').classList.contains('hidden')&&document.getElementById('storyRoundSummary').textContent.includes('Sieben'),'Round did not stop after seven');
  teacherPreview=false;
  for(const level of [1,2,3,4,5,6]){
    prof.areaStars.mal=(level-1)*50;renderProfileHeader();

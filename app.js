@@ -1,5 +1,5 @@
 const FREE_QUESTIONS = 15;
-const SHOP_QUESTIONS = 8;
+const SHOP_QUESTIONS = 7;
 const STORAGE_KEY = 'malMagieProfilesV1';
 const EMOJIS = [
   { icon: '🌟', level: 1 }, { icon: '🐰', level: 1 }, { icon: '🐱', level: 1 },
@@ -1042,10 +1042,10 @@ function startShopGame(station = shopState.station || 'fruit') {
   if(requestRows('shop',()=>startShopGame(station)))return;
   if (!getProfile()) return showProfileSelection();
   if(station!=='fruit'&&!hasGameReward(station))return;
-  shopState = { question: 0, score: 0, task: null, operationChosen: false, locked: false, hadHelp: false, operations: makeOperationRound(), station };
-  elements.shopScore.textContent = '0';
-  showScreen('shop');
-  nextShopQuestion();
+  const profile=getProfile(),saved=profile.shopPractice?.rounds?.[station];
+  shopState=!teacherPreview&&saved?.total===SHOP_QUESTIONS?{...saved,profileId:profile.id}:{question:0,score:0,task:null,operationChosen:false,locked:false,hadHelp:false,operations:makeOperationRound(),station,profileId:profile.id};
+  elements.shopScore.textContent=shopState.score;showScreen('shop');
+  if(saved?.total===SHOP_QUESTIONS&&!teacherPreview&&!shopState.locked&&shopState.task)renderShopQuestion();else nextShopQuestion();
 }
 
 function makeOperationRound() {
@@ -1071,6 +1071,10 @@ function nextShopQuestion() {
   if (shopState.question >= SHOP_QUESTIONS) return finishShopGame();
   shopState.task = makeShopTask(shopState.operations[shopState.question], shopState.station);
   shopState.operationChosen = false; shopState.locked = false; shopState.hadHelp = false;
+  renderShopQuestion();saveShopRound();
+}
+function renderShopQuestion(){
+  document.getElementById('shopRoundLabel').textContent=`Geschichte ${shopState.question+1} von ${SHOP_QUESTIONS}`;
   elements.shopStory.textContent = shopState.task.story;
   elements.shopPreviewA.textContent = shopState.task.a; elements.shopPreviewB.textContent = shopState.task.b;
   elements.shopScene.textContent = shopState.task.scene;
@@ -1127,7 +1131,7 @@ function chooseShopOperation(operation, button) {
     button.classList.add('wrong');
     elements.shopFeedback.textContent = operationHint(shopState.task.operation);
     elements.shopFeedback.className = 'feedback wrong';
-    rememberOperation(false);
+    rememberOperation(false);saveShopRound();
     return;
   }
   shopState.operationChosen = true; button.classList.add('chosen'); rememberOperation(true);
@@ -1147,7 +1151,10 @@ function completeShopTask() {
   incrementActivity('shop'); saveProfiles();
   elements.shopScore.textContent = shopState.score; elements.shopProgress.style.width = `${(shopState.question / SHOP_QUESTIONS) * 100}%`;
   elements.shopFeedback.textContent = shopState.hadHelp ? 'Geschafft – gut nachgedacht! 💪' : 'Geschichte richtig verstanden! ✨'; elements.shopFeedback.className = 'feedback correct';
-  window.setTimeout(nextShopQuestion, 750);
+  saveShopRound();
+  if(shopState.question>=SHOP_QUESTIONS)return finishShopGame();
+  const round=shopState;
+  window.setTimeout(()=>{if(shopState===round&&getProfile()?.id===round.profileId&&!screens.shop.classList.contains('hidden'))nextShopQuestion()},750);
 }
 
 function rememberOperation(correct) {
@@ -1157,7 +1164,18 @@ function rememberOperation(correct) {
   profile.operations[key].attempts += 1; profile.operations[key][correct ? 'correct' : 'wrong'] += 1; saveProfiles();
 }
 
+function saveShopRound(){
+  const profile=getProfile();if(!profile||teacherPreview||profile.id!==shopState.profileId)return;
+  profile.shopPractice||={rounds:{}};profile.shopPractice.rounds||={};
+  profile.shopPractice.rounds[shopState.station]={...shopState,total:SHOP_QUESTIONS};saveProfiles();
+}
 function finishShopGame() {
+  const profile=getProfile();
+  if(profile&&profile.id===shopState.profileId&&!teacherPreview){
+    profile.shopPractice||={rounds:{}};profile.shopPractice.rounds||={};
+    delete profile.shopPractice.rounds[shopState.station];
+    profile.shopPractice.lastRound={solved:SHOP_QUESTIONS,score:shopState.score,station:shopState.station};saveProfiles();
+  }
   elements.shopFinalScore.textContent = shopState.score;
   elements.shopFinishText.textContent = shopState.score === SHOP_QUESTIONS ? 'Du hast jede Geschichte sofort richtig verstanden!' : `${shopState.score} von ${SHOP_QUESTIONS} Geschichten hast du ganz ohne Hilfe gelöst.`;
   showScreen('shopFinish');
@@ -2167,6 +2185,7 @@ function showProfileSelection() {
 }
 
 function renderProfileSelection() {
+  screens.profiles.classList.toggle('has-profiles',profiles.length>0);
   elements.profileSelectGrid.replaceChildren();
   profiles.forEach((profile) => {
     const button = document.createElement('button');
@@ -2325,7 +2344,7 @@ elements.leaveShopButton.addEventListener('click', () => showScreen('games'));
 elements.shopHomeButton.addEventListener('click',()=>confirmLeaveGame('shopWorld',openShopWorld));
 document.querySelectorAll('.store-station').forEach((station) => station.addEventListener('click', () => startShopGame(station.dataset.station)));
 elements.operationChoices.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => chooseShopOperation(button.dataset.operation, button)));
-elements.shopAgain.addEventListener('click', startShopGame);
+elements.shopAgain.addEventListener('click',()=>startShopGame(shopState.station));
 elements.shopChoose.addEventListener('click', () => showScreen('games'));
 elements.catchHome.addEventListener('click', () => confirmLeaveGame('games',()=>{catchState.running=false;clearCatchBubbles();cancelAnimationFrame(catchState.frame)}));
 elements.catchBack.addEventListener('click',()=>showScreen('games'));elements.catchMixedMode.addEventListener('click',()=>startCatchGame('mixed'));

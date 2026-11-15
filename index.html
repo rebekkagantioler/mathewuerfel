@@ -21,17 +21,24 @@
     <aside id="companionSpot" class="companion-spot hidden"><button id="learningCompanion" class="hidden" type="button"></button></aside>
     <main class="app-shell">
       <section id="profileScreen" class="screen profile-screen">
-        <div class="profile-welcome">
-          <div class="welcome-mark">✦</div>
-          <p class="eyebrow">Zahlen-Abenteuer</p>
-          <h1>Wer übt heute?</h1>
-          <p>Wähle dein Profil aus.</p>
+        <header class="signin-brand"><span aria-hidden="true">✦</span><strong>Zahlen-Abenteuer</strong><small>Entdecken. Üben. Wachsen.</small></header>
+        <div class="signin-layout">
+          <div class="profile-welcome">
+            <p class="eyebrow">Kleine Schritte. Große Entdeckungen.</p>
+            <h1>Dein nächstes<br><span>Zahlen-Abenteuer.</span></h1>
+            <p>Rechne, entdecke neue Welten und sammle Sterne. Dein Abenteuer geht genau dort weiter, wo du aufgehört hast.</p>
+            <div class="signin-friends" aria-hidden="true"><span class="signin-spark spark-one">✦</span><img src="./assets/figures/rabbit.png" alt="" /><img src="./assets/figures/cat.png" alt="" /><img src="./assets/figures/dog.png" alt="" /><span class="signin-spark spark-two">＋</span></div>
+            <span class="signin-note">Für neugierige Rechenköpfe</span>
+          </div>
+          <div class="signin-card">
+            <p class="eyebrow">Schön, dass du da bist</p><h2>Wer übt heute?</h2><p class="signin-intro">Öffne dein Profil und leg los.</p>
+            <div class="signin-local"><h3>Auf diesem Gerät</h3><div id="profileSelectGrid" class="profile-select-grid"></div></div>
+            <div class="signin-empty"><span aria-hidden="true">✦</span><p>Dein Abenteuer wartet schon.<br>Öffne dein Profil oder erstelle ein neues.</p></div>
+            <div class="signin-actions"><button id="openCloudProfileButton" class="signin-primary" type="button"><span aria-hidden="true">↗</span> Vorhandenes Profil öffnen</button><button id="addProfileButton" class="add-profile-button" type="button"><span aria-hidden="true">＋</span><strong>Neues Profil erstellen</strong></button></div>
+            <p class="signin-device-note">Dein Online-Profil begleitet dich auf jedem Gerät.</p>
+          </div>
         </div>
-        <div id="profileSelectGrid" class="profile-select-grid"></div>
-        <button id="addProfileButton" class="add-profile-button" type="button"><span>＋</span><strong>Neuer Benutzer</strong></button>
-        <button id="openCloudProfileButton" class="text-button" type="button">☁️ Vorhandenes Online-Profil öffnen</button>
-        <p data-cloud-sync-status role="status">Online-Speicherung wird geprüft …</p><div class="app-update"><button type="button" data-update-check>↻ App aktualisieren</button><small data-update-status role="status">Updates direkt hier laden – dein Homebildschirm-Symbol bleibt.</small></div>
-        <button id="teacherAreaButton" class="teacher-link" type="button">🔒 Bereich für Lehrpersonen</button>
+        <footer class="signin-footer"><button id="teacherAreaButton" class="teacher-link" type="button">🔒 Für Lehrpersonen</button><details class="signin-settings"><summary>Speicherung &amp; Updates</summary><div><p data-cloud-sync-status role="status">Online-Speicherung wird geprüft …</p><div class="app-update"><button type="button" data-update-check>↻ App aktualisieren</button><small data-update-status role="status">Die App sucht automatisch nach neuen Versionen.</small></div></div></details></footer>
       </section>
 
       <section id="activityScreen" class="screen activity-screen hidden">
@@ -78,8 +85,9 @@
 
       <section id="storiesScreen" class="screen stories-screen hidden">
         <header class="game-header"><button id="storyHome" class="icon-button" type="button" aria-label="Zurück zur Spielauswahl">←</button><div class="game-title"><small>Mathe im Leben</small><strong>Rechengeschichten</strong></div></header>
-        <div id="storyStart" class="story-panel"><span class="story-mark">🗺️</span><h1>Finde deinen Rechenweg</h1><p>Was ist gefragt? Welche Informationen brauchst du? Plane deinen Weg und schreibe deine Rechnungen auf.</p><label for="storyTier">Was möchtest du üben?</label><select id="storyTier"></select><p id="storySummary"></p><button id="storyBegin" class="check-button" type="button">Geschichten entdecken</button></div>
-        <div id="storyQuestion" class="story-panel hidden"><p id="storyBadge" class="eyebrow"></p><h2 id="storyText"></h2><label for="storyWork">Dein Rechenweg</label><p id="storyWorkHelp">Nutze die Rechentastatur. Mit „Neue Zeile“ beginnst du den nächsten Rechenschritt; auch Klammern sind möglich.</p><textarea readonly inputmode="none" id="storyWork" rows="3" spellcheck="false" autocapitalize="off" aria-describedby="storyWorkHelp" placeholder="Meine Rechnungen …"></textarea><div id="storyKeypad" class="math-keypad" role="group" aria-label="Rechentastatur"></div><div class="action-row"><button id="storyHint" class="secondary-button" type="button">Ein Tipp</button><button id="storyCheck" class="check-button" type="button">Rechenweg prüfen</button></div><p id="storyFeedback" class="feedback" role="status"></p><button id="storyNext" class="check-button hidden" type="button">Nächste Geschichte →</button></div>
+        <div id="storyStart" class="story-panel"><span class="story-mark">🗺️</span><h1>Finde deinen Rechenweg</h1><p>Was ist gefragt? Welche Informationen brauchst du? Plane deinen Weg und schreibe deine Rechnungen auf.</p><label for="storyTier">Was möchtest du üben?</label><select id="storyTier"></select><p id="storySummary"></p><button id="storyBegin" class="check-button" type="button">7 Geschichten starten</button></div>
+        <div id="storyQuestion" class="story-panel hidden"><p id="storyBadge" class="eyebrow"></p><progress id="storyRoundProgress" class="story-round-progress" max="7" value="0" aria-label="Gelöste Geschichten von sieben"></progress><h2 id="storyText"></h2><label for="storyWork">Dein Rechenweg</label><p id="storyWorkHelp">Nutze die Rechentastatur. Mit „Neue Zeile“ beginnst du den nächsten Rechenschritt; auch Klammern sind möglich.</p><textarea readonly inputmode="none" id="storyWork" rows="3" spellcheck="false" autocapitalize="off" aria-describedby="storyWorkHelp" placeholder="Meine Rechnungen …"></textarea><div id="storyKeypad" class="math-keypad" role="group" aria-label="Rechentastatur"></div><div class="action-row"><button id="storyHint" class="secondary-button" type="button">Ein Tipp</button><button id="storyCheck" class="check-button" type="button">Rechenweg prüfen</button></div><p id="storyFeedback" class="feedback" role="status"></p><button id="storyNext" class="check-button hidden" type="button">Nächste Geschichte →</button></div>
+        <div id="storyFinish" class="story-panel story-finish hidden"><div class="finish-stars" aria-hidden="true">✦ ✨ ✦</div><p class="eyebrow">Runde abgeschlossen</p><h1>Sieben geschafft!</h1><div class="story-finish-count">7 <small>von 7 Geschichten</small></div><p id="storyRoundSummary" role="status"></p><button id="storyAgain" class="check-button" type="button">Noch eine Runde</button><button id="storyChoose" class="text-button" type="button">Anderes Spiel wählen</button></div>
       </section>
 
       <section id="duelScreen" class="screen duel-screen hidden" aria-label="Schranken-Rennen für zwei Personen">
@@ -215,7 +223,7 @@
         <div class="progress-track"><div id="shopProgress" class="progress-bar"></div></div>
         <section class="shop-card-panel">
           <div id="shopScene" class="shop-scene">🛒 🍎 🥖</div>
-          <p class="task-label">Welche Rechenart passt? Wähle +, −, × oder ÷.</p>
+          <p id="shopRoundLabel" class="eyebrow"></p><p class="task-label">Welche Rechenart passt? Wähle +, −, × oder ÷.</p>
           <h2 id="shopStory">Du kaufst etwas im Laden.</h2>
           <div class="operation-preview"><span id="shopPreviewA">12</span><b>□</b><span id="shopPreviewB">3</span><b>=</b><span>?</span></div>
           <div id="operationChoices" class="operation-choices">
@@ -230,7 +238,7 @@
 
       <section id="shopFinishScreen" class="screen finish-screen hidden">
         <div class="finish-stars">🛍️ ✦ 🛒</div><p class="eyebrow">Einkauf geschafft!</p><h2>Der Laden schließt</h2>
-        <p id="shopFinishText"></p><div class="result-circle"><span id="shopFinalScore">0</span><small>von 8</small></div>
+        <p id="shopFinishText"></p><div class="result-circle"><span id="shopFinalScore">0</span><small>von 7</small></div>
         <button id="shopAgain" class="check-button large" type="button">Nochmal einkaufen</button><button id="shopChoose" class="text-button" type="button">Anderes Spiel wählen</button>
       </section>
 
@@ -269,7 +277,7 @@
 
       <section id="pipeFinishScreen" class="screen finish-screen hidden">
         <div class="finish-stars">🚰 ✦ ⭐</div><p class="eyebrow">Rohre gemeistert!</p><h2>Super gerechnet!</h2><p id="pipeFinishText"></p>
-        <div class="result-circle"><span id="pipeFinalScore">0</span><small>von 8</small></div><button id="pipeAgain" class="check-button large" type="button">Nochmal spielen</button><button id="pipeChoose" class="text-button" type="button">Zurück zu den Spielen</button>
+        <div class="result-circle"><span id="pipeFinalScore">0</span><small>von 7</small></div><button id="pipeAgain" class="check-button large" type="button">Nochmal spielen</button><button id="pipeChoose" class="text-button" type="button">Zurück zu den Spielen</button>
       </section>
 
       <section id="divisionStartScreen" class="screen start-screen hidden">
@@ -294,7 +302,7 @@
       <section id="divisionFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">➗ ✦ 🍓</div><p class="eyebrow">Gut verteilt!</p><h2>Geteilt geschafft</h2><p id="divisionFinishText"></p><div class="result-circle"><span id="divisionFinalScore">0</span><small>von 10</small></div><button id="divisionAgain" class="check-button large" type="button">Nochmal teilen</button><button id="divisionChoose" class="text-button" type="button">Anderes Spiel wählen</button></section>
 
       <section id="numberLineScreen" class="screen number-line-screen hidden"><header class="game-header"><button id="numberLineHome" class="icon-button" type="button">←</button><div class="game-title"><small>Große Zahlen</small><strong>Zahlensprünge</strong></div><div class="score-pill">📍 <strong id="numberLineScore">0</strong></div></header><div class="progress-track"><div id="numberLineProgress" class="progress-bar"></div></div><section class="number-line-panel"><div class="number-line-modes" role="group" aria-label="Zahlenstrahl auswählen"><button type="button" data-number-line-mode="guided" aria-pressed="true">Auf dem Zahlenstrahl rechnen</button><button type="button" data-number-line-mode="free" aria-pressed="false">Leeren Zahlenstrahl beschriften</button></div><p id="numberLineEyebrow" class="eyebrow">Ein fester Zahlenstrahl</p><h2 id="numberLineTask">2.400 + 300</h2><p id="numberLineHint">Lies die Zahlen am Zahlenstrahl und finde die gesuchte Stelle.</p><div id="numberLineVisual" class="number-line-visual"></div><p id="numberLineFeedback" class="feedback"></p><div class="action-row"><button id="numberLineCheck" class="check-button" type="button">Prüfen</button></div></section></section>
-      <section id="numberLineFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">📍 ✦ 🚀</div><p class="eyebrow">Sicher gelandet!</p><h2>Zahlensprünge geschafft</h2><p id="numberLineFinishText"></p><div class="result-circle"><span id="numberLineFinalScore">0</span><small>von 8</small></div><button id="numberLineAgain" class="check-button large" type="button">Nochmal springen</button><button id="numberLineChoose" class="text-button" type="button">Andere Aktivität wählen</button></section>
+      <section id="numberLineFinishScreen" class="screen finish-screen hidden"><div class="finish-stars">📍 ✦ 🚀</div><p class="eyebrow">Sicher gelandet!</p><h2>Zahlensprünge geschafft</h2><p id="numberLineFinishText"></p><div class="result-circle"><span id="numberLineFinalScore">0</span><small>von 7</small></div><button id="numberLineAgain" class="check-button large" type="button">Nochmal springen</button><button id="numberLineChoose" class="text-button" type="button">Andere Aktivität wählen</button></section>
 
       <section id="placeValueStartScreen" class="screen activity-screen hidden"><button id="placeValueBack" class="icon-button" type="button">←</button><header class="activity-header"><p class="eyebrow">Große Zahlen begreifen</p><h1>Stellenwert-Werkstatt</h1><p>Ein Punkt hat je nach Haus einen anderen Wert. Zehn gleiche Punkte können gegen einen Punkt im nächsten Haus getauscht werden.</p></header><label>Minus-Zahlenraum <select id="minusRange"><option value="100">Bis 100</option><option value="1000">Bis 1.000</option><option value="10000">Bis 10.000</option></select></label><div class="activity-grid"><button class="activity-card place-build-card" data-place-mode="build" type="button"><span class="activity-picture">🏗️</span><span><small>Stellen richtig besetzen</small><strong>Zahl bauen</strong><em>Baue eine Zahl aus T, H, Z und E</em></span><b>→</b></button><button class="activity-card place-trade-card" data-place-mode="trade" type="button"><span class="activity-picture">🔄</span><span><small>10 werden zu 1</small><strong>Tausch-Challenge</strong><em>Tausche Einer, Zehner und Hunderter</em></span><b>→</b></button><button class="activity-card place-minus-card" data-place-mode="minus" type="button"><span class="activity-picture">✂️</span><span><small>Punkte wegnehmen</small><strong>Minus-Werkstatt</strong><em>Entbündle einen Zehner, wenn es nicht reicht</em></span><b>→</b></button></div></section>
       <section id="placeValueScreen" class="screen place-value-screen hidden"><header class="game-header"><button id="placeValueHome" class="icon-button" type="button">←</button><div class="game-title"><small>Stellenwert-Werkstatt</small><strong id="placeValueModeTitle">Zahl bauen</strong></div><div class="score-pill">🏠 <strong id="placeValueScore">0</strong></div></header><div class="progress-track"><div id="placeValueProgress" class="progress-bar"></div></div><section class="place-value-panel"><p id="placeValueInstruction" class="eyebrow"></p><h2 id="placeValueTask">Baue 3.426</h2><button id="placeMinusHelp" class="secondary-button hidden" type="button">💡 Hilfe: Würfelhäuser</button><div id="minusAnswerArea" class="hidden"><p>Dein Ergebnis</p><div id="minusAnswer" class="answer-zone">?</div><div id="minusAnswerKeys" class="math-keypad"></div></div><div id="placeValueHouses" class="place-value-houses"></div><div id="placeValueTray" class="place-value-tray"></div><div id="placeValueActions" class="place-value-actions"></div><p id="placeValueReading" class="place-value-reading"></p><p id="placeValueFeedback" class="feedback"></p><div class="action-row"><button id="placeValueReset" class="secondary-button" type="button">↺ Zurücksetzen</button><button id="placeValueCheck" class="check-button" type="button">Prüfen</button></div></section></section>
@@ -320,7 +328,7 @@
       <section id="kingTowerFinishScreen" class="screen finish-screen hidden">
         <div class="finish-stars">👑 ✦ 🏗️</div><p class="eyebrow">Turm gebaut!</p><h2>Königsaufgaben geschafft</h2>
         <p id="kingTowerFinishText"></p>
-        <div class="result-circle"><span id="kingTowerFinalScore">0</span><small>von 8</small></div>
+        <div class="result-circle"><span id="kingTowerFinalScore">0</span><small>von 7</small></div>
         <button id="kingTowerAgain" class="check-button large" type="button">Nochmal bauen</button><button id="kingTowerChoose" class="text-button" type="button">Anderes Spiel wählen</button>
       </section>
 
@@ -343,7 +351,7 @@
       <section id="neighborFinishScreen" class="screen finish-screen hidden">
         <div class="finish-stars">🁣 ✦ 🧠</div><p class="eyebrow">Nachbarn gefunden!</p><h2>Domino geschafft</h2>
         <p id="neighborFinishText"></p>
-        <div class="result-circle"><span id="neighborFinalScore">0</span><small>von 8</small></div>
+        <div class="result-circle"><span id="neighborFinalScore">0</span><small>von 7</small></div>
         <button id="neighborAgain" class="check-button large" type="button">Nochmal legen</button><button id="neighborChoose" class="text-button" type="button">Anderes Spiel wählen</button>
       </section>
 

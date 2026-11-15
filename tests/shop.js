@@ -22,7 +22,7 @@ try{
    chooseShopOperation(operation,correct);completeShopTask();
    assert(getTotalStars(profile)===beforeStars+1&&profile.activityCounts.shop===beforeCount+1,'Repeated click awarded twice');
   }
-  startShopGame('fruit');const correct=[...elements.operationChoices.querySelectorAll('button')].find(button=>button.dataset.operation===shopState.task.operation);chooseShopOperation(correct.dataset.operation,correct);
+  profile.shopPractice={rounds:{}};startShopGame('fruit');const correct=[...elements.operationChoices.querySelectorAll('button')].find(button=>button.dataset.operation===shopState.task.operation);chooseShopOperation(correct.dataset.operation,correct);
   assert(shopState.score===1,'First correct operation not counted');
  }
  return 'Passed: operation-only shop at levels 1/4/9/11/100, all stations and operations, four choices, no equation/result input, wrong-choice retry, immediate completion, progress and repeated-click protection';

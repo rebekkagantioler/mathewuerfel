@@ -1,3 +1,4 @@
+const STORIES_PER_ROUND=7;
 const storyUI = Object.fromEntries(['storyHome','storyTier','storyStart','storyQuestion','storyBadge','storyText','storyWork','storyFeedback','storyCheck','storyHint','storyNext','storySummary'].map(id=>[id,document.getElementById(id)]));
 let storyState={question:0,task:null,failed:false,helped:false,locked:false,profileId:null,recent:[],seenThisRound:new Set()};
 function parseStoryExpression(source){
@@ -61,12 +62,23 @@ function openStories(){
     const option=document.createElement('option');option.value=value;option.textContent=label+(Number(value)>max?' · noch gesperrt':'');option.disabled=Number(value)>max;storyUI.storyTier.append(option);
   });
   storyUI.storySummary.textContent=`${STORY_TEMPLATES.length} Geschichtenideen mit neuen Zahlen. Zwei Schritte ab Bereichslevel 4 oder 12 sicher gelösten Geschichten; drei Schritte ab Bereichslevel 7 oder 24 sicher gelösten Geschichten.`;
+  document.getElementById('storyFinish').classList.add('hidden');
+  const saved=getProfile().storyPractice?.round;
+  document.getElementById('storyBegin').textContent=saved?.total===STORIES_PER_ROUND?`Fortsetzen · ${saved.question+(saved.locked?1:0)} von ${STORIES_PER_ROUND} geschafft`:'7 Geschichten starten';
+  storyUI.storySummary.textContent+=' Eine Runde hat sieben Geschichten. Dein Fortschritt bleibt auch beim Verlassen erhalten.';
   storyUI.storyQuestion.classList.add('hidden');storyUI.storyStart.classList.remove('hidden');showScreen('stories');
 }
 function startStories(){
   if(requestRows('stories',startStories))return;
   const profile=getProfile();if(!profile)return showProfileSelection();
   const max=teacherPreview?3:getStoryTier(profile);
+  document.getElementById('storyFinish').classList.add('hidden');
+  const saved=profile.storyPractice?.round;
+  if(!teacherPreview&&saved?.total===STORIES_PER_ROUND&&saved.profileId===profile.id){
+    storyState={...saved,seenThisRound:new Set(saved.seenThisRound),finished:false};
+    storyUI.storyStart.classList.add('hidden');storyUI.storyQuestion.classList.remove('hidden');
+    renderStoryQuestion(saved.work||'');return;
+  }
   const chosen=storyUI.storyTier.value;
   storyState={question:0,task:null,failed:false,helped:false,locked:false,profileId:profile.id,recent:[...(profile.storyPractice?.recent||[])],seenThisRound:new Set(),ceiling:chosen==='auto'?max:Math.min(max,Number(chosen)||1)};
   storyUI.storyStart.classList.add('hidden');storyUI.storyQuestion.classList.remove('hidden');nextStory();
@@ -83,17 +95,46 @@ function getStorySlotTier(profile,ceiling,question){
 }
 function nextStory(){
   if(storyState.profileId!==getProfile()?.id)return openStories();
-  if(storyState.question>=5){storyUI.storyQuestion.classList.add('hidden');storyUI.storyStart.classList.remove('hidden');let summary=document.getElementById('storyRoundSummary');if(!summary){summary=document.createElement('p');summary.id='storyRoundSummary';storyUI.storyStart.prepend(summary)}summary.textContent='Fünf Geschichten geschafft! ✨';return}
+  if(storyState.finished)return;
+  if(storyState.question>=STORIES_PER_ROUND)return finishStories();
   const easy=storyState.question%2===0;
   const tier=getStorySlotTier(getProfile(),storyState.ceiling,storyState.question);
   const template=chooseStoryTemplate(getProfile(),tier,storyState.question,storyState.recent,storyState.seenThisRound);
   const previousText=getProfile()?.storyPractice?.types?.[template.id]?.lastText||'';
   storyState.task=makeStoryTask(template,easy,previousText);storyState.failed=false;storyState.helped=false;storyState.locked=false;
   storyState.recent.push(template.id);storyState.recent=storyState.recent.slice(-8);storyState.seenThisRound.add(template.id);
-  storyUI.storyBadge.textContent=`Geschichte ${storyState.question+1} von 5 · ${easy?'Zum Warmwerden':'Zum Knobeln'} · ${tier} ${tier===1?'Schritt':'Schritte'}`;
-  storyUI.storyText.textContent=storyState.task.text;storyUI.storyWork.value='';storyUI.storyWork.disabled=false;
-  storyUI.storyFeedback.textContent='';storyUI.storyFeedback.className='feedback';storyUI.storyCheck.disabled=false;storyUI.storyHint.disabled=false;storyUI.storyNext.classList.add('hidden');
+  renderStoryQuestion();saveStoryRound();
 }
+function renderStoryQuestion(work=''){
+  const easy=storyState.question%2===0,tier=storyState.task.tier;
+  storyUI.storyBadge.textContent=`Geschichte ${storyState.question+1} von ${STORIES_PER_ROUND} · ${easy?'Zum Warmwerden':'Zum Knobeln'} · ${tier} ${tier===1?'Schritt':'Schritte'}`;
+  storyUI.storyText.textContent=storyState.task.text;storyUI.storyWork.value=work;storyUI.storyWork.disabled=storyState.locked;
+  storyUI.storyFeedback.textContent=storyState.locked?'Diese Geschichte hast du bereits gelöst. ✨':'';
+  storyUI.storyFeedback.className=storyState.locked?'feedback correct':'feedback';
+  storyUI.storyCheck.disabled=storyState.locked;storyUI.storyHint.disabled=storyState.locked;
+  storyUI.storyNext.classList.toggle('hidden',!storyState.locked);
+  document.getElementById('storyRoundProgress').value=storyState.question+(storyState.locked?1:0);
+}
+function saveStoryRound(){
+  const profile=getProfile();if(teacherPreview||!profile||profile.id!==storyState.profileId||storyState.finished||!storyState.task)return;
+  profile.storyPractice||={types:{},recent:[]};
+  profile.storyPractice.round={...storyState,total:STORIES_PER_ROUND,seenThisRound:[...storyState.seenThisRound],work:storyUI.storyWork.value};
+  saveProfiles();
+}
+function finishStories(){
+  if(storyState.finished)return;
+  storyState.finished=true;
+  const profile=getProfile();
+  if(profile&&profile.id===storyState.profileId&&!teacherPreview){
+    profile.storyPractice||={types:{},recent:[]};
+    profile.storyPractice.round=null;
+    profile.storyPractice.lastRound={solved:STORIES_PER_ROUND,finishedAt:new Date().toISOString()};saveProfiles();
+  }
+  storyUI.storyQuestion.classList.add('hidden');storyUI.storyStart.classList.add('hidden');
+  document.getElementById('storyRoundSummary').textContent='Sieben Geschichten geschafft! Deine gesammelten Sterne bleiben erhalten.';
+  document.getElementById('storyFinish').classList.remove('hidden');
+}
+
 function validateStoryWork(task,source){
   const lines=source.split(/[\n;]+/).map(line=>line.trim()).filter(Boolean);
   if(!lines.length)throw Error('Schreibe zuerst deinen Rechenweg auf.');
@@ -131,21 +172,27 @@ function checkStory(){
   if(storyState.locked||!storyState.task)return;
   if(!storyUI.storyWork.value.trim()){storyUI.storyFeedback.textContent='Schreibe zuerst deinen Rechenweg auf.';return}
   try{validateStoryWork(storyState.task,storyUI.storyWork.value)}catch(error){
-    recordStoryAttempt(false);storyState.failed=true;storyUI.storyFeedback.textContent=error.message;storyUI.storyFeedback.className='feedback wrong';return;
+    recordStoryAttempt(false);storyState.failed=true;saveStoryRound();storyUI.storyFeedback.textContent=error.message;storyUI.storyFeedback.className='feedback wrong';return;
   }
   recordStoryAttempt(true);storyState.locked=true;storyUI.storyWork.disabled=true;storyUI.storyCheck.disabled=true;storyUI.storyHint.disabled=true;
-  storyUI.storyFeedback.textContent='Dein Rechenweg stimmt! Du hast die Geschichte gelöst. ✨';storyUI.storyFeedback.className='feedback correct';storyUI.storyNext.classList.remove('hidden');renderProfileHeader();maybeShowLevelUp();
+  storyUI.storyFeedback.textContent='Dein Rechenweg stimmt! Du hast die Geschichte gelöst. ✨';storyUI.storyFeedback.className='feedback correct';storyUI.storyNext.classList.remove('hidden');
+  document.getElementById('storyRoundProgress').value=storyState.question+1;
+  saveStoryRound();renderProfileHeader();maybeShowLevelUp();
+  if(storyState.question+1===STORIES_PER_ROUND)finishStories();
 }
 function storyHint(){
-  if(storyState.locked)return;storyState.helped=true;
+  if(storyState.locked)return;storyState.helped=true;saveStoryRound();
   const task=storyState.task;
   storyUI.storyFeedback.textContent=task.tier===1?'Was ist gesucht? Überlege, was mit den Mengen passiert. Du kannst deine Rechnung mit +, −, × oder ÷ aufschreiben.':`Ein möglicher Anfang ist ${task.steps[0].replace(/\*/g,' × ').replace(/\//g,' ÷ ')} = ${task.results[0]}. Was musst du mit diesem Zwischenergebnis noch herausfinden?`;
 }
 document.getElementById('gamesStoriesCard').addEventListener('click',openStories);
-storyUI.storyHome.addEventListener('click',()=>showScreen('games'));
+storyUI.storyHome.addEventListener('click',()=>{saveStoryRound();showScreen('games')});
 document.getElementById('storyBegin').addEventListener('click',startStories);
 storyUI.storyCheck.addEventListener('click',checkStory);storyUI.storyHint.addEventListener('click',storyHint);
-storyUI.storyNext.addEventListener('click',()=>{storyState.question++;nextStory()});
+storyUI.storyNext.addEventListener('click',()=>{if(!storyState.locked||storyState.finished)return;storyState.question++;nextStory()});
+storyUI.storyWork.addEventListener('input',saveStoryRound);
+document.getElementById('storyAgain').addEventListener('click',openStories);
+document.getElementById('storyChoose').addEventListener('click',()=>showScreen('games'));
 
 function storyKeyInput(key){
   const field=storyUI.storyWork;
